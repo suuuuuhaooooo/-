@@ -31,6 +31,12 @@
         border-radius: 20px;
         box-shadow: 0 15px 35px rgba(0,0,0,0.05);
         overflow: hidden;
+        animation: fadeInUp 0.8s ease-out;
+    }
+
+    @keyframes fadeInUp {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
     }
 
     .header-banner {
@@ -114,22 +120,59 @@
         left: 0;
     }
 
-    .highlight {
-        color: #c0392b;
-        font-weight: 500;
-    }
-
     footer {
         text-align: center;
-        padding: 20px;
+        padding: 40px 20px;
         font-size: 14px;
         color: var(--text-light);
         background: var(--morandi-sand);
+        border-top: 1px solid #eee;
+    }
+
+    /* 按鈕樣式 */
+    .btn-group {
+        display: flex;
+        justify-content: center;
+        gap: 15px;
+        flex-wrap: wrap;
+        margin-top: 20px;
+    }
+
+    .nav-btn {
+        display: inline-block;
+        padding: 12px 30px;
+        border-radius: 50px;
+        text-decoration: none;
+        font-weight: 500;
+        font-size: 16px;
+        transition: 0.3s;
+    }
+
+    .btn-outline {
+        border: 1.5px solid var(--morandi-green);
+        color: var(--morandi-green);
+    }
+
+    .btn-outline:hover {
+        background: var(--morandi-green);
+        color: white;
+    }
+
+    .btn-filled {
+        background: #06c755;
+        color: white;
+        box-shadow: 0 10px 20px rgba(6, 199, 85, 0.15);
+    }
+
+    .btn-filled:hover {
+        transform: scale(1.05);
+        box-shadow: 0 12px 25px rgba(6, 199, 85, 0.25);
     }
 
     @media (max-width: 600px) {
         .info-grid { grid-template-columns: 1fr; }
         .content { padding: 25px; }
+        .nav-btn { width: 100%; max-width: 250px; }
     }
 </style>
 </head>
@@ -150,7 +193,7 @@
                 <span class="badge">成績</span> 班排第 4 名（前 15%）
             </div>
             <div class="info-item">
-                <span class="badge">專業</span> 國中小數理、程式語言</span>
+                <span class="badge">專業</span> 國中小數理、程式語言
             </div>
             <div class="info-item">
                 <span class="badge">入學</span> 繁星推薦入學
@@ -191,6 +234,10 @@
 
     <footer>
         <p>致力於提供與大型補習班同等規模的精緻教學資源</p>
+        <div class="btn-group">
+            <a href="FAQ.html" class="nav-btn btn-outline">查看目前課表時段</a>
+            <a href="https://line.me/ti/p/~@000gwomo" class="nav-btn btn-filled">立即聯繫官方 LINE</a>
+        </div>
     </footer>
 </div>
 
