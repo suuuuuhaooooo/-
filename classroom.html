@@ -213,7 +213,7 @@
                                 </div>`).join('');
                             playVideo(vIds[0], vNames[0] || "第一單元");
                         } else {
-                            document.getElementById('video-container').innerHTML = '<div class="no-data-msg">目前暫無影音解題課程。</div>';
+                            document.getElementById('video-container').innerHTML = '<div class="no-data-msg">目前暫無影音內容。</div>';
                         }
 
                         // 渲染教材區域
@@ -225,7 +225,7 @@
                                     <a href="${url.trim()}" target="_blank" class="download-btn">開啟教材</a>
                                 </div>`).join('');
                         } else {
-                            document.getElementById('pdf-container').innerHTML = '<div class="no-data-msg">目前暫無教材資源可供下載。</div>';
+                            document.getElementById('pdf-container').innerHTML = '<div class="no-data-msg">目前暫無教材。</div>';
                         }
                     }
                 });
