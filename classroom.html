@@ -14,48 +14,51 @@
         
         body { font-family: "Noto Serif TC", serif; background-color: var(--bg); margin: 0; color: #333; height: 100vh; overflow: hidden; }
         
-        /* 登入介面 */
+        /* 登入介面優化 */
         #login-ui { display: flex; justify-content: center; align-items: center; height: 100vh; background: var(--bg); position: fixed; width: 100%; z-index: 1000; }
-        .login-card { background: white; padding: 50px 40px; border-radius: 4px; box-shadow: 0 15px 35px rgba(0,0,0,0.05); width: 320px; text-align: center; border-top: 6px solid var(--primary); }
-        input { width: 100%; padding: 14px; margin: 10px 0; border: 1px solid #eee; background: #fafafa; box-sizing: border-box; outline: none; }
-        .main-btn { background: var(--primary); color: white; border: none; padding: 14px; width: 100%; cursor: pointer; letter-spacing: 2px; font-weight: 700; transition: 0.3s; }
+        .login-card { background: white; padding: 50px 40px; border-radius: 4px; box-shadow: 0 15px 35px rgba(0,0,0,0.05); width: 340px; text-align: center; border-top: 6px solid var(--primary); }
+        
+        .input-group { position: relative; margin: 10px 0; }
+        input { width: 100%; padding: 14px; border: 1px solid #eee; background: #fafafa; box-sizing: border-box; outline: none; transition: 0.3s; }
+        input:focus { border-color: var(--primary); background: #fff; }
+
+        /* 密碼眼睛圖示 */
+        .toggle-password { position: absolute; right: 15px; top: 14px; cursor: pointer; color: #ccc; font-size: 14px; }
+        .toggle-password:hover { color: var(--primary); }
+
+        .main-btn { background: var(--primary); color: white; border: none; padding: 14px; width: 100%; cursor: pointer; letter-spacing: 2px; font-weight: 700; transition: 0.3s; margin-top: 10px; }
         .main-btn:hover { background: var(--dark); }
 
         /* 教室後台佈局 */
         #classroom-ui { display: none; height: 100vh; width: 100%; }
-        
-        /* 側邊導覽 */
         .sidebar { width: 260px; background: white; border-right: 1px solid #eee; display: flex; flex-direction: column; padding: 30px 0; }
         .sidebar-brand { padding: 0 30px 30px; border-bottom: 1px solid #f5f5f5; margin-bottom: 20px; }
         .nav-group { flex-grow: 1; }
         .nav-link { display: block; padding: 15px 30px; text-decoration: none; color: #777; font-size: 0.95em; cursor: pointer; transition: 0.2s; border-left: 4px solid transparent; }
         .nav-link:hover { background: #f9faf9; color: var(--primary); }
         .nav-link.active { background: #f4f6f4; color: var(--primary); border-left-color: var(--primary); font-weight: 700; }
-        .sidebar-footer { padding: 20px 30px; border-top: 1px solid #f5f5f5; }
+        .sidebar-footer { padding: 20px 30px; border-top: 1px solid #f5f5f5; line-height: 1.6; }
 
-        /* 主內容區 */
         .main-content { flex-grow: 1; overflow-y: auto; padding: 40px; box-sizing: border-box; }
         .view-section { display: none; max-width: 1000px; margin: 0 auto; }
         .view-section.active { display: block; animation: fadeIn 0.5s; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-        /* 影片播放器 */
         .video-player-container { background: black; width: 100%; position: relative; padding-bottom: 56.25%; margin-bottom: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
         .video-player-container iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
         
-        /* 影片清單與卡片樣式 */
         .video-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 15px; margin-top: 20px; }
         .video-card { background: white; padding: 15px; cursor: pointer; border-radius: 2px; border: 1px solid #eee; transition: 0.3s; }
         .video-card:hover { border-color: var(--primary); background: #fcfdfc; }
         .video-card.playing { border-left: 5px solid var(--primary); background: #f4f6f4; font-weight: 700; }
 
-        /* 教材卡片 */
         .resource-card { background: white; padding: 20px; display: flex; align-items: center; justify-content: space-between; margin-bottom: 15px; border-radius: 2px; box-shadow: 0 2px 5px rgba(0,0,0,0.02); }
         .pdf-tag { background: #eef1ec; color: var(--primary); padding: 2px 8px; font-size: 11px; margin-right: 12px; font-weight: 700; }
         .download-btn { color: var(--primary); text-decoration: none; font-weight: 700; border: 1px solid var(--primary); padding: 8px 18px; border-radius: 2px; font-size: 13px; transition: 0.3s; }
         .download-btn:hover { background: var(--primary); color: white; }
 
-        .logout-link { font-size: 12px; color: #999; cursor: pointer; text-decoration: underline; }
+        .logout-link { font-size: 12px; color: #999; cursor: pointer; text-decoration: underline; display: block; margin-top: 10px; }
+        .info-tag { font-size: 11px; color: #888; background: #f0f0f0; padding: 2px 6px; border-radius: 3px; margin-right: 4px; }
 
         @media (max-width: 768px) {
             #classroom-ui { flex-direction: column; overflow-y: auto; }
@@ -71,8 +74,16 @@
         <div class="login-card">
             <h1 style="font-size: 22px; letter-spacing: 4px; margin-bottom: 10px;">雲端影音教室</h1>
             <div style="font-size: 12px; color: #aaa; margin-bottom: 30px;">Professional Teaching Platform</div>
-            <input type="email" id="email" placeholder="帳號">
-            <input type="password" id="password" placeholder="密碼">
+            
+            <div class="input-group">
+                <input type="email" id="email" placeholder="學習帳號">
+            </div>
+            
+            <div class="input-group">
+                <input type="password" id="password" placeholder="個人密碼">
+                <span class="toggle-password" onclick="togglePassword()">👁️</span>
+            </div>
+
             <button class="main-btn" onclick="login()">進入系統</button>
             <p id="error-msg" style="color:#b03a2e; font-size:12px; margin-top:15px"></p>
         </div>
@@ -89,8 +100,10 @@
                 <a class="nav-link" onclick="showView('pdf-view', this)">專屬教材下載</a>
             </div>
             <div class="sidebar-footer">
-                <div id="student-name" style="font-size: 14px; font-weight: 700; margin-bottom: 5px; color: var(--dark);">同步資料中...</div>
-                <span class="logout-link" onclick="logout()">登出</span>
+                <div id="student-name" style="font-size: 15px; font-weight: 700; color: var(--dark);">同步資料中...</div>
+                <div id="student-meta" style="margin-top: 5px;"></div>
+                <div id="login-ip" style="font-size: 10px; color: #bbb; margin-top: 5px;">IP: 獲取中...</div>
+                <span class="logout-link" onclick="logout()">安全登出系統</span>
             </div>
         </nav>
 
@@ -113,7 +126,6 @@
     </div>
 
     <script>
-        // 1. Firebase 初始化
         const firebaseConfig = {
             apiKey: "AIzaSyALkTnkYY3JZLCTyajahpi4IZKmFX9USdw",
             authDomain: "su-hao-classroom.firebaseapp.com",
@@ -126,11 +138,29 @@
         firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth();
         const db = firebase.database();
-
-        // 2. Google Sheets API 網址
         const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx884HoE5YwEpoWwKR3aIIvAUGrydmwRFC7ETpW_UowiSsIoMch9esQye_7WjRQrNQelQ/exec";
 
-        // --- 功能：自動登出偵測 (5分鐘) ---
+        // --- 功能：切換密碼顯示/隱藏 ---
+        function togglePassword() {
+            const pwd = document.getElementById('password');
+            const icon = document.querySelector('.toggle-password');
+            if (pwd.type === "password") {
+                pwd.type = "text";
+                icon.innerText = "🔒";
+            } else {
+                pwd.type = "password";
+                icon.innerText = "👁️";
+            }
+        }
+
+        // 獲取使用者 IP
+        fetch('https://api.ipify.org?format=json')
+            .then(res => res.json())
+            .then(data => {
+                const ipEl = document.getElementById('login-ip');
+                if(ipEl) ipEl.innerText = "IP: " + data.ip;
+            });
+
         let idleTimer;
         function resetIdleTimer() {
             clearTimeout(idleTimer);
@@ -138,12 +168,11 @@
                 idleTimer = setTimeout(() => {
                     alert("由於長時間未操作，系統已自動登出。");
                     logout();
-                }, 300000); 
+                }, 300000); // 5分鐘
             }
         }
         window.onmousemove = window.onkeypress = window.ontouchstart = resetIdleTimer;
 
-        // --- 功能：切換頁面視圖 ---
         function showView(viewId, navEl) {
             document.querySelectorAll('.view-section').forEach(v => v.classList.remove('active'));
             document.querySelectorAll('.nav-link').forEach(n => n.classList.remove('active'));
@@ -151,17 +180,14 @@
             navEl.classList.add('active');
         }
 
-        // --- 功能：切換影片播放 ---
         function playVideo(id, title, el) {
             document.getElementById('video-frame').src = `https://www.youtube.com/embed/${id.trim()}?modestbranding=1&rel=0&disablekb=1&autoplay=1`;
             document.getElementById('current-video-title').innerText = title.trim();
             document.querySelectorAll('.video-card').forEach(c => c.classList.remove('playing'));
             if(el) el.classList.add('playing');
-            // 回到頂部以便觀看
             document.querySelector('.main-content').scrollTop = 0;
         }
 
-        // --- 功能：登入與登出 ---
         function login() {
             const email = document.getElementById('email').value;
             const password = document.getElementById('password').value;
@@ -179,10 +205,8 @@
             auth.signOut(); 
         }
 
-        // --- 核心邏輯：驗證狀態與資料渲染 ---
         auth.onAuthStateChanged(user => {
             if (user) {
-                // 多裝置偵測
                 db.ref('sessions/' + user.uid).on('value', snap => {
                     if (snap.val() && localStorage.getItem('session_id') && snap.val() !== localStorage.getItem('session_id')) {
                         alert("偵測到此帳號已在其他裝置登入，您已被強制登出。");
@@ -194,13 +218,15 @@
                 document.getElementById('classroom-ui').style.display = 'flex';
                 resetIdleTimer();
                 
-                // 向 Google Sheets 抓取資料
                 fetch(SCRIPT_URL).then(r => r.json()).then(data => {
                     const my = data.find(i => i.uid === user.uid);
                     if (my) {
                         document.getElementById('student-name').innerText = my.name + " 同學";
+                        document.getElementById('student-meta').innerHTML = `
+                            <span class="info-tag">${my.level} 年級</span>
+                            <span class="info-tag">${my.subject}</span>
+                        `;
                         
-                        // 1. 生成影片網格 (匹配 11 欄結構：vNames 與 vIds)
                         const vNames = my.vNames.split(',');
                         const vIds = my.vIds.split(',');
                         document.getElementById('video-grid').innerHTML = vIds.map((id, i) => `
@@ -210,10 +236,8 @@
                             </div>
                         `).join('');
                         
-                        // 預設加載第一支影片
                         if(vIds.length > 0) playVideo(vIds[0], vNames[0] || "第一單元");
 
-                        // 2. 生成教材列表 (匹配 11 欄結構：docNames 與 docLinks)
                         const dNames = my.docNames.split(',');
                         const dLinks = my.docLinks.split(',');
                         document.getElementById('pdf-list').innerHTML = dLinks.map((url, i) => `
@@ -222,11 +246,7 @@
                                 <a href="${url.trim()}" target="_blank" class="download-btn">開啟教材</a>
                             </div>
                         `).join('');
-                    } else {
-                        document.getElementById('student-name').innerText = "找不到資料";
                     }
-                }).catch(err => {
-                    console.error("資料抓取失敗:", err);
                 });
             } else {
                 document.getElementById('login-ui').style.display = 'flex';
