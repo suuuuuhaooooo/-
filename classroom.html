@@ -8,141 +8,33 @@
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;700&display=swap');
-
-        :root {
-            --primary: #8e9775;
-            --secondary: #a2aab0;
-            --bg: #f4f4f2;
-            --card: #ffffff;
-        }
-
-        body {
-            font-family: "Noto Serif TC", serif;
-            background-color: var(--bg);
-            margin: 0;
-            padding: 0;
-            color: #444;
-        }
-
-        /* 登入介面優化 */
-        #login-ui {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-        }
-
-        .login-card {
-            background: white;
-            padding: 50px 40px;
-            border-radius: 2px;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.05);
-            width: 100%;
-            max-width: 350px;
-            text-align: center;
-            border-top: 5px solid var(--primary);
-        }
-
-        input {
-            width: 100%;
-            padding: 12px;
-            margin: 10px 0;
-            border: 1px solid #eee;
-            background: #f9f9f9;
-            box-sizing: border-box;
-        }
-
-        .main-btn {
-            background: var(--primary);
-            color: white;
-            border: none;
-            padding: 12px;
-            width: 100%;
-            cursor: pointer;
-            letter-spacing: 2px;
-            margin-top: 10px;
-            transition: 0.3s;
-        }
-
-        /* 教室內部介面優化 */
-        #classroom-ui {
-            display: none;
-            max-width: 1000px;
-            margin: 40px auto;
-            padding: 20px;
-        }
-
-        .classroom-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 1px solid var(--secondary);
-            padding-bottom: 15px;
-            margin-bottom: 30px;
-        }
-
-        .video-list-container {
-            display: grid;
-            grid-template-columns: 1fr;
-            gap: 30px;
-        }
-
-        .video-item {
-            background: white;
-            padding: 25px;
-            box-shadow: 0 5px 20px rgba(0,0,0,0.02);
-            border-radius: 2px;
-        }
-
-        .video-title {
-            font-size: 1.2em;
-            color: var(--primary);
-            margin-bottom: 15px;
-            font-weight: 700;
-            border-left: 4px solid var(--primary);
-            padding-left: 10px;
-        }
-
-        .video-wrapper {
-            position: relative;
-            padding-bottom: 56.25%;
-            height: 0;
-            margin-bottom: 15px;
-            background: #000;
-        }
-
-        .video-wrapper iframe {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-        }
-
-        .resource-link {
-            display: inline-block;
-            margin-top: 10px;
-            color: var(--secondary);
-            text-decoration: none;
-            font-size: 0.9em;
-            border-bottom: 1px solid var(--secondary);
-        }
-
-        .logout-link {
-            font-size: 12px;
-            color: #999;
-            cursor: pointer;
-            text-decoration: underline;
-        }
-
-        @media (max-width: 600px) {
-            #classroom-ui { padding: 10px; }
-        }
+        :root { --primary: #8e9775; --secondary: #a2aab0; --bg: #f4f4f2; }
+        body { font-family: "Noto Serif TC", serif; background-color: var(--bg); margin: 0; color: #444; }
+        
+        /* 登入 UI */
+        #login-ui { display: flex; justify-content: center; align-items: center; height: 100vh; }
+        .login-card { background: white; padding: 50px 40px; border-radius: 2px; box-shadow: 0 10px 40px rgba(0,0,0,0.05); width: 100%; max-width: 350px; text-align: center; border-top: 5px solid var(--primary); }
+        input { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #eee; background: #f9f9f9; box-sizing: border-box; }
+        .main-btn { background: var(--primary); color: white; border: none; padding: 12px; width: 100%; cursor: pointer; letter-spacing: 2px; transition: 0.3s; }
+        
+        /* 教室 UI */
+        #classroom-ui { display: none; max-width: 900px; margin: 40px auto; padding: 20px; }
+        .classroom-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--secondary); padding-bottom: 15px; margin-bottom: 30px; }
+        .video-item { background: white; padding: 25px; margin-bottom: 30px; box-shadow: 0 5px 20px rgba(0,0,0,0.02); }
+        .video-title { font-size: 1.1em; color: var(--primary); margin-bottom: 15px; font-weight: 700; border-left: 4px solid var(--primary); padding-left: 10px; }
+        .video-wrapper { position: relative; padding-bottom: 56.25%; height: 0; background: #000; }
+        .video-wrapper iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
+        .logout-link { font-size: 12px; color: #999; cursor: pointer; text-decoration: underline; }
+        .loading { text-align: center; color: var(--secondary); padding: 50px; }
     </style>
 </head>
 <body>
 
     <div id="login-ui">
         <div class="login-card">
-            <h1 style="font-size: 24px; letter-spacing: 4px;">學生登入</h1>
-            <p style="color: #999; font-size: 13px;">SU HAO CLASSROOM</p>
-            <input type="email" id="email" placeholder="學習帳號 (Email)">
+            <h1>學生登入</h1>
+            <p style="color:#999; font-size:12px">SU HAO ONLINE CLASSROOM</p>
+            <input type="email" id="email" placeholder="帳號 (@SUHAO.com)">
             <input type="password" id="password" placeholder="密碼">
             <button class="main-btn" onclick="login()">進入教室</button>
             <p id="error-msg" style="color:#b03a2e; font-size:12px; margin-top:10px"></p>
@@ -152,18 +44,14 @@
     <div id="classroom-ui">
         <div class="classroom-header">
             <div>
-                <h2 id="welcome-text" style="margin:0; font-size: 20px;">歡迎回來</h2>
+                <h2 id="welcome-text">確認身分中...</h2>
                 <span class="logout-link" onclick="logout()">登出帳號</span>
             </div>
-            <img src="https://via.placeholder.com/50" alt="Logo" style="border-radius: 50%;">
         </div>
-
-        <div class="video-list-container" id="video-list">
-            </div>
-
-        <footer style="text-align: center; margin-top: 50px; color: #bbb; font-size: 12px;">
-            <p>© 2026 蘇昊數理教學系統｜專業教材與影音解題</p>
-        </div>
+        <div id="video-list"><div class="loading">正在從雲端同步課程內容...</div></div>
+        <footer style="text-align: center; margin-top: 50px; color: #bbb; font-size: 11px;">
+            <p>© 2026 蘇昊數理教學系統｜專業 LaTeX 教材與影音解題</p>
+        </footer>
     </div>
 
     <script>
@@ -175,58 +63,54 @@
             messagingSenderId: "764168135846",
             appId: "1:764168135846:web:f2923a5f4952fa1ca64067"
         };
-        
         firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth();
+
+        // 貼上你的 Apps Script 網址
+        const SCRIPT_URL = "你的_APPS_SCRIPT_URL";
 
         function login() {
             const email = document.getElementById('email').value;
             const password = document.getElementById('password').value;
-            auth.signInWithEmailAndPassword(email, password).catch(err => {
-                document.getElementById('error-msg').innerText = "帳號或密碼有誤。";
+            auth.signInWithEmailAndPassword(email, password).catch(() => {
+                document.getElementById('error-msg').innerText = "驗證失敗，請檢查帳號密碼。";
             });
         }
 
         function logout() { auth.signOut(); }
 
         auth.onAuthStateChanged(user => {
-            const loginUI = document.getElementById('login-ui');
-            const classroomUI = document.getElementById('classroom-ui');
-            const videoList = document.getElementById('video-list');
-
             if (user) {
-                loginUI.style.display = 'none';
-                classroomUI.style.display = 'block';
-                document.getElementById('welcome-text').innerText = `${user.email.split('@')[0]} 同學，你好`;
-
-                // --- 設定不同學生的影片資料庫 ---
-                let studentData = [];
-
-                if (user.email === "dbcf9e@suhao.com") {
-                    studentData = [
-                        { title: "【新北市江翠國中】113年七上二段［填充題9.］", id: "E64HY6nagig", doc: "講義連結A1" },
-                        { title: "主題二：段考精選題庫解說", id: "dQw4w9WgXcQ", doc: "講義連結A2" }
-                    ];
-                } else if (user.email === "dbcf9e@suhao.com") {
-                    studentData = [
-                        { title: "Python 基礎：迴圈與判斷式", id: "dQw4w9WgXcQ", doc: "Python講義" }
-                    ];
-                }
-
-                // 動態產生影片列表
-                videoList.innerHTML = studentData.map(item => `
-                    <div class="video-item">
-                        <div class="video-title">${item.title}</div>
-                        <div class="video-wrapper">
-                            <iframe src="https://www.youtube.com/embed/${item.id}" frameborder="0" allowfullscreen></iframe>
-                        </div>
-                        <a href="${item.doc}" class="resource-link">📖 下載對應講義教材</a>
-                    </div>
-                `).join('');
-
+                document.getElementById('login-ui').style.display = 'none';
+                document.getElementById('classroom-ui').style.display = 'block';
+                
+                // 使用 UID 進行高強度匹配
+                fetch(SCRIPT_URL)
+                    .then(res => res.json())
+                    .then(allData => {
+                        const myData = allData.find(item => item.uid === user.uid);
+                        
+                        if (myData) {
+                            document.getElementById('welcome-text').innerText = `${myData.name} 同學，你好 (${myData.subject})`;
+                            
+                            // 解析逗號隔開的影片 ID
+                            const ids = myData.idList.split(',').map(id => id.trim());
+                            document.getElementById('video-list').innerHTML = ids.map((id, index) => `
+                                <div class="video-item">
+                                    <div class="video-title">單元影片 ${index + 1}</div>
+                                    <div class="video-wrapper">
+                                        <iframe src="https://www.youtube.com/embed/${id}" frameborder="0" allowfullscreen></iframe>
+                                    </div>
+                                    <a href="${myData.doc}" target="_blank" class="resource-link" style="color:var(--secondary); font-size:0.9em; text-decoration:none; display:block; margin-top:15px; border-bottom:1px solid #eee; width:fit-content;">📖 下載本週講義教材</a>
+                                </div>
+                            `).join('');
+                        } else {
+                            document.getElementById('video-list').innerHTML = "暫未找到您的課程資料，請聯繫蘇老師。";
+                        }
+                    });
             } else {
-                loginUI.style.display = 'flex';
-                classroomUI.style.display = 'none';
+                document.getElementById('login-ui').style.display = 'flex';
+                document.getElementById('classroom-ui').style.display = 'none';
             }
         });
     </script>
