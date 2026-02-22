@@ -22,6 +22,11 @@
         input:focus { border-color: var(--primary); background: #fff; }
         .toggle-password { position: absolute; right: 15px; top: 14px; cursor: pointer; color: #ccc; font-size: 14px; }
 
+        /* 驗證碼樣式 */
+        .captcha-container { display: flex; align-items: center; gap: 10px; margin: 10px 0; }
+        #captcha-code { background: #eef1ec; color: var(--dark); font-weight: 700; padding: 10px; flex: 1; letter-spacing: 5px; font-style: italic; text-decoration: line-through; user-select: none; border-radius: 2px; font-family: sans-serif; cursor: pointer; }
+        #captcha-input { flex: 1; }
+
         .main-btn { background: var(--primary); color: white; border: none; padding: 14px; width: 100%; cursor: pointer; letter-spacing: 2px; font-weight: 700; transition: 0.3s; margin-top: 10px; }
         .main-btn:hover { background: var(--dark); }
 
@@ -34,8 +39,6 @@
         .sidebar { width: 260px; background: white; border-right: 1px solid #eee; display: flex; flex-direction: column; padding: 30px 0; }
         .sidebar-brand { padding: 0 30px 30px; border-bottom: 1px solid #f5f5f5; margin-bottom: 20px; }
         .nav-group { flex-grow: 1; }
-        
-        /* 側邊按鈕常駐顯示 */
         .nav-link { display: block; padding: 15px 30px; text-decoration: none; color: #777; font-size: 0.95em; cursor: pointer; transition: 0.2s; border-left: 4px solid transparent; }
         .nav-link:hover { background: #f9faf9; color: var(--primary); }
         .nav-link.active { background: #f4f6f4; color: var(--primary); border-left-color: var(--primary); font-weight: 700; }
@@ -59,7 +62,6 @@
         .pdf-tag { background: #eef1ec; color: var(--primary); padding: 2px 8px; font-size: 11px; margin-right: 12px; font-weight: 700; }
         .download-btn { color: var(--primary); text-decoration: none; font-weight: 700; border: 1px solid var(--primary); padding: 8px 18px; border-radius: 2px; font-size: 13px; transition: 0.3s; }
         
-        /* 暫無內容訊息樣式 */
         .no-data-msg { text-align: center; color: #bbb; padding: 100px 0; font-style: italic; letter-spacing: 1px; font-size: 15px; }
         .logout-link { font-size: 12px; color: #999; cursor: pointer; text-decoration: underline; display: block; margin-top: 10px; }
         .info-tag { font-size: 11px; color: #888; background: #f0f0f0; padding: 2px 6px; border-radius: 3px; margin-right: 4px; }
@@ -85,10 +87,16 @@
                 <input type="password" id="password" placeholder="密碼" autocomplete="new-password">
                 <span class="toggle-password" onclick="togglePassword()">👁️</span>
             </div>
+
+            <div class="captcha-container">
+                <div id="captcha-code" title="點擊更換驗證碼" onclick="generateCaptcha()"></div>
+                <input type="text" id="captcha-input" placeholder="驗證碼">
+            </div>
+
             <button class="main-btn" onclick="login()">登入</button>
             <p id="error-msg" style="color:#b03a2e; font-size:12px; margin-top:15px"></p>
 
-            <div class="online-counter">
+            <div class="online-counter" id="presence-display">
                 <span class="online-dot"></span>
                 <span id="presence-text">正在讀取在線人數...</span>
             </div>
@@ -106,7 +114,7 @@
                 <a id="nav-pdf" class="nav-link" onclick="showView('pdf-view', this)">專屬教材下載</a>
             </div>
             <div class="sidebar-footer">
-                <div id="student-name" style="font-size: 15px; font-weight: 700; color: var(--dark);">資料同步中...</div>
+                <div id="student-name" style="font-size: 15px; font-weight: 700; color: var(--dark);">載入中...</div>
                 <div id="student-meta" style="margin-top: 5px;"></div>
                 <div id="login-ip" style="font-size: 10px; color: #bbb; margin-top: 5px;">IP: 獲取中...</div>
                 <span class="logout-link" onclick="logout()">安全登出系統</span>
@@ -141,14 +149,28 @@
         const db = firebase.database();
         const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx884HoE5YwEpoWwKR3aIIvAUGrydmwRFC7ETpW_UowiSsIoMch9esQye_7WjRQrNQelQ/exec";
 
-        // 在線人數顯示語法優化
+        // --- 驗證碼生成邏輯 ---
+        let currentCaptcha = "";
+        function generateCaptcha() {
+            const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; // 移除容易混淆的 0, O, 1, I
+            let code = "";
+            for (let i = 0; i < 4; i++) {
+                code += chars.charAt(Math.floor(Math.random() * chars.length));
+            }
+            currentCaptcha = code;
+            document.getElementById('captcha-code').innerText = code;
+            document.getElementById('captcha-input').value = "";
+        }
+        generateCaptcha(); // 頁面載入時先生成一次
+
+        // --- 在線人數監聽 ---
         db.ref('presence').on('value', snap => {
             const count = snap.numChildren() || 0;
             const textEl = document.getElementById('presence-text');
-            if (count > 1) {
-                textEl.innerHTML = `目前有 <span style="font-weight:700; color:#666;">${count}</span> 位同學正在線上`;
+            if (count > 0) {
+                textEl.innerHTML = `目前有 <span style="font-weight:700; color:#666;">${count}</span> 位同學在線上`;
             } else {
-                textEl.innerHTML = `目前有 <span style="font-weight:700; color:#666;">1</span> 位同學在線上`;
+                textEl.innerHTML = `系統運作中`;
             }
         });
 
@@ -168,7 +190,7 @@
         function resetIdleTimer() {
             clearTimeout(idleTimer);
             if (auth.currentUser) {
-                idleTimer = setTimeout(() => { alert("由於長時間未操作，系統已自動登出。"); logout(); }, 180000); // 改為 3 分鐘
+                idleTimer = setTimeout(() => { alert("由於長時間未操作，系統已自動登出。"); logout(); }, 180000); // 3分鐘
             }
         }
         window.onmousemove = window.onkeypress = window.ontouchstart = resetIdleTimer;
@@ -193,11 +215,23 @@
         function login() {
             const email = document.getElementById('email').value;
             const password = document.getElementById('password').value;
+            const captchaInput = document.getElementById('captcha-input').value.toUpperCase();
+
+            // 檢查驗證碼
+            if (captchaInput !== currentCaptcha) {
+                document.getElementById('error-msg').innerText = "驗證碼錯誤。";
+                generateCaptcha(); // 失敗後強制更換驗證碼
+                return;
+            }
+
             auth.signInWithEmailAndPassword(email, password).then(cred => {
                 const sid = Math.random().toString(36).substring(2);
                 localStorage.setItem('session_id', sid);
                 db.ref('sessions/' + cred.user.uid).set(sid);
-            }).catch(() => { document.getElementById('error-msg').innerText = "驗證失敗"; });
+            }).catch(() => { 
+                document.getElementById('error-msg').innerText = "帳號密碼錯誤。"; 
+                generateCaptcha(); // 失敗後強制更換驗證碼
+            });
         }
 
         function logout() { 
@@ -209,6 +243,7 @@
             auth.signOut().then(() => {
                 document.getElementById('email').value = "";
                 document.getElementById('password').value = "";
+                generateCaptcha();
                 localStorage.clear();
                 document.getElementById('video-container').innerHTML = "";
                 document.getElementById('pdf-container').innerHTML = "";
@@ -221,6 +256,7 @@
 
         auth.onAuthStateChanged(user => {
             if (user) {
+                // 優化：登入後才開啟在線偵測
                 const presenceRef = db.ref('presence/' + user.uid);
                 db.ref('.info/connected').on('value', snap => {
                     if (snap.val() === true) {
@@ -236,6 +272,7 @@
                 });
 
                 document.getElementById('login-ui').style.display = 'none';
+                document.getElementById('classroom-ui').style.display = 'block'; // 修正顯示方式
                 document.getElementById('classroom-ui').style.display = 'flex';
                 resetIdleTimer();
                 
@@ -248,7 +285,7 @@
                         const vIds = my.vIds ? my.vIds.toString().split(',').filter(id => id.trim() !== "") : [];
                         const dLinks = my.docLinks ? my.docLinks.toString().split(',').filter(url => url.trim() !== "") : [];
 
-                        // 渲染影片區域
+                        // 渲染影音
                         const videoBox = document.getElementById('video-container');
                         if (vIds.length > 0) {
                             const vNames = my.vNames ? my.vNames.toString().split(',') : [];
@@ -270,7 +307,7 @@
                             videoBox.innerHTML = '<div class="no-data-msg">目前暫無影音內容。</div>';
                         }
 
-                        // 渲染教材區域
+                        // 渲染教材
                         const pdfBox = document.getElementById('pdf-container');
                         if (dLinks.length > 0) {
                             const dNames = my.docNames ? my.docNames.toString().split(',') : [];
