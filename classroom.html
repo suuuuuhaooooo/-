@@ -22,10 +22,10 @@
         .main-btn:hover { background: var(--dark); }
 
         /* 教室後台佈局 */
-        #classroom-ui { display: none; display: flex; height: 100vh; width: 100%; }
+        #classroom-ui { display: none; height: 100vh; width: 100%; }
         
-        /* 左側導覽列 */
-        .sidebar { width: 240px; background: white; border-right: 1px solid #eee; display: flex; flex-direction: column; padding: 30px 0; }
+        /* 側邊導覽 */
+        .sidebar { width: 260px; background: white; border-right: 1px solid #eee; display: flex; flex-direction: column; padding: 30px 0; }
         .sidebar-brand { padding: 0 30px 30px; border-bottom: 1px solid #f5f5f5; margin-bottom: 20px; }
         .nav-group { flex-grow: 1; }
         .nav-link { display: block; padding: 15px 30px; text-decoration: none; color: #777; font-size: 0.95em; cursor: pointer; transition: 0.2s; border-left: 4px solid transparent; }
@@ -33,28 +33,34 @@
         .nav-link.active { background: #f4f6f4; color: var(--primary); border-left-color: var(--primary); font-weight: 700; }
         .sidebar-footer { padding: 20px 30px; border-top: 1px solid #f5f5f5; }
 
-        /* 右側主內容區 */
+        /* 主內容區 */
         .main-content { flex-grow: 1; overflow-y: auto; padding: 40px; box-sizing: border-box; }
         .view-section { display: none; max-width: 1000px; margin: 0 auto; }
         .view-section.active { display: block; animation: fadeIn 0.5s; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-        /* 影片播放器樣式 */
-        .video-player-container { background: black; width: 100%; position: relative; padding-bottom: 56.25%; margin-bottom: 20px; }
+        /* 影片播放器 */
+        .video-player-container { background: black; width: 100%; position: relative; padding-bottom: 56.25%; margin-bottom: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
         .video-player-container iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
-        .video-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; margin-top: 20px; }
-        .video-card { background: white; padding: 15px; cursor: pointer; border-radius: 2px; box-shadow: 0 2px 10px rgba(0,0,0,0.02); transition: 0.3s; }
-        .video-card:hover { transform: translateY(-3px); box-shadow: 0 5px 15px rgba(0,0,0,0.05); }
+        
+        /* 影片清單與卡片樣式 */
+        .video-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 15px; margin-top: 20px; }
+        .video-card { background: white; padding: 15px; cursor: pointer; border-radius: 2px; border: 1px solid #eee; transition: 0.3s; }
+        .video-card:hover { border-color: var(--primary); background: #fcfdfc; }
+        .video-card.playing { border-left: 5px solid var(--primary); background: #f4f6f4; font-weight: 700; }
 
-        /* 教材清單樣式 */
-        .resource-card { background: white; padding: 20px; display: flex; align-items: center; justify-content: space-between; margin-bottom: 15px; border-radius: 2px; }
-        .pdf-tag { background: #eef1ec; color: var(--primary); padding: 4px 10px; font-size: 12px; border-radius: 2px; margin-right: 10px; }
-        .download-link { color: var(--primary); text-decoration: none; font-weight: 700; border: 1px solid var(--primary); padding: 8px 15px; border-radius: 2px; transition: 0.3s; }
-        .download-link:hover { background: var(--primary); color: white; }
+        /* 教材卡片 */
+        .resource-card { background: white; padding: 20px; display: flex; align-items: center; justify-content: space-between; margin-bottom: 15px; border-radius: 2px; box-shadow: 0 2px 5px rgba(0,0,0,0.02); }
+        .pdf-tag { background: #eef1ec; color: var(--primary); padding: 2px 8px; font-size: 11px; margin-right: 12px; font-weight: 700; }
+        .download-btn { color: var(--primary); text-decoration: none; font-weight: 700; border: 1px solid var(--primary); padding: 8px 18px; border-radius: 2px; font-size: 13px; transition: 0.3s; }
+        .download-btn:hover { background: var(--primary); color: white; }
+
+        .logout-link { font-size: 12px; color: #999; cursor: pointer; text-decoration: underline; }
 
         @media (max-width: 768px) {
-            #classroom-ui { flex-direction: column; }
+            #classroom-ui { flex-direction: column; overflow-y: auto; }
             .sidebar { width: 100%; height: auto; padding: 10px 0; }
+            .main-content { padding: 20px; height: auto; }
             .nav-link { display: inline-block; padding: 10px 20px; }
         }
     </style>
@@ -63,11 +69,12 @@
 
     <div id="login-ui">
         <div class="login-card">
-            <h1 style="font-size: 22px; letter-spacing: 3px;">雲端影音教室</h1>
+            <h1 style="font-size: 22px; letter-spacing: 4px; margin-bottom: 10px;">雲端影音教室</h1>
+            <div style="font-size: 12px; color: #aaa; margin-bottom: 30px;">Professional Teaching Platform</div>
             <input type="email" id="email" placeholder="帳號">
             <input type="password" id="password" placeholder="密碼">
-            <button class="main-btn" onclick="login()">登入系統</button>
-            <p id="error-msg" style="color:#b03a2e; font-size:12px; margin-top:10px"></p>
+            <button class="main-btn" onclick="login()">進入系統</button>
+            <p id="error-msg" style="color:#b03a2e; font-size:12px; margin-top:15px"></p>
         </div>
     </div>
 
@@ -82,30 +89,31 @@
                 <a class="nav-link" onclick="showView('pdf-view', this)">專屬教材下載</a>
             </div>
             <div class="sidebar-footer">
-                <div id="student-name" style="font-size: 14px; font-weight: 700; margin-bottom: 5px;">同學</div>
-                <span class="logout-link" onclick="logout()">安全登出</span>
+                <div id="student-name" style="font-size: 14px; font-weight: 700; margin-bottom: 5px; color: var(--dark);">同步資料中...</div>
+                <span class="logout-link" onclick="logout()">登出</span>
             </div>
         </nav>
 
         <main class="main-content">
             <section id="video-view" class="view-section active">
-                <h2 style="border-left: 5px solid var(--primary); padding-left: 15px;">影音解題中心</h2>
+                <h2 style="font-size: 20px; margin-bottom: 25px; border-left: 5px solid var(--primary); padding-left: 15px;">影音解題中心</h2>
                 <div class="video-player-container">
-                    <div style="position: absolute; top: 0; left: 0; width: 100%; height: 60px; z-index: 10;"></div>
+                    <div style="position: absolute; top: 0; left: 0; width: 100%; height: 60px; z-index: 10; cursor: default;"></div>
                     <iframe id="video-frame" src="" frameborder="0" allowfullscreen></iframe>
                 </div>
-                <h3 id="current-video-title" style="color: var(--primary);">請點選下方單元</h3>
+                <h3 id="current-video-title" style="color: var(--primary); font-size: 18px; margin-top: 20px;">請選擇播放單元</h3>
                 <div id="video-grid" class="video-grid"></div>
             </section>
 
             <section id="pdf-view" class="view-section">
-                <h2 style="border-left: 5px solid var(--primary); padding-left: 15px;">教材資源下載</h2>
+                <h2 style="font-size: 20px; margin-bottom: 25px; border-left: 5px solid var(--primary); padding-left: 15px;">專屬教材資源</h2>
                 <div id="pdf-list"></div>
             </section>
         </main>
     </div>
 
     <script>
+        // 1. Firebase 初始化
         const firebaseConfig = {
             apiKey: "AIzaSyALkTnkYY3JZLCTyajahpi4IZKmFX9USdw",
             authDomain: "su-hao-classroom.firebaseapp.com",
@@ -118,9 +126,24 @@
         firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth();
         const db = firebase.database();
+
+        // 2. Google Sheets API 網址
         const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx884HoE5YwEpoWwKR3aIIvAUGrydmwRFC7ETpW_UowiSsIoMch9esQye_7WjRQrNQelQ/exec";
 
-        // 切換視圖邏輯
+        // --- 功能：自動登出偵測 (5分鐘) ---
+        let idleTimer;
+        function resetIdleTimer() {
+            clearTimeout(idleTimer);
+            if (auth.currentUser) {
+                idleTimer = setTimeout(() => {
+                    alert("由於長時間未操作，系統已自動登出。");
+                    logout();
+                }, 300000); 
+            }
+        }
+        window.onmousemove = window.onkeypress = window.ontouchstart = resetIdleTimer;
+
+        // --- 功能：切換頁面視圖 ---
         function showView(viewId, navEl) {
             document.querySelectorAll('.view-section').forEach(v => v.classList.remove('active'));
             document.querySelectorAll('.nav-link').forEach(n => n.classList.remove('active'));
@@ -128,57 +151,82 @@
             navEl.classList.add('active');
         }
 
-        function playVideo(id, title) {
-            document.getElementById('video-frame').src = `https://www.youtube.com/embed/${id}?modestbranding=1&rel=0&disablekb=1&autoplay=1`;
-            document.getElementById('current-video-title').innerText = title;
-            window.scrollTo({ top: 0, behavior: 'smooth' });
+        // --- 功能：切換影片播放 ---
+        function playVideo(id, title, el) {
+            document.getElementById('video-frame').src = `https://www.youtube.com/embed/${id.trim()}?modestbranding=1&rel=0&disablekb=1&autoplay=1`;
+            document.getElementById('current-video-title').innerText = title.trim();
+            document.querySelectorAll('.video-card').forEach(c => c.classList.remove('playing'));
+            if(el) el.classList.add('playing');
+            // 回到頂部以便觀看
+            document.querySelector('.main-content').scrollTop = 0;
         }
 
+        // --- 功能：登入與登出 ---
         function login() {
-            auth.signInWithEmailAndPassword(document.getElementById('email').value, document.getElementById('password').value)
-                .then(cred => {
-                    const sid = Math.random().toString(36).substring(2);
-                    localStorage.setItem('session_id', sid);
-                    db.ref('sessions/' + cred.user.uid).set(sid);
-                }).catch(() => document.getElementById('error-msg').innerText = "驗證失敗");
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            auth.signInWithEmailAndPassword(email, password).then(cred => {
+                const sid = Math.random().toString(36).substring(2);
+                localStorage.setItem('session_id', sid);
+                db.ref('sessions/' + cred.user.uid).set(sid);
+            }).catch(() => {
+                document.getElementById('error-msg').innerText = "驗證失敗，請確認帳號密碼。";
+            });
         }
 
-        function logout() { if(auth.currentUser) db.ref('sessions/' + auth.currentUser.uid).remove(); auth.signOut(); }
+        function logout() { 
+            if(auth.currentUser) db.ref('sessions/' + auth.currentUser.uid).remove(); 
+            auth.signOut(); 
+        }
 
+        // --- 核心邏輯：驗證狀態與資料渲染 ---
         auth.onAuthStateChanged(user => {
             if (user) {
+                // 多裝置偵測
                 db.ref('sessions/' + user.uid).on('value', snap => {
                     if (snap.val() && localStorage.getItem('session_id') && snap.val() !== localStorage.getItem('session_id')) {
-                        alert("偵測到他處登入。"); logout();
+                        alert("偵測到此帳號已在其他裝置登入，您已被強制登出。");
+                        logout();
                     }
                 });
+
                 document.getElementById('login-ui').style.display = 'none';
                 document.getElementById('classroom-ui').style.display = 'flex';
+                resetIdleTimer();
                 
+                // 向 Google Sheets 抓取資料
                 fetch(SCRIPT_URL).then(r => r.json()).then(data => {
                     const my = data.find(i => i.uid === user.uid);
                     if (my) {
                         document.getElementById('student-name').innerText = my.name + " 同學";
                         
-                        // 影片網格生成
-                        const ids = my.idList.split(',').map(s => s.trim());
-                        document.getElementById('video-grid').innerHTML = ids.map((id, i) => `
-                            <div class="video-card" onclick="playVideo('${id}', '${my.subject} - 第 ${i+1} 單元')">
-                                <div style="color: var(--primary); font-weight: 700; margin-bottom: 5px;">單元 ${i+1}</div>
-                                <div style="font-size: 13px; color: #666;">點擊開始播放專屬影片</div>
+                        // 1. 生成影片網格 (匹配 11 欄結構：vNames 與 vIds)
+                        const vNames = my.vNames.split(',');
+                        const vIds = my.vIds.split(',');
+                        document.getElementById('video-grid').innerHTML = vIds.map((id, i) => `
+                            <div class="video-card" onclick="playVideo('${id}', '${vNames[i] || '課程單元 '+(i+1)}', this)">
+                                <div style="color: var(--primary); font-weight: 700; font-size: 14px; margin-bottom: 5px;">${(vNames[i] || '單元 '+(i+1)).trim()}</div>
+                                <div style="font-size: 12px; color: #999;">點擊切換播放</div>
                             </div>
                         `).join('');
-                        if(ids.length > 0) playVideo(ids[0], my.subject + " - 第 1 單元");
+                        
+                        // 預設加載第一支影片
+                        if(vIds.length > 0) playVideo(vIds[0], vNames[0] || "第一單元");
 
-                        // 教材列表生成
-                        const docs = my.doc.split(',').map(s => s.trim());
-                        document.getElementById('pdf-list').innerHTML = docs.map((url, i) => `
+                        // 2. 生成教材列表 (匹配 11 欄結構：docNames 與 docLinks)
+                        const dNames = my.docNames.split(',');
+                        const dLinks = my.docLinks.split(',');
+                        document.getElementById('pdf-list').innerHTML = dLinks.map((url, i) => `
                             <div class="resource-card">
-                                <div><span class="pdf-tag">PDF</span> 單元 ${i+1} 課程講義</div>
-                                <a href="${url}" target="_blank" class="download-link">立即閱讀</a>
+                                <div><span class="pdf-tag">PDF</span> ${(dNames[i] || '課程講義 '+(i+1)).trim()}</div>
+                                <a href="${url.trim()}" target="_blank" class="download-btn">開啟教材</a>
                             </div>
                         `).join('');
+                    } else {
+                        document.getElementById('student-name').innerText = "找不到資料";
                     }
+                }).catch(err => {
+                    console.error("資料抓取失敗:", err);
                 });
             } else {
                 document.getElementById('login-ui').style.display = 'flex';
