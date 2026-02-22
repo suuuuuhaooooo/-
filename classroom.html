@@ -6,16 +6,16 @@
     <title>蘇昊雲端教室｜學生專區</title>
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-database-compat.js"></script>
+    
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;700&display=swap');
         :root { --primary: #8e9775; --secondary: #a2aab0; --bg: #f4f4f2; }
         body { font-family: "Noto Serif TC", serif; background-color: var(--bg); margin: 0; color: #444; }
-        
         #login-ui { display: flex; justify-content: center; align-items: center; height: 100vh; }
         .login-card { background: white; padding: 50px 40px; border-radius: 2px; box-shadow: 0 10px 40px rgba(0,0,0,0.05); width: 100%; max-width: 350px; text-align: center; border-top: 5px solid var(--primary); }
         input { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #eee; background: #f9f9f9; box-sizing: border-box; }
         .main-btn { background: var(--primary); color: white; border: none; padding: 12px; width: 100%; cursor: pointer; letter-spacing: 2px; transition: 0.3s; }
-        
         #classroom-ui { display: none; max-width: 900px; margin: 40px auto; padding: 20px; }
         .classroom-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--secondary); padding-bottom: 15px; margin-bottom: 30px; }
         .video-item { background: white; padding: 25px; margin-bottom: 30px; box-shadow: 0 5px 20px rgba(0,0,0,0.02); border-radius: 2px; }
@@ -31,7 +31,6 @@
     <div id="login-ui">
         <div class="login-card">
             <h1 style="font-size: 24px; letter-spacing: 4px;">學生登入</h1>
-            <p style="color: #999; font-size: 13px;">SU HAO CLASSROOM</p>
             <input type="email" id="email" placeholder="學習帳號">
             <input type="password" id="password" placeholder="密碼">
             <button class="main-btn" onclick="login()">進入教室</button>
@@ -47,95 +46,103 @@
             </div>
             <div style="font-size: 12px; color: var(--primary); font-weight: bold;">蘇昊數理教學系統</div>
         </div>
-
-        <div id="video-list">
-            <p style="text-align: center; color: #999;">正在同步您的雲端課程內容...</p>
-        </div>
-
-        <footer style="text-align: center; margin-top: 60px; color: #bbb; font-size: 11px; letter-spacing: 1px;">
-            <p>© 2026 蘇昊數理教學系統｜專業教材與影音解題</p>
+        <div id="video-list"><p style="text-align: center; color: #999;">正在同步內容...</p></div>
+        <footer style="text-align: center; margin-top: 60px; color: #bbb; font-size: 11px;">
+            <p>© 2026 蘇昊數理教學系統</p>
         </footer>
     </div>
 
     <script>
-        // Firebase 設定
         const firebaseConfig = {
             apiKey: "AIzaSyALkTnkYY3JZLCTyajahpi4IZKmFX9USdw",
             authDomain: "su-hao-classroom.firebaseapp.com",
             projectId: "su-hao-classroom",
             storageBucket: "su-hao-classroom.firebasestorage.app",
             messagingSenderId: "764168135846",
-            appId: "1:764168135846:web:f2923a5f4952fa1ca64067"
+            appId: "1:764168135846:web:f2923a5f4952fa1ca64067",
+            // 記得確認資料庫 URL 是否正確
+            databaseURL: "https://su-hao-classroom-default-rtdb.firebaseio.com/" 
         };
         firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth();
-
-        // 你的 Apps Script API 網址
+        const db = firebase.database();
         const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx884HoE5YwEpoWwKR3aIIvAUGrydmwRFC7ETpW_UowiSsIoMch9esQye_7WjRQrNQelQ/exec";
 
+        // --- 1. 自動登出邏輯 (15分鐘) ---
+        let idleTimer;
+        function resetIdleTimer() {
+            clearTimeout(idleTimer);
+            if (auth.currentUser) {
+                idleTimer = setTimeout(() => {
+                    alert("由於長時間未操作，系統已自動登出。");
+                    logout();
+                }, 900000); // 15 * 60 * 1000ms
+            }
+        }
+        window.onmousemove = resetIdleTimer;
+        window.onkeypress = resetIdleTimer;
+        window.ontouchstart = resetIdleTimer; // 支援手機
+
+        // --- 2. 登入與登出 ---
         function login() {
             const email = document.getElementById('email').value;
             const password = document.getElementById('password').value;
-            auth.signInWithEmailAndPassword(email, password).catch(err => {
+            auth.signInWithEmailAndPassword(email, password).then(cred => {
+                // 產生隨機 Session ID 並記錄
+                const newSessionId = Math.random().toString(36).substring(2);
+                localStorage.setItem('session_id', newSessionId);
+                db.ref('sessions/' + cred.user.uid).set(newSessionId);
+            }).catch(err => {
                 document.getElementById('error-msg').innerText = "帳號或密碼錯誤。";
             });
         }
 
-        function logout() { auth.signOut(); }
+        function logout() { 
+            if(auth.currentUser) {
+                db.ref('sessions/' + auth.currentUser.uid).remove(); 
+            }
+            auth.signOut(); 
+        }
 
+        // --- 3. 核心監聽 ---
         auth.onAuthStateChanged(user => {
-            const loginUI = document.getElementById('login-ui');
-            const classroomUI = document.getElementById('classroom-ui');
-            const videoList = document.getElementById('video-list');
-
             if (user) {
-                loginUI.style.display = 'none';
-                classroomUI.style.display = 'block';
+                // 多裝置檢查
+                db.ref('sessions/' + user.uid).on('value', (snapshot) => {
+                    const activeSession = snapshot.val();
+                    const mySession = localStorage.getItem('session_id');
+                    if (activeSession && mySession && activeSession !== mySession) {
+                        alert("偵測到此帳號已在其他裝置登入，您已被強制登出。");
+                        logout();
+                    }
+                });
 
-                // 抓取 Google Sheets 資料
+                document.getElementById('login-ui').style.display = 'none';
+                document.getElementById('classroom-ui').style.display = 'block';
+                resetIdleTimer();
+
                 fetch(SCRIPT_URL)
                     .then(res => res.json())
                     .then(allData => {
-                        // 透過 UID 匹配學生 (表格中第 8 欄)
                         const myData = allData.find(item => item.uid === user.uid);
-
                         if (myData) {
                             document.getElementById('welcome-text').innerText = `${myData.name} 同學，你好 (${myData.subject})`;
-                            
-                            // 解析逗號隔開的影片 ID
                             const ids = myData.idList.split(',').map(id => id.trim()).filter(id => id);
-                            
-                            videoList.innerHTML = ids.map((id, index) => `
-     <div class="video-item">
-        <div class="video-title">${myData.level}${myData.subject} - 影音重點 (${index + 1})</div>
-        
-        <div class="video-wrapper" style="position: relative; overflow: hidden;">
-            
-            <div style="position: absolute; top: 0; left: 0; width: 100%; height: 60px; z-index: 10; cursor: default;"></div>
-            
-            <iframe 
-                src="https://www.youtube.com/embed/${id}?modestbranding=1&rel=0&disablekb=1" 
-                frameborder="0" 
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
-                allowfullscreen>
-            </iframe>
-        </div>
-        
-        <a href="${myData.doc}" target="_blank" class="resource-link">📖 查看本週專屬教材 (PDF)</a>
-    </div>
-`).join('');
-                        } else {
-                            videoList.innerHTML = `<p style="text-align:center;">找不到您的課程資料，請確認 UUID 是否正確填入表格。</p>`;
+                            document.getElementById('video-list').innerHTML = ids.map((id, index) => `
+                                <div class="video-item">
+                                    <div class="video-title">${myData.level}${myData.subject} - 影音重點 (${index + 1})</div>
+                                    <div class="video-wrapper" style="position: relative; overflow: hidden;">
+                                        <div style="position: absolute; top: 0; left: 0; width: 100%; height: 60px; z-index: 10; cursor: default;"></div>
+                                        <iframe src="https://www.youtube.com/embed/${id}?modestbranding=1&rel=0&disablekb=1" frameborder="0" allowfullscreen></iframe>
+                                    </div>
+                                    <a href="${myData.doc}" target="_blank" class="resource-link">📖 查看專屬教材 (PDF)</a>
+                                </div>`).join('');
                         }
-                    })
-                    .catch(error => {
-                        console.error("API 抓取失敗:", error);
-                        videoList.innerHTML = `<p style="text-align:center;">資料同步失敗，請重新整理頁面。</p>`;
                     });
-
             } else {
-                loginUI.style.display = 'flex';
-                classroomUI.style.display = 'none';
+                document.getElementById('login-ui').style.display = 'flex';
+                document.getElementById('classroom-ui').style.display = 'none';
+                clearTimeout(idleTimer);
             }
         });
     </script>
