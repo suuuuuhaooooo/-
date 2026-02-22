@@ -68,7 +68,7 @@
         const db = firebase.database();
         const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx884HoE5YwEpoWwKR3aIIvAUGrydmwRFC7ETpW_UowiSsIoMch9esQye_7WjRQrNQelQ/exec";
 
-        // --- 1. 自動登出邏輯 (15分鐘) ---
+        // --- 1. 自動登出邏輯 (5分鐘) ---
         let idleTimer;
         function resetIdleTimer() {
             clearTimeout(idleTimer);
@@ -76,7 +76,7 @@
                 idleTimer = setTimeout(() => {
                     alert("由於長時間未操作，系統已自動登出。");
                     logout();
-                }, 900000); // 15 * 60 * 1000ms
+                }, 900000); // 5 * 60 * 1000ms
             }
         }
         window.onmousemove = resetIdleTimer;
