@@ -106,14 +106,24 @@
                             const ids = myData.idList.split(',').map(id => id.trim()).filter(id => id);
                             
                             videoList.innerHTML = ids.map((id, index) => `
-                                <div class="video-item">
-                                    <div class="video-title">${myData.level}${myData.subject} - 影音重點 (${index + 1})</div>
-                                    <div class="video-wrapper">
-                                        <iframe src="https://www.youtube.com/embed/${id}" frameborder="0" allowfullscreen></iframe>
-                                    </div>
-                                    <a href="${myData.doc}" target="_blank" class="resource-link">📖 查看本週專屬教材 (PDF)</a>
-                                </div>
-                            `).join('');
+     <div class="video-item">
+        <div class="video-title">${myData.level}${myData.subject} - 影音重點 (${index + 1})</div>
+        
+        <div class="video-wrapper" style="position: relative; overflow: hidden;">
+            
+            <div style="position: absolute; top: 0; left: 0; width: 100%; height: 60px; z-index: 10; cursor: default;"></div>
+            
+            <iframe 
+                src="https://www.youtube.com/embed/${id}?modestbranding=1&rel=0&disablekb=1" 
+                frameborder="0" 
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                allowfullscreen>
+            </iframe>
+        </div>
+        
+        <a href="${myData.doc}" target="_blank" class="resource-link">📖 查看本週專屬教材 (PDF)</a>
+    </div>
+`).join('');
                         } else {
                             videoList.innerHTML = `<p style="text-align:center;">找不到您的課程資料，請確認 UUID 是否正確填入表格。</p>`;
                         }
