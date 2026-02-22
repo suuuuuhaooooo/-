@@ -22,7 +22,6 @@
         input:focus { border-color: var(--primary); background: #fff; }
         .toggle-password { position: absolute; right: 15px; top: 14px; cursor: pointer; color: #ccc; font-size: 14px; }
 
-        /* 驗證碼 */
         .captcha-container { display: flex; align-items: center; gap: 10px; margin: 10px 0; }
         #captcha-code { background: #eef1ec; color: var(--dark); font-weight: 700; padding: 10px; flex: 1; letter-spacing: 5px; font-style: italic; text-decoration: line-through; user-select: none; border-radius: 2px; cursor: pointer; }
 
@@ -38,7 +37,7 @@
         .sidebar { width: 260px; background: white; border-right: 1px solid #eee; display: flex; flex-direction: column; padding: 30px 0; }
         .sidebar-brand { padding: 0 30px 30px; border-bottom: 1px solid #f5f5f5; margin-bottom: 20px; }
         .nav-group { flex-grow: 1; }
-        /* 側邊按鈕常駐顯示 */
+        /* 側邊按鈕常駐 */
         .nav-link { display: block; padding: 15px 30px; text-decoration: none; color: #777; font-size: 0.95em; cursor: pointer; transition: 0.2s; border-left: 4px solid transparent; }
         .nav-link:hover { background: #f9faf9; color: var(--primary); }
         .nav-link.active { background: #f4f6f4; color: var(--primary); border-left-color: var(--primary); font-weight: 700; }
@@ -51,18 +50,17 @@
 
         .video-player-container { background: black; width: 100%; position: relative; padding-bottom: 56.25%; margin-bottom: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
         .video-player-container iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
-        
         .video-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 15px; margin-top: 20px; }
         .video-card { background: white; padding: 15px; cursor: pointer; border-radius: 2px; border: 1px solid #eee; transition: 0.3s; }
         .video-card:hover { border-color: var(--primary); background: #fcfdfc; }
         .video-card.playing { border-left: 5px solid var(--primary); background: #f4f6f4; font-weight: 700; }
 
-        .resource-card { background: white; padding: 20px; display: flex; align-items: center; justify-content: space-between; margin-bottom: 15px; border-radius: 2px; box-shadow: 0 2px 5px rgba(0,0,0,0.02); }
+        .resource-card { background: white; padding: 20px; display: flex; align-items: center; justify-content: space-between; margin-bottom: 15px; border-radius: 2px; box-shadow: 0 2px 5px rgba(0,0,0,0.02); border: 1px solid #eee; }
         .pdf-tag { background: #eef1ec; color: var(--primary); padding: 2px 8px; font-size: 11px; margin-right: 12px; font-weight: 700; }
         .download-btn { color: var(--primary); text-decoration: none; font-weight: 700; border: 1px solid var(--primary); padding: 8px 18px; border-radius: 2px; font-size: 13px; transition: 0.3s; }
         
-        /* 暫無內容訊息 */
-        .no-data-msg { text-align: center; color: #bbb; padding: 100px 0; font-style: italic; letter-spacing: 1px; font-size: 15px; }
+        /* 暫無內容提示文字 */
+        .no-data-msg { text-align: center; color: #bbb; padding: 80px 0; font-style: italic; letter-spacing: 1px; font-size: 16px; border: 1px dashed #ddd; border-radius: 4px; }
         .logout-link { font-size: 12px; color: #999; cursor: pointer; text-decoration: underline; display: block; margin-top: 10px; }
         .info-tag { font-size: 11px; color: #888; background: #f0f0f0; padding: 2px 6px; border-radius: 3px; margin-right: 4px; }
 
@@ -91,12 +89,11 @@
                 <div id="captcha-code" title="點擊更換驗證碼" onclick="generateCaptcha()">載入中</div>
                 <input type="text" id="captcha-input" placeholder="驗證碼">
             </div>
-            <button class="main-btn" onclick="login()">登入</button>
-            <p id="error-msg" style="color:#b03a2e; font-size:12px; margin-top:15px; height:15px;"></p>
-
+            <button class="main-btn" onclick="login()">進入系統</button>
+            <p id="error-msg" style="color:#b03a2e; font-size:12px; margin-top:15px; height: 15px;"></p>
             <div class="online-counter">
                 <span class="online-dot"></span>
-                <span id="presence-text">雲端系統已連線</span>
+                <span id="presence-text">雲端系統連線中</span>
             </div>
         </div>
     </div>
@@ -146,22 +143,27 @@
         const db = firebase.database();
         const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx884HoE5YwEpoWwKR3aIIvAUGrydmwRFC7ETpW_UowiSsIoMch9esQye_7WjRQrNQelQ/exec";
 
-        // 在線人數監聽
+        // 在線人數即時統計
         db.ref('presence').on('value', snap => {
             const count = snap.numChildren() || 0;
             const textEl = document.getElementById('presence-text');
             textEl.innerHTML = count > 1 ? `目前有 <span style="font-weight:700; color:#666;">${count}</span> 位同學正在線上` : `目前有 <span style="font-weight:700; color:#666;">1</span> 位同學在線上`;
         });
 
-        // 今日登入分析與第 12 欄公告處理
-        function runLoginAnalytics(uid, noticeText) {
+        // --- 公告欄與次數分析 ---
+        function runLoginAnalysis(uid, noticeText) {
             const today = new Date().toISOString().split('T')[0];
             const countRef = db.ref(`login_stats/${uid}/${today}`);
             
             countRef.transaction(current => (current || 0) + 1, (err, comm, snap) => {
                 if (comm) {
                     const count = snap.val();
-                    alert(noticeText ? `【蘇昊老師的話】\n${noticeText}` : `登入成功！這是你今天第 ${count} 次回來學習。`);
+                    // 如果有公告顯示公告，否則顯示次數
+                    if (noticeText && noticeText.trim() !== "") {
+                        alert("【蘇昊老師的話】\n" + noticeText);
+                    } else {
+                        alert(`登入成功！這是你今天第 ${count} 次回來學習。`);
+                    }
                 }
             });
         }
@@ -217,53 +219,29 @@
             const email = document.getElementById('email').value;
             const password = document.getElementById('password').value;
             const captchaInput = document.getElementById('captcha-input').value.toUpperCase();
-            if (captchaInput !== currentCaptcha) {
-                alert("驗證碼錯誤"); generateCaptcha(); return;
-            }
+            if (captchaInput !== currentCaptcha) { alert("驗證碼錯誤"); generateCaptcha(); return; }
             auth.signInWithEmailAndPassword(email, password).then(cred => {
-                const sid = Math.random().toString(36).substring(2);
-                localStorage.setItem('session_id', sid);
-                db.ref('sessions/' + cred.user.uid).set(sid);
-            }).catch(() => { alert("帳號密碼錯誤"); generateCaptcha(); });
+                localStorage.setItem('session_id', Math.random().toString(36).substring(2));
+                db.ref('sessions/' + cred.user.uid).set(localStorage.getItem('session_id'));
+            }).catch(() => { alert("驗證失敗"); generateCaptcha(); });
         }
 
         function logout() { 
-            const currentUser = auth.currentUser;
-            if(currentUser) {
-                db.ref('sessions/' + currentUser.uid).remove();
-                db.ref('presence/' + currentUser.uid).remove();
-            }
+            const user = auth.currentUser;
+            if(user) { db.ref('sessions/' + user.uid).remove(); db.ref('presence/' + user.uid).remove(); }
             auth.signOut().then(() => {
-                document.getElementById('email').value = "";
-                document.getElementById('password').value = "";
-                localStorage.clear();
-                document.getElementById('video-container').innerHTML = "";
-                document.getElementById('pdf-container').innerHTML = "";
-                document.getElementById('classroom-ui').style.display = 'none';
-                document.getElementById('login-ui').style.display = 'flex';
-                generateCaptcha();
+                document.getElementById('email').value = ""; document.getElementById('password').value = "";
+                localStorage.clear(); location.reload(); 
             });
         }
 
         auth.onAuthStateChanged(user => {
             if (user) {
                 const presenceRef = db.ref('presence/' + user.uid);
-                db.ref('.info/connected').on('value', snap => {
-                    if (snap.val() === true) {
-                        presenceRef.onDisconnect().remove();
-                        presenceRef.set(true);
-                    }
-                });
-
-                db.ref('sessions/' + user.uid).on('value', snap => {
-                    if (snap.val() && localStorage.getItem('session_id') && snap.val() !== localStorage.getItem('session_id')) {
-                        alert("偵測到此帳號已在其他裝置登入。"); logout();
-                    }
-                });
+                db.ref('.info/connected').on('value', snap => { if (snap.val()) { presenceRef.onDisconnect().remove(); presenceRef.set(true); } });
 
                 document.getElementById('login-ui').style.display = 'none';
                 document.getElementById('classroom-ui').style.display = 'flex';
-                resetIdleTimer();
                 
                 fetch(SCRIPT_URL).then(r => r.json()).then(data => {
                     const my = data.find(i => i.uid === user.uid);
@@ -271,9 +249,10 @@
                         document.getElementById('student-name').innerText = my.name + " 同學";
                         document.getElementById('student-meta').innerHTML = `<span class="info-tag">${my.level} 年級</span><span class="info-tag">${my.subject}</span>`;
                         
-                        // 執行登入分析與第 12 欄公告
+                        // 執行公告彈窗
                         runLoginAnalysis(user.uid, my.notice);
 
+                        // 渲染影片區域
                         const vIds = my.vIds ? my.vIds.toString().split(',').filter(id => id.trim() !== "") : [];
                         const videoBox = document.getElementById('video-container');
                         if (vIds.length > 0) {
@@ -284,25 +263,25 @@
                                     <iframe id="video-frame" src="" frameborder="0" allowfullscreen></iframe>
                                 </div>
                                 <h3 id="current-video-title" style="color: var(--primary); font-size: 18px; margin-top: 20px;"></h3>
-                                <div id="video-grid" class="video-grid"></div>
-                            `;
+                                <div id="video-grid" class="video-grid"></div>`;
                             document.getElementById('video-grid').innerHTML = vIds.map((id, i) => `
-                                <div class="video-card" onclick="playVideo('${id}', '${vNames[i] || '課程單元 '+(i+1)}', this)">
+                                <div class="video-card" onclick="playVideo('${id}', '${vNames[i] || '單元 '+(i+1)}', this)">
                                     <div style="color: var(--primary); font-weight: 700; font-size: 14px; margin-bottom: 5px;">${(vNames[i] || '單元 '+(i+1)).trim()}</div>
-                                    <div style="font-size: 12px; color: #999;">點擊切換播放</div>
+                                    <div style="font-size: 12px; color: #999;">點擊播放</div>
                                 </div>`).join('');
                             playVideo(vIds[0], vNames[0] || "第一單元");
                         } else {
                             videoBox.innerHTML = '<div class="no-data-msg">目前暫無影音內容。</div>';
                         }
 
+                        // 渲染教材區域
                         const dLinks = my.docLinks ? my.docLinks.toString().split(',').filter(url => url.trim() !== "") : [];
                         const pdfBox = document.getElementById('pdf-container');
                         if (dLinks.length > 0) {
                             const dNames = my.docNames ? my.docNames.toString().split(',') : [];
                             pdfBox.innerHTML = dLinks.map((url, i) => `
                                 <div class="resource-card">
-                                    <div><span class="pdf-tag">PDF</span> ${(dNames[i] || '課程講義 '+(i+1)).trim()}</div>
+                                    <div><span class="pdf-tag">PDF</span> ${(dNames[i] || '講義 '+(i+1)).trim()}</div>
                                     <a href="${url.trim()}" target="_blank" class="download-btn">開啟教材</a>
                                 </div>`).join('');
                         } else {
