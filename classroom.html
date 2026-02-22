@@ -12,18 +12,43 @@
         @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;700&display=swap');
         :root { --primary: #8e9775; --secondary: #a2aab0; --bg: #f4f4f2; }
         body { font-family: "Noto Serif TC", serif; background-color: var(--bg); margin: 0; color: #444; }
+
+        /* 登入介面 */
         #login-ui { display: flex; justify-content: center; align-items: center; height: 100vh; }
         .login-card { background: white; padding: 50px 40px; border-radius: 2px; box-shadow: 0 10px 40px rgba(0,0,0,0.05); width: 100%; max-width: 350px; text-align: center; border-top: 5px solid var(--primary); }
         input { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #eee; background: #f9f9f9; box-sizing: border-box; }
         .main-btn { background: var(--primary); color: white; border: none; padding: 12px; width: 100%; cursor: pointer; letter-spacing: 2px; transition: 0.3s; }
-        #classroom-ui { display: none; max-width: 900px; margin: 40px auto; padding: 20px; }
-        .classroom-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--secondary); padding-bottom: 15px; margin-bottom: 30px; }
-        .video-item { background: white; padding: 25px; margin-bottom: 30px; box-shadow: 0 5px 20px rgba(0,0,0,0.02); border-radius: 2px; }
-        .video-title { font-size: 1.1em; color: var(--primary); margin-bottom: 15px; font-weight: 700; border-left: 4px solid var(--primary); padding-left: 10px; }
-        .video-wrapper { position: relative; padding-bottom: 56.25%; height: 0; background: #000; margin-bottom: 15px; }
+
+        /* 教室主介面 (左右佈局) */
+        #classroom-ui { display: none; max-width: 1200px; margin: 20px auto; padding: 0 20px; }
+        .classroom-header { display: flex; justify-content: space-between; align-items: center; padding: 20px 0; border-bottom: 1px solid var(--secondary); margin-bottom: 20px; }
+        
+        .main-layout { display: flex; gap: 30px; align-items: flex-start; }
+        
+        /* 左側：影片播放區 */
+        .video-column { flex: 2.5; background: white; padding: 20px; box-shadow: 0 5px 20px rgba(0,0,0,0.02); }
+        .video-wrapper { position: relative; padding-bottom: 56.25%; height: 0; background: #000; }
         .video-wrapper iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
-        .resource-link { color: var(--secondary); text-decoration: none; font-size: 0.9em; border-bottom: 1px solid #ddd; padding-bottom: 2px; }
+        .current-info { margin-top: 15px; }
+        .current-title { font-size: 1.2em; font-weight: 700; color: var(--primary); }
+
+        /* 右側：清單區 */
+        .list-column { flex: 1; display: flex; flex-direction: column; gap: 20px; min-width: 300px; }
+        .list-card { background: white; padding: 20px; box-shadow: 0 5px 20px rgba(0,0,0,0.02); border-radius: 2px; }
+        .list-header { font-weight: 700; margin-bottom: 15px; border-bottom: 1px solid #eee; padding-bottom: 10px; color: var(--primary); font-size: 0.95em; letter-spacing: 1px; }
+        
+        /* 選單與教材清單項目 */
+        .nav-item { display: block; padding: 12px; text-decoration: none; color: #666; font-size: 0.9em; border-bottom: 1px solid #f9f9f9; cursor: pointer; transition: 0.2s; }
+        .nav-item:hover { background: #fafafa; color: var(--primary); }
+        .nav-item.active { border-left: 4px solid var(--primary); background: #f7faf7; font-weight: 700; color: var(--primary); }
+
         .logout-link { font-size: 12px; color: #999; cursor: pointer; text-decoration: underline; }
+
+        /* 手機版適配 */
+        @media (max-width: 900px) {
+            .main-layout { flex-direction: column; }
+            .video-column, .list-column { flex: none; width: 100%; box-sizing: border-box; }
+        }
     </style>
 </head>
 <body>
@@ -41,14 +66,42 @@
     <div id="classroom-ui">
         <div class="classroom-header">
             <div>
-                <h2 id="welcome-text" style="margin:0; font-size: 20px;">歡迎回來</h2>
+                <h2 id="welcome-text" style="margin:0; font-size: 18px;">載入中...</h2>
                 <span class="logout-link" onclick="logout()">登出帳號</span>
             </div>
-            <div style="font-size: 12px; color: var(--primary); font-weight: bold;">蘇昊數理教學系統</div>
+            <div style="font-size: 12px; color: var(--primary); font-weight: bold;">蘇昊數理雲端系統</div>
         </div>
-        <div id="video-list"><p style="text-align: center; color: #999;">正在同步內容...</p></div>
+
+        <div class="main-layout">
+            <div class="video-column">
+                <div class="video-wrapper">
+                    <div style="position: absolute; top: 0; left: 0; width: 100%; height: 60px; z-index: 10; cursor: default;"></div>
+                    <iframe id="main-video" src="" frameborder="0" allowfullscreen></iframe>
+                </div>
+                <div class="current-info">
+                    <div id="display-title" class="current-title">請選擇課程單元</div>
+                </div>
+            </div>
+
+            <div class="list-column">
+                <div class="list-card">
+                    <div class="list-header">📽️ 課程影音清單</div>
+                    <div id="video-nav-list">
+                        <p style="font-size: 12px; color: #999;">正在同步影片...</p>
+                    </div>
+                </div>
+
+                <div class="list-card">
+                    <div class="list-header">📖 教材資源下載</div>
+                    <div id="pdf-resource-list">
+                        <p style="font-size: 12px; color: #999;">正在同步教材...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <footer style="text-align: center; margin-top: 60px; color: #bbb; font-size: 11px;">
-            <p>© 2026 蘇昊數理教學系統</p>
+            <p>© 2026 蘇昊數理教學系統｜專業教材與影音解題</p>
         </footer>
     </div>
 
@@ -60,7 +113,6 @@
             storageBucket: "su-hao-classroom.firebasestorage.app",
             messagingSenderId: "764168135846",
             appId: "1:764168135846:web:f2923a5f4952fa1ca64067",
-            // 記得確認資料庫 URL 是否正確
             databaseURL: "https://su-hao-classroom-default-rtdb.firebaseio.com/"
         };
         firebase.initializeApp(firebaseConfig);
@@ -68,7 +120,7 @@
         const db = firebase.database();
         const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx884HoE5YwEpoWwKR3aIIvAUGrydmwRFC7ETpW_UowiSsIoMch9esQye_7WjRQrNQelQ/exec";
 
-        // --- 1. 自動登出邏輯 (5分鐘) ---
+        // --- 1. 自動登出與多裝置偵測 ---
         let idleTimer;
         function resetIdleTimer() {
             clearTimeout(idleTimer);
@@ -76,43 +128,40 @@
                 idleTimer = setTimeout(() => {
                     alert("由於長時間未操作，系統已自動登出。");
                     logout();
-                }, 900000); // 5 * 60 * 1000ms
+                }, 900000); // 15分鐘
             }
         }
-        window.onmousemove = resetIdleTimer;
-        window.onkeypress = resetIdleTimer;
-        window.ontouchstart = resetIdleTimer; // 支援手機
+        window.onmousemove = window.onkeypress = window.ontouchstart = resetIdleTimer;
 
-        // --- 2. 登入與登出 ---
         function login() {
             const email = document.getElementById('email').value;
             const password = document.getElementById('password').value;
             auth.signInWithEmailAndPassword(email, password).then(cred => {
-                // 產生隨機 Session ID 並記錄
                 const newSessionId = Math.random().toString(36).substring(2);
                 localStorage.setItem('session_id', newSessionId);
                 db.ref('sessions/' + cred.user.uid).set(newSessionId);
-            }).catch(err => {
-                document.getElementById('error-msg').innerText = "帳號或密碼錯誤。";
-            });
+            }).catch(() => { document.getElementById('error-msg').innerText = "帳號或密碼錯誤。"; });
         }
 
         function logout() { 
-            if(auth.currentUser) {
-                db.ref('sessions/' + auth.currentUser.uid).remove(); 
-            }
+            if(auth.currentUser) db.ref('sessions/' + auth.currentUser.uid).remove(); 
             auth.signOut(); 
         }
 
-        // --- 3. 核心監聽 ---
+        // --- 2. 影片切換功能 ---
+        function changeVideo(id, title, element) {
+            document.getElementById('main-video').src = `https://www.youtube.com/embed/${id}?modestbranding=1&rel=0&disablekb=1`;
+            document.getElementById('display-title').innerText = title;
+            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+            element.classList.add('active');
+        }
+
+        // --- 3. 核心邏輯 ---
         auth.onAuthStateChanged(user => {
             if (user) {
-                // 多裝置檢查
                 db.ref('sessions/' + user.uid).on('value', (snapshot) => {
-                    const activeSession = snapshot.val();
-                    const mySession = localStorage.getItem('session_id');
-                    if (activeSession && mySession && activeSession !== mySession) {
-                        alert("偵測到此帳號已在其他裝置登入，您已被強制登出。");
+                    if (snapshot.val() && localStorage.getItem('session_id') && snapshot.val() !== localStorage.getItem('session_id')) {
+                        alert("偵測到此帳號已在其他裝置登入。");
                         logout();
                     }
                 });
@@ -121,28 +170,35 @@
                 document.getElementById('classroom-ui').style.display = 'block';
                 resetIdleTimer();
 
-                fetch(SCRIPT_URL)
-                    .then(res => res.json())
-                    .then(allData => {
-                        const myData = allData.find(item => item.uid === user.uid);
-                        if (myData) {
-                            document.getElementById('welcome-text').innerText = `${myData.name} 同學，你好 (${myData.subject})`;
-                            const ids = myData.idList.split(',').map(id => id.trim()).filter(id => id);
-                            document.getElementById('video-list').innerHTML = ids.map((id, index) => `
-                                <div class="video-item">
-                                    <div class="video-title">${myData.level}${myData.subject} - 影音重點 (${index + 1})</div>
-                                    <div class="video-wrapper" style="position: relative; overflow: hidden;">
-                                        <div style="position: absolute; top: 0; left: 0; width: 100%; height: 60px; z-index: 10; cursor: default;"></div>
-                                        <iframe src="https://www.youtube.com/embed/${id}?modestbranding=1&rel=0&disablekb=1" frameborder="0" allowfullscreen></iframe>
-                                    </div>
-                                    <a href="${myData.doc}" target="_blank" class="resource-link">📖 查看專屬教材 (PDF)</a>
-                                </div>`).join('');
+                fetch(SCRIPT_URL).then(res => res.json()).then(allData => {
+                    const myData = allData.find(item => item.uid === user.uid);
+                    if (myData) {
+                        document.getElementById('welcome-text').innerText = `${myData.name} 同學，你好`;
+                        
+                        // 處理影片清單
+                        const ids = myData.idList.split(',').map(id => id.trim()).filter(id => id);
+                        document.getElementById('video-nav-list').innerHTML = ids.map((id, index) => `
+                            <div class="nav-item" onclick="changeVideo('${id}', '${myData.level}${myData.subject} - 影音重點 (${index + 1})', this)">
+                                🎬 第 ${index + 1} 講：單元核心解析
+                            </div>
+                        `).join('');
+
+                        // 預設加載第一支影片
+                        if(ids.length > 0) {
+                            const firstItem = document.querySelector('.nav-item');
+                            changeVideo(ids[0], `${myData.level}${myData.subject} - 影音重點 (1)`, firstItem);
                         }
-                    });
+
+                        // 處理教材清單 (支援多個連結)
+                        const docs = myData.doc.split(',').map(url => url.trim()).filter(url => url);
+                        document.getElementById('pdf-resource-list').innerHTML = docs.map((url, i) => `
+                            <a href="${url}" target="_blank" class="nav-item">📄 下載單元 ${i+1} 講義教材</a>
+                        `).join('');
+                    }
+                });
             } else {
                 document.getElementById('login-ui').style.display = 'flex';
                 document.getElementById('classroom-ui').style.display = 'none';
-                clearTimeout(idleTimer);
             }
         });
     </script>
