@@ -30,8 +30,6 @@
         .sidebar { width: 260px; background: white; border-right: 1px solid #eee; display: flex; flex-direction: column; padding: 30px 0; }
         .sidebar-brand { padding: 0 30px 30px; border-bottom: 1px solid #f5f5f5; margin-bottom: 20px; }
         .nav-group { flex-grow: 1; }
-        
-        /* 側邊按鈕改為預設顯示 (block) */
         .nav-link { display: block; padding: 15px 30px; text-decoration: none; color: #777; font-size: 0.95em; cursor: pointer; transition: 0.2s; border-left: 4px solid transparent; }
         .nav-link:hover { background: #f9faf9; color: var(--primary); }
         .nav-link.active { background: #f4f6f4; color: var(--primary); border-left-color: var(--primary); font-weight: 700; }
@@ -72,12 +70,13 @@
     <div id="login-ui">
         <div class="login-card">
             <h1 style="font-size: 22px; letter-spacing: 4px; margin-bottom: 10px;">雲端影音教室</h1>
-            <div style="font-size: 12px; color: #aaa; margin-bottom: 30px;">專業數位教學系統</div>
+            <div style="font-size: 12px; color: #aaa; margin-bottom: 30px;">Professional Teaching Platform</div>
+            
             <div class="input-group">
-                <input type="email" id="email" placeholder="學習帳號">
+                <input type="email" id="email" placeholder="學習帳號" autocomplete="off">
             </div>
             <div class="input-group">
-                <input type="password" id="password" placeholder="個人密碼">
+                <input type="password" id="password" placeholder="個人密碼" autocomplete="new-password">
                 <span class="toggle-password" onclick="togglePassword()">👁️</span>
             </div>
             <button class="main-btn" onclick="login()">進入系統</button>
@@ -96,7 +95,7 @@
                 <a id="nav-pdf" class="nav-link" onclick="showView('pdf-view', this)">專屬教材下載</a>
             </div>
             <div class="sidebar-footer">
-                <div id="student-name" style="font-size: 15px; font-weight: 700; color: var(--dark);">同步資料中...</div>
+                <div id="student-name" style="font-size: 15px; font-weight: 700; color: var(--dark);">載入中...</div>
                 <div id="student-meta" style="margin-top: 5px;"></div>
                 <div id="login-ip" style="font-size: 10px; color: #bbb; margin-top: 5px;">IP: 獲取中...</div>
                 <span class="logout-link" onclick="logout()">安全登出系統</span>
@@ -146,7 +145,8 @@
         }
 
         fetch('https://api.ipify.org?format=json').then(res => res.json()).then(data => { 
-            document.getElementById('login-ip').innerText = "IP: " + data.ip; 
+            const ipEl = document.getElementById('login-ip');
+            if(ipEl) ipEl.innerText = "IP: " + data.ip; 
         });
 
         let idleTimer;
@@ -173,14 +173,53 @@
         }
 
         function login() {
-            auth.signInWithEmailAndPassword(document.getElementById('email').value, document.getElementById('password').value).then(cred => {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            auth.signInWithEmailAndPassword(email, password).then(cred => {
                 const sid = Math.random().toString(36).substring(2);
                 localStorage.setItem('session_id', sid);
                 db.ref('sessions/' + cred.user.uid).set(sid);
             }).catch(() => { document.getElementById('error-msg').innerText = "驗證失敗"; });
         }
 
-        function logout() { if(auth.currentUser) db.ref('sessions/' + auth.currentUser.uid).remove(); auth.signOut(); }
+        // --- 強化的完全斷開登出函數 ---
+        function logout() { 
+            const currentUser = auth.currentUser;
+            
+            // 1. 同步移除資料庫 Session
+            const removeSession = currentUser ? db.ref('sessions/' + currentUser.uid).remove() : Promise.resolve();
+
+            removeSession.finally(() => {
+                auth.signOut().then(() => {
+                    // 2. 徹底清空 localStorage
+                    localStorage.clear();
+                    
+                    // 3. 徹底清空輸入框 (物理上重設 DOM value)
+                    const emailInput = document.getElementById('email');
+                    const passInput = document.getElementById('password');
+                    emailInput.value = "";
+                    passInput.value = "";
+                    passInput.type = "password"; // 重置回星號
+                    document.querySelector('.toggle-password').innerText = "👁️";
+                    document.getElementById('error-msg').innerText = "";
+
+                    // 4. 重置頁面數據區，防止閃現
+                    document.getElementById('video-grid').innerHTML = "";
+                    document.getElementById('pdf-container').innerHTML = "";
+                    document.getElementById('video-frame').src = "";
+                    document.getElementById('current-video-title').innerText = "";
+                    document.getElementById('student-name').innerText = "載入中...";
+                    document.getElementById('student-meta').innerHTML = "";
+
+                    // 5. 切換 UI
+                    document.getElementById('classroom-ui').style.display = 'none';
+                    document.getElementById('login-ui').style.display = 'flex';
+
+                    // 6. 強制執行一次垃圾回收式的重整 (確保瀏覽器不留快取)
+                    // location.reload(); // 如果你想要最極端的清空，可以解除這一行的註釋
+                });
+            });
+        }
 
         auth.onAuthStateChanged(user => {
             if (user) {
@@ -202,7 +241,6 @@
                         const vIds = my.vIds ? my.vIds.toString().split(',').filter(id => id.trim() !== "") : [];
                         const dLinks = my.docLinks ? my.docLinks.toString().split(',').filter(url => url.trim() !== "") : [];
 
-                        // 渲染影片區域
                         if (vIds.length > 0) {
                             const vNames = my.vNames ? my.vNames.toString().split(',') : [];
                             document.getElementById('video-container').style.display = 'block';
@@ -216,7 +254,6 @@
                             document.getElementById('video-container').innerHTML = '<div class="no-data-msg">目前暫無影音內容。</div>';
                         }
 
-                        // 渲染教材區域
                         if (dLinks.length > 0) {
                             const dNames = my.docNames ? my.docNames.toString().split(',') : [];
                             document.getElementById('pdf-container').innerHTML = dLinks.map((url, i) => `
