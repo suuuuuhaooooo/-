@@ -115,7 +115,7 @@
         <main class="main-content">
             <section id="video-view" class="view-section active">
                 <h2 style="font-size: 20px; margin-bottom: 5px; border-left: 5px solid var(--primary); padding-left: 15px;">解題中心</h2>
-                <p style="font-size: 13px; color: #888; margin-bottom: 25px; padding-left: 20px;">點擊按鈕後，將另開分頁播放影片屆時請以 Google 帳號支援授權。</p>
+                <p style="font-size: 13px; color: #888; margin-bottom: 25px; padding-left: 20px;">點擊按鈕後，系統將另開分頁屆時請以 Google 帳號支援授權。</p>
                 <div id="video-container"></div>
             </section>
             <section id="pdf-view" class="view-section">
@@ -140,27 +140,28 @@
         const db = firebase.database();
         const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx884HoE5YwEpoWwKR3aIIvAUGrydmwRFC7ETpW_UowiSsIoMch9esQye_7WjRQrNQelQ/exec";
 
-        // 在線人數監聽
+        // 在線人數統計
         db.ref('presence').on('value', snap => {
             const count = snap.numChildren() || 0;
             const textEl = document.getElementById('presence-text');
             textEl.innerHTML = count > 1 ? `目前有 <span style="font-weight:700; color:#666;">${count}</span> 位同學正在線上` : `目前有 <span style="font-weight:700; color:#666;">1</span> 位同學在線上`;
         });
 
-        // --- 補回：3 分鐘閒置自動登出 ---
+        // --- 核心功能：3 分鐘閒置機制 ---
         let idleTimer;
         function resetIdleTimer() {
             clearTimeout(idleTimer);
             if (auth.currentUser) {
                 idleTimer = setTimeout(() => { 
-                    alert("由於您長時間未操作，系統已自動安全登出。"); 
+                    alert("由於您已超過 3 分鐘未操作，系統已自動安全登出。"); 
                     logout(); 
-                }, 180000); // 180,000ms = 3 mins
+                }, 180000); // 3 分鐘
             }
         }
+        // 監聽所有互動行為
         window.onmousemove = window.onkeypress = window.ontouchstart = window.onclick = resetIdleTimer;
 
-        // 分兩次彈窗並等待確認
+        // 分兩次彈窗邏輯
         function runLoginAnalysis(uid, noticeText) {
             return new Promise((resolve) => {
                 const today = new Date().toISOString().split('T')[0];
@@ -230,7 +231,10 @@
                 db.ref('sessions/' + user.uid).remove(); 
                 db.ref('presence/' + user.uid).remove(); 
             }
-            auth.signOut().then(() => { localStorage.clear(); location.reload(); });
+            auth.signOut().then(() => { 
+                localStorage.clear(); 
+                location.reload(); 
+            });
         }
 
         auth.onAuthStateChanged(async (user) => {
@@ -245,7 +249,7 @@
                     }
                 });
 
-                // 在線狀態與離線處理
+                // 在線狀態
                 const presenceRef = db.ref('presence/' + user.uid);
                 db.ref('.info/connected').on('value', snap => { 
                     if (snap.val()) { presenceRef.onDisconnect().remove(); presenceRef.set(true); } 
@@ -254,7 +258,7 @@
                 document.getElementById('login-ui').style.display = 'none';
                 document.getElementById('classroom-ui').style.display = 'flex';
                 
-                // 啟動閒置計時器
+                // --- 登入後立即啟動閒置計時 ---
                 resetIdleTimer();
                 
                 try {
