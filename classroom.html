@@ -49,7 +49,6 @@
 
         .video-player-container { background: black; width: 100%; position: relative; padding-bottom: 56.25%; margin-bottom: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
         .video-player-container iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
-        
         .video-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 15px; margin-top: 20px; }
         .video-card { background: white; padding: 15px; cursor: pointer; border-radius: 2px; border: 1px solid #eee; transition: 0.3s; }
         .video-card:hover { border-color: var(--primary); background: #fcfdfc; }
@@ -59,7 +58,6 @@
         .pdf-tag { background: #eef1ec; color: var(--primary); padding: 2px 8px; font-size: 11px; margin-right: 12px; font-weight: 700; }
         .download-btn { color: var(--primary); text-decoration: none; font-weight: 700; border: 1px solid var(--primary); padding: 8px 18px; border-radius: 2px; font-size: 13px; transition: 0.3s; }
         
-        /* 暫無內容提示文字 */
         .no-data-msg { text-align: center; color: #bbb; padding: 80px 0; font-style: italic; letter-spacing: 1px; font-size: 15px; border: 1px dashed #ddd; border-radius: 4px; }
         .logout-link { font-size: 12px; color: #999; cursor: pointer; text-decoration: underline; display: block; margin-top: 10px; }
         .info-tag { font-size: 11px; color: #888; background: #f0f0f0; padding: 2px 6px; border-radius: 3px; margin-right: 4px; }
@@ -150,23 +148,28 @@
             textEl.innerHTML = count > 1 ? `目前有 <span style="font-weight:700; color:#666;">${count}</span> 位同學正在線上` : `目前有 <span style="font-weight:700; color:#666;">1</span> 位同學在線上`;
         });
 
-        // 今日登入分析與分兩次彈窗
+        // --- 優化：分兩次彈窗並等待使用者確認 ---
         function runLoginAnalysis(uid, noticeText) {
-            const today = new Date().toISOString().split('T')[0];
-            const countRef = db.ref(`login_stats/${uid}/${today}`);
-            
-            countRef.transaction(current => (current || 0) + 1, (err, comm, snap) => {
-                if (comm) {
-                    const count = snap.val();
-                    alert(`登入成功！這是你今天第 ${count} 次回來學習。`);
-                    if (noticeText && noticeText.trim() !== "") {
-                        alert("【蘇昊老師的話】\n" + noticeText.trim());
+            return new Promise((resolve) => {
+                const today = new Date().toISOString().split('T')[0];
+                const countRef = db.ref(`login_stats/${uid}/${today}`);
+                
+                countRef.transaction(current => (current || 0) + 1, (err, comm, snap) => {
+                    if (comm) {
+                        const count = snap.val();
+                        // 第一次彈窗
+                        alert(`登入成功！這是你今天第 ${count} 次回來學習。`);
+                        
+                        // 第二次彈窗 (如果有公告)
+                        if (noticeText && noticeText.trim() !== "") {
+                            alert("【蘇昊老師的話】\n" + noticeText.trim());
+                        }
                     }
-                }
+                    resolve(); // 完成所有彈窗後才繼續
+                });
             });
         }
 
-        // 驗證碼邏輯
         let currentCaptcha = "";
         function generateCaptcha() {
             const chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjklmnpqrstuvwxyz23456789";
@@ -204,11 +207,9 @@
             if(navEl) navEl.classList.add('active');
         }
 
-        // --- 重點修改：Google Drive 播放邏輯 ---
         function playVideo(fileId, title, el) {
             const frame = document.getElementById('video-frame');
             if(frame) {
-                // 使用 Google Drive 的嵌入式預覽連結格式
                 frame.src = `https://drive.google.com/file/d/${fileId.trim()}/preview`;
                 document.getElementById('current-video-title').innerText = title.trim();
                 document.querySelectorAll('.video-card').forEach(c => c.classList.remove('playing'));
@@ -236,23 +237,29 @@
             });
         }
 
-        auth.onAuthStateChanged(user => {
+        // --- 主程式進入點：加入 async/await 以等待彈窗 ---
+        auth.onAuthStateChanged(async (user) => {
             if (user) {
                 const presenceRef = db.ref('presence/' + user.uid);
                 db.ref('.info/connected').on('value', snap => { if (snap.val()) { presenceRef.onDisconnect().remove(); presenceRef.set(true); } });
 
+                // 顯示教室介面
                 document.getElementById('login-ui').style.display = 'none';
                 document.getElementById('classroom-ui').style.display = 'flex';
                 
-                fetch(SCRIPT_URL).then(r => r.json()).then(data => {
+                try {
+                    const r = await fetch(SCRIPT_URL);
+                    const data = await r.json();
                     const my = data.find(i => i.uid === user.uid);
+                    
                     if (my) {
                         document.getElementById('student-name').innerText = my.name + " 同學";
                         document.getElementById('student-meta').innerHTML = `<span class="info-tag">${my.level} 年級</span><span class="info-tag">${my.subject}</span>`;
                         
-                        runLoginAnalysis(user.uid, my.notice);
+                        // 【關鍵】使用 await 等待兩次彈窗點完，再執行後面的渲染
+                        await runLoginAnalysis(user.uid, my.notice);
 
-                        // 影音渲染 (Google Drive 模式)
+                        // 渲染影音
                         const vIds = my.vIds ? my.vIds.toString().split(',').filter(id => id.trim() !== "") : [];
                         const videoBox = document.getElementById('video-container');
                         if (vIds.length > 0) {
@@ -266,16 +273,14 @@
                             document.getElementById('video-grid').innerHTML = vIds.map((id, i) => `
                                 <div class="video-card" onclick="playVideo('${id}', '${vNames[i] || '單元 '+(i+1)}', this)">
                                     <div style="color: var(--primary); font-weight: 700; font-size: 14px; margin-bottom: 5px;">${(vNames[i] || '單元 '+(i+1)).trim()}</div>
-                                    <div style="font-size: 12px; color: #999;">點擊切換影片</div>
+                                    <div style="font-size: 12px; color: #999;">點擊播放</div>
                                 </div>`).join('');
-                            
-                            // 自動播放第一個影片
                             playVideo(vIds[0], vNames[0] || "第一單元");
                         } else {
                             videoBox.innerHTML = '<div class="no-data-msg">目前暫無影音內容。</div>';
                         }
 
-                        // 教材渲染
+                        // 渲染教材
                         const dLinks = my.docLinks ? my.docLinks.toString().split(',').filter(url => url.trim() !== "") : [];
                         const pdfBox = document.getElementById('pdf-container');
                         if (dLinks.length > 0) {
@@ -289,7 +294,9 @@
                             pdfBox.innerHTML = '<div class="no-data-msg">目前暫無教材。</div>';
                         }
                     }
-                });
+                } catch (e) {
+                    console.error("載入失敗", e);
+                }
             } else {
                 document.getElementById('login-ui').style.display = 'flex';
                 document.getElementById('classroom-ui').style.display = 'none';
