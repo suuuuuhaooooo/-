@@ -113,12 +113,14 @@
     }
     
     td.x::after {
-        content: "已預約Reserved";
-        font-size: 10px;
-        display: block;
-        opacity: 0.5;
-        letter-spacing: 1px;
-        margin-top: 2px;
+    content: "已預約\00000aReserved"; 
+    white-space: pre; 
+    font-size: 10px;
+    display: block;
+    opacity: 0.5;
+    letter-spacing: 1px;
+    margin-top: 2px;
+    line-height: 1.2; /* 建議調整行高，讓換行後的間距更美觀 */
     }
 
     td:not(.x):not(.time-label) {
