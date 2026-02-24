@@ -49,6 +49,7 @@
 
         .video-player-container { background: black; width: 100%; position: relative; padding-bottom: 56.25%; margin-bottom: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
         .video-player-container iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
+        
         .video-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 15px; margin-top: 20px; }
         .video-card { background: white; padding: 15px; cursor: pointer; border-radius: 2px; border: 1px solid #eee; transition: 0.3s; }
         .video-card:hover { border-color: var(--primary); background: #fcfdfc; }
@@ -58,7 +59,8 @@
         .pdf-tag { background: #eef1ec; color: var(--primary); padding: 2px 8px; font-size: 11px; margin-right: 12px; font-weight: 700; }
         .download-btn { color: var(--primary); text-decoration: none; font-weight: 700; border: 1px solid var(--primary); padding: 8px 18px; border-radius: 2px; font-size: 13px; transition: 0.3s; }
         
-        .no-data-msg { text-align: center; color: #bbb; padding: 100px 0; font-style: italic; letter-spacing: 1px; font-size: 15px; border: 1px dashed #ddd; border-radius: 4px; }
+        /* 暫無內容提示文字 */
+        .no-data-msg { text-align: center; color: #bbb; padding: 80px 0; font-style: italic; letter-spacing: 1px; font-size: 15px; border: 1px dashed #ddd; border-radius: 4px; }
         .logout-link { font-size: 12px; color: #999; cursor: pointer; text-decoration: underline; display: block; margin-top: 10px; }
         .info-tag { font-size: 11px; color: #888; background: #f0f0f0; padding: 2px 6px; border-radius: 3px; margin-right: 4px; }
 
@@ -75,7 +77,7 @@
     <div id="login-ui">
         <div class="login-card">
             <h1 style="font-size: 22px; letter-spacing: 4px; margin-bottom: 10px;">雲端影音教室</h1>
-            <div style="font-size: 12px; color: #aaa; margin-bottom: 30px;">專業數位教學系統</div>
+            <div style="font-size: 12px; color: #aaa; margin-bottom: 30px;">Professional Teaching Platform</div>
             <div class="input-group">
                 <input type="email" id="email" placeholder="帳號(6 碼 + @suhao.com)" autocomplete="off">
             </div>
@@ -87,7 +89,7 @@
                 <div id="captcha-code" title="點擊更換驗證碼" onclick="generateCaptcha()">載入中</div>
                 <input type="text" id="captcha-input" placeholder="驗證碼">
             </div>
-            <button class="main-btn" onclick="login()">登入</button>
+            <button class="main-btn" onclick="login()">進入系統</button>
             <p id="error-msg" style="color:#b03a2e; font-size:12px; margin-top:15px; height: 15px;"></p>
             <div class="online-counter">
                 <span class="online-dot"></span>
@@ -107,10 +109,10 @@
                 <a id="nav-pdf" class="nav-link" onclick="showView('pdf-view', this)">專屬教材下載</a>
             </div>
             <div class="sidebar-footer">
-                <div id="student-name" style="font-size: 15px; font-weight: 700; color: var(--dark);">資料同步中...</div>
+                <div id="student-name" style="font-size: 15px; font-weight: 700; color: var(--dark);">載入中...</div>
                 <div id="student-meta" style="margin-top: 5px;"></div>
                 <div id="login-ip" style="font-size: 10px; color: #bbb; margin-top: 5px;">IP: 獲取中...</div>
-                <span class="logout-link" onclick="logout()">登出</span>
+                <span class="logout-link" onclick="logout()">安全登出系統</span>
             </div>
         </nav>
 
@@ -141,14 +143,14 @@
         const db = firebase.database();
         const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx884HoE5YwEpoWwKR3aIIvAUGrydmwRFC7ETpW_UowiSsIoMch9esQye_7WjRQrNQelQ/exec";
 
-        // 在線人數顯示
+        // 在線人數監聽
         db.ref('presence').on('value', snap => {
             const count = snap.numChildren() || 0;
             const textEl = document.getElementById('presence-text');
             textEl.innerHTML = count > 1 ? `目前有 <span style="font-weight:700; color:#666;">${count}</span> 位同學正在線上` : `目前有 <span style="font-weight:700; color:#666;">1</span> 位同學在線上`;
         });
 
-        // --- 功能：分析登入次數與老師公告 (分兩次對話框) ---
+        // 今日登入分析與分兩次彈窗
         function runLoginAnalysis(uid, noticeText) {
             const today = new Date().toISOString().split('T')[0];
             const countRef = db.ref(`login_stats/${uid}/${today}`);
@@ -156,18 +158,15 @@
             countRef.transaction(current => (current || 0) + 1, (err, comm, snap) => {
                 if (comm) {
                     const count = snap.val();
-                    // 第一次對話框：顯示次數
                     alert(`登入成功！這是你今天第 ${count} 次回來學習。`);
-                    
-                    // 第二次對話框：顯示老師公告 (如果有)
                     if (noticeText && noticeText.trim() !== "") {
-                        alert("【公告】\n" + noticeText.trim());
+                        alert("【蘇昊老師的話】\n" + noticeText.trim());
                     }
                 }
             });
         }
 
-        // --- 驗證碼邏輯 (具備大小寫之分) ---
+        // 驗證碼邏輯
         let currentCaptcha = "";
         function generateCaptcha() {
             const chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjklmnpqrstuvwxyz23456789";
@@ -205,10 +204,12 @@
             if(navEl) navEl.classList.add('active');
         }
 
-        function playVideo(id, title, el) {
+        // --- 重點修改：Google Drive 播放邏輯 ---
+        function playVideo(fileId, title, el) {
             const frame = document.getElementById('video-frame');
             if(frame) {
-                frame.src = `https://www.youtube.com/embed/${id.trim()}?modestbranding=1&rel=0&disablekb=1&autoplay=1`;
+                // 使用 Google Drive 的嵌入式預覽連結格式
+                frame.src = `https://drive.google.com/file/d/${fileId.trim()}/preview`;
                 document.getElementById('current-video-title').innerText = title.trim();
                 document.querySelectorAll('.video-card').forEach(c => c.classList.remove('playing'));
                 if(el) el.classList.add('playing');
@@ -218,7 +219,6 @@
         function login() {
             const email = document.getElementById('email').value;
             const password = document.getElementById('password').value;
-            // 比對驗證碼 (移除原本的 .toUpperCase() 以支持大小寫區分)
             const captchaInput = document.getElementById('captcha-input').value;
             if (captchaInput !== currentCaptcha) { alert("驗證碼錯誤(請注意大小寫)"); generateCaptcha(); return; }
             auth.signInWithEmailAndPassword(email, password).then(cred => {
@@ -252,29 +252,30 @@
                         
                         runLoginAnalysis(user.uid, my.notice);
 
-                        // 影音渲染邏輯
+                        // 影音渲染 (Google Drive 模式)
                         const vIds = my.vIds ? my.vIds.toString().split(',').filter(id => id.trim() !== "") : [];
                         const videoBox = document.getElementById('video-container');
                         if (vIds.length > 0) {
                             const vNames = my.vNames ? my.vNames.toString().split(',') : [];
                             videoBox.innerHTML = `
                                 <div class="video-player-container">
-                                    <div style="position: absolute; top: 0; left: 0; width: 100%; height: 60px; z-index: 10;"></div>
-                                    <iframe id="video-frame" src="" frameborder="0" allowfullscreen></iframe>
+                                    <iframe id="video-frame" src="" frameborder="0" allow="autoplay" allowfullscreen></iframe>
                                 </div>
                                 <h3 id="current-video-title" style="color: var(--primary); font-size: 18px; margin-top: 20px;"></h3>
                                 <div id="video-grid" class="video-grid"></div>`;
                             document.getElementById('video-grid').innerHTML = vIds.map((id, i) => `
                                 <div class="video-card" onclick="playVideo('${id}', '${vNames[i] || '單元 '+(i+1)}', this)">
                                     <div style="color: var(--primary); font-weight: 700; font-size: 14px; margin-bottom: 5px;">${(vNames[i] || '單元 '+(i+1)).trim()}</div>
-                                    <div style="font-size: 12px; color: #999;">點擊播放</div>
+                                    <div style="font-size: 12px; color: #999;">點擊切換影片</div>
                                 </div>`).join('');
+                            
+                            // 自動播放第一個影片
                             playVideo(vIds[0], vNames[0] || "第一單元");
                         } else {
                             videoBox.innerHTML = '<div class="no-data-msg">目前暫無影音內容。</div>';
                         }
 
-                        // 教材渲染邏輯
+                        // 教材渲染
                         const dLinks = my.docLinks ? my.docLinks.toString().split(',').filter(url => url.trim() !== "") : [];
                         const pdfBox = document.getElementById('pdf-container');
                         if (dLinks.length > 0) {
