@@ -49,6 +49,7 @@
 
         .video-player-container { background: black; width: 100%; position: relative; padding-bottom: 56.25%; margin-bottom: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
         .video-player-container iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
+        
         .video-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 15px; margin-top: 20px; }
         .video-card { background: white; padding: 15px; cursor: pointer; border-radius: 2px; border: 1px solid #eee; transition: 0.3s; }
         .video-card:hover { border-color: var(--primary); background: #fcfdfc; }
@@ -148,7 +149,12 @@
             textEl.innerHTML = count > 1 ? `目前有 <span style="font-weight:700; color:#666;">${count}</span> 位同學正在線上` : `目前有 <span style="font-weight:700; color:#666;">1</span> 位同學在線上`;
         });
 
-        // --- 優化：分兩次彈窗並等待使用者確認 ---
+        // 偵測行動裝置
+        function isMobile() {
+            return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+        }
+
+        // --- 優化：分兩次彈窗並等待確認 (Async Promise) ---
         function runLoginAnalysis(uid, noticeText) {
             return new Promise((resolve) => {
                 const today = new Date().toISOString().split('T')[0];
@@ -157,15 +163,12 @@
                 countRef.transaction(current => (current || 0) + 1, (err, comm, snap) => {
                     if (comm) {
                         const count = snap.val();
-                        // 第一次彈窗
                         alert(`登入成功！這是你今天第 ${count} 次回來學習。`);
-                        
-                        // 第二次彈窗 (如果有公告)
                         if (noticeText && noticeText.trim() !== "") {
-                            alert("【蘇昊老師的話】\n" + noticeText.trim());
+                            alert("【公告】\n" + noticeText.trim());
                         }
                     }
-                    resolve(); // 完成所有彈窗後才繼續
+                    resolve();
                 });
             });
         }
@@ -209,18 +212,25 @@
 
         function playVideo(fileId, title, el) {
             const frame = document.getElementById('video-frame');
-            if(frame) {
-                frame.src = `https://drive.google.com/file/d/${fileId.trim()}/preview`;
-                document.getElementById('current-video-title').innerText = title.trim();
-                document.querySelectorAll('.video-card').forEach(c => c.classList.remove('playing'));
-                if(el) el.classList.add('playing');
+            if (isMobile()) {
+                const confirmOpen = confirm("手機版建議另開視窗觀看，以獲得最佳流暢度。\n是否開啟影片？");
+                if (confirmOpen) {
+                    window.open(`https://drive.google.com/file/d/${fileId.trim()}/view`, '_blank');
+                }
+            } else {
+                if(frame) {
+                    frame.src = `https://drive.google.com/file/d/${fileId.trim()}/preview`;
+                    document.getElementById('current-video-title').innerText = title.trim();
+                    document.querySelectorAll('.video-card').forEach(c => c.classList.remove('playing'));
+                    if(el) el.classList.add('playing');
+                }
             }
         }
 
         function login() {
             const email = document.getElementById('email').value;
             const password = document.getElementById('password').value;
-            const captchaInput = document.getElementById('captcha-input').value;
+            const captchaInput = document.getElementById('captcha-input').value; // 支持大小寫
             if (captchaInput !== currentCaptcha) { alert("驗證碼錯誤(請注意大小寫)"); generateCaptcha(); return; }
             auth.signInWithEmailAndPassword(email, password).then(cred => {
                 localStorage.setItem('session_id', Math.random().toString(36).substring(2));
@@ -237,13 +247,11 @@
             });
         }
 
-        // --- 主程式進入點：加入 async/await 以等待彈窗 ---
         auth.onAuthStateChanged(async (user) => {
             if (user) {
                 const presenceRef = db.ref('presence/' + user.uid);
                 db.ref('.info/connected').on('value', snap => { if (snap.val()) { presenceRef.onDisconnect().remove(); presenceRef.set(true); } });
 
-                // 顯示教室介面
                 document.getElementById('login-ui').style.display = 'none';
                 document.getElementById('classroom-ui').style.display = 'flex';
                 
@@ -256,31 +264,35 @@
                         document.getElementById('student-name').innerText = my.name + " 同學";
                         document.getElementById('student-meta').innerHTML = `<span class="info-tag">${my.level} 年級</span><span class="info-tag">${my.subject}</span>`;
                         
-                        // 【關鍵】使用 await 等待兩次彈窗點完，再執行後面的渲染
+                        // 【等待彈窗確認完畢】
                         await runLoginAnalysis(user.uid, my.notice);
 
-                        // 渲染影音
+                        // 影音渲染
                         const vIds = my.vIds ? my.vIds.toString().split(',').filter(id => id.trim() !== "") : [];
                         const videoBox = document.getElementById('video-container');
                         if (vIds.length > 0) {
                             const vNames = my.vNames ? my.vNames.toString().split(',') : [];
                             videoBox.innerHTML = `
+                                ${!isMobile() ? `
                                 <div class="video-player-container">
                                     <iframe id="video-frame" src="" frameborder="0" allow="autoplay" allowfullscreen></iframe>
                                 </div>
                                 <h3 id="current-video-title" style="color: var(--primary); font-size: 18px; margin-top: 20px;"></h3>
+                                ` : `<p style="font-size:14px; color:var(--primary); margin-bottom:15px; border-left:4px solid var(--primary); padding-left:10px;">👋 手機版：點擊下方單元將另開分頁播放</p>`}
                                 <div id="video-grid" class="video-grid"></div>`;
+
                             document.getElementById('video-grid').innerHTML = vIds.map((id, i) => `
                                 <div class="video-card" onclick="playVideo('${id}', '${vNames[i] || '單元 '+(i+1)}', this)">
                                     <div style="color: var(--primary); font-weight: 700; font-size: 14px; margin-bottom: 5px;">${(vNames[i] || '單元 '+(i+1)).trim()}</div>
-                                    <div style="font-size: 12px; color: #999;">點擊播放</div>
+                                    <div style="font-size: 12px; color: #999;">${isMobile() ? '點擊跳轉播放' : '點擊切換播放'}</div>
                                 </div>`).join('');
-                            playVideo(vIds[0], vNames[0] || "第一單元");
+                            
+                            if (!isMobile()) playVideo(vIds[0], vNames[0] || "第一單元");
                         } else {
                             videoBox.innerHTML = '<div class="no-data-msg">目前暫無影音內容。</div>';
                         }
 
-                        // 渲染教材
+                        // 教材渲染
                         const dLinks = my.docLinks ? my.docLinks.toString().split(',').filter(url => url.trim() !== "") : [];
                         const pdfBox = document.getElementById('pdf-container');
                         if (dLinks.length > 0) {
@@ -294,9 +306,7 @@
                             pdfBox.innerHTML = '<div class="no-data-msg">目前暫無教材。</div>';
                         }
                     }
-                } catch (e) {
-                    console.error("載入失敗", e);
-                }
+                } catch (e) { console.error(e); }
             } else {
                 document.getElementById('login-ui').style.display = 'flex';
                 document.getElementById('classroom-ui').style.display = 'none';
