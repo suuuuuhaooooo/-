@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>蘇昊數理｜專業家教數位入口網</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;700&family=Noto+Sans+TC:wght@300;500&display=swap');
+
+        :root {
+            --primary: #8e9775; /* 莫蘭迪綠 */
+            --dark: #5b6348;
+            --bg: #f8f8f6;
+            --white: #ffffff;
+            --text: #4a4a4a;
+            --line-green: #06c755;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            font-family: 'Noto Sans TC', sans-serif;
+            background-color: var(--bg);
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            color: var(--text);
+        }
+
+        .container {
+            width: 100%;
+            max-width: 500px;
+            padding: 40px 20px;
+            text-align: center;
+        }
+
+        header {
+            margin-bottom: 50px;
+            transition: all 0.5s ease;
+            animation: fadeInDown 0.8s ease-out;
+        }
+
+        .logo-text {
+            font-family: 'Noto Serif TC', serif;
+            font-size: 36px;
+            font-weight: 700;
+            letter-spacing: 5px;
+            color: var(--dark);
+            margin-bottom: 10px;
+            transition: 0.3s;
+        }
+
+        .sub-text {
+            font-size: 14px;
+            color: #999;
+            letter-spacing: 2px;
+        }
+
+        /* 身份選擇大卡片樣式 */
+        .identity-card {
+            background: var(--white);
+            padding: 45px 20px;
+            margin-bottom: 25px;
+            border-radius: 24px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.04);
+            cursor: pointer;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            border: 1px solid transparent;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .identity-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.08);
+            border-color: var(--primary);
+        }
+
+        .identity-card h2 {
+            margin: 0;
+            font-family: 'Noto Serif TC', serif;
+            font-size: 26px;
+            color: var(--dark);
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        .identity-card span {
+            font-size: 13px;
+            color: #bbb;
+            margin-top: 10px;
+            letter-spacing: 1px;
+        }
+
+        /* 官方 LINE 小按鈕樣式 */
+        .line-link-card {
+            background: #fff;
+            padding: 15px;
+            border-radius: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            text-decoration: none;
+            color: var(--line-green);
+            font-weight: 500;
+            font-size: 14px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.03);
+            border: 1px solid #eee;
+            transition: 0.3s;
+            margin-top: 10px;
+            animation: fadeInUp 1s ease-out both;
+            animation-delay: 0.6s;
+        }
+
+        .line-link-card:hover {
+            background: #fdfdfd;
+            border-color: var(--line-green);
+            box-shadow: 0 8px 20px rgba(6, 199, 85, 0.1);
+        }
+
+        /* 次選單樣式 */
+        .sub-menu {
+            display: none;
+            flex-direction: column;
+            gap: 12px;
+            margin-top: 10px;
+            animation: fadeIn 0.5s ease;
+        }
+
+        .sub-link {
+            display: block;
+            background: #fff;
+            color: var(--text);
+            text-decoration: none;
+            padding: 20px;
+            border-radius: 15px;
+            font-size: 16px;
+            border: 1px solid #eee;
+            transition: 0.3s;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.02);
+        }
+
+        .sub-link:hover {
+            background: #fcfdfc;
+            border-color: var(--primary);
+            color: var(--primary);
+            transform: scale(1.02);
+        }
+
+        .classroom-btn { background: var(--primary); color: white; border-color: var(--primary); font-weight: 500; }
+        .classroom-btn:hover { background: var(--dark); color: white; }
+        .highlight-btn { background: #fdfaf3; border: 1px dashed #d4c09d !important; font-weight: 500; }
+
+        .back-btn {
+            margin-top: 25px;
+            font-size: 13px;
+            color: #aaa;
+            cursor: pointer;
+            text-decoration: none;
+            display: none;
+            letter-spacing: 1px;
+        }
+
+        footer {
+            margin-top: 50px;
+            font-size: 11px;
+            color: #ccc;
+            letter-spacing: 1px;
+        }
+
+        @keyframes fadeInDown { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes fadeIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header id="main-header">
+        <div class="logo-text">蘇昊數理</div>
+        <div id="sub-title" class="sub-text">專業家教數位入口網</div>
+    </header>
+
+    <div id="selection-zone">
+        <div class="identity-card" onclick="showMenu('student')">
+            <h2>我是學生</h2>
+            <span>For Students</span>
+        </div>
+
+        <div class="identity-card" onclick="showMenu('parent')">
+            <h2>我是家長</h2>
+            <span>For Parents</span>
+        </div>
+
+        <a href="https://line.me/ti/p/~@000gwomo" class="line-link-card">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M24 10.304c0-5.232-5.383-9.486-12-9.486s-12 4.254-12 9.486c0 4.69 4.269 8.608 10.024 9.333.39.085.92.257 1.054.59.12.301.079.77.039 1.073l-.171 1.027c-.053.313-.251 1.225 1.076.669 1.327-.556 7.163-4.218 9.774-7.218 1.931-2.181 2.204-3.766 2.204-5.478zm-15.546 4.75h-1.933c-.27 0-.489-.219-.489-.489v-4.103c0-.27.219-.489.489-.489.271 0 .489.219.489.489v3.614h1.444c.27 0 .489.219.489.489 0 .27-.219.489-.489.489zm2.463 0c-.271 0-.489-.219-.489-.489v-4.103c0-.27.219-.489.489-.489.271 0 .489.219.489.489v4.103c0 .27-.218.489-.489.489zm3.76 0h-1.803l-1.448-2.029v1.54c0 .27-.219.489-.489.489-.271 0-.489-.219-.489-.489v-4.103c0-.27.219-.489.489-.489h1.803l1.448 2.03v-1.541c0-.27.219-.489.489-.489.271 0 .489.219.489.489v4.103c0 .27-.219.489-.489.489zm3.567-1.025c0 .27-.219.489-.489.489h-1.933c-.27 0-.489-.219-.489-.489v-4.103c0-.27.219-.489.489-.489h1.933c.271 0 .489.219.489.489 0 .27-.218.489-.489.489h-1.444v1.074h1.444c.27 0 .489.219.489.489 0 .27-.218.489-.489.489h-1.444v1.073h1.444c.271 0 .489.219.489.489z"/></svg>
+            即時聯繫官方 LINE
+        </a>
+    </div>
+
+    <div id="student-menu" class="sub-menu">
+        <a href="https://suuuuuhaooooo.github.io/-/classroom.html" class="sub-link classroom-btn">進入雲端教室</a>
+        <a href="https://line.me/ti/p/~@000gwomo" class="sub-link" style="color:var(--line-green);">聯絡老師解題</a>
+        <div class="sub-link" style="color: #ccc; cursor: default; border-style: dotted;">更多功能開發中...</div>
+    </div>
+
+    <div id="parent-menu" class="sub-menu">
+        <a href="https://suuuuuhaooooo.github.io/-/profile.html" class="sub-link">師資簡介</a>
+        <a href="https://suuuuuhaooooo.github.io/-/schedule.html" class="sub-link">即時排課總表</a>
+        <a href="https://suuuuuhaooooo.github.io/-/FAQ.html" class="sub-link">常見問題 FAQ</a>
+        <a href="https://forms.gle/x3UuSB7ZjDrtfrH1A" class="sub-link highlight-btn">💡 立即預約試教</a>
+        <a href="https://line.me/ti/p/~@000gwomo" class="sub-link" style="color:var(--line-green);">LINE 諮詢課程</a>
+    </div>
+
+    <a href="javascript:void(0)" class="back-btn" onclick="showSelection()">← 返回身分選擇</a>
+
+    <footer>
+        &copy; 2026 蘇昊數理 SUHAO MATH & SCIENCE
+    </footer>
+</div>
+
+<script>
+    function showMenu(role) {
+        document.getElementById('selection-zone').style.display = 'none';
+        if(role === 'student') {
+            document.getElementById('student-menu').style.display = 'flex';
+            document.getElementById('sub-title').innerText = 'STUDENT PORTAL';
+        } else {
+            document.getElementById('parent-menu').style.display = 'flex';
+            document.getElementById('sub-title').innerText = 'PARENT INFORMATION';
+        }
+        document.querySelector('.back-btn').style.display = 'inline-block';
+        document.querySelector('.logo-text').style.fontSize = '30px';
+    }
+
+    function showSelection() {
+        document.getElementById('selection-zone').style.display = 'block';
+        document.getElementById('student-menu').style.display = 'none';
+        document.getElementById('parent-menu').style.display = 'none';
+        document.querySelector('.back-btn').style.display = 'none';
+        document.querySelector('.logo-text').style.fontSize = '36px';
+        document.getElementById('sub-title').innerText = '專業家教數位入口網';
+    }
+</script>
+
+</body>
+</html>
