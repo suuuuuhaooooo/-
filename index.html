@@ -4,6 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>蘇昊數理｜專業家教數位入口網</title>
+    
+    <meta name="description" content="為學生與家長提供介面優化的入口網。整合雲端教室、即時課表與師資簡介，打造系統化理科學習體驗。">
+    <meta property="og:title" content="蘇昊數理｜專業數位教學入口">
+    <meta property="og:description" content="為學生與家長提供介面優化的入口網。透過系統化邏輯與數位整合，提供最優質的家教諮詢服務。">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://suuuuuhaooooo.github.io/-/">
+    <meta property="og:image" content="https://suuuuuhaooooo.github.io/-/og-image.png">
+
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;700&family=Noto+Sans+TC:wght@300;500&display=swap');
 
@@ -56,6 +64,7 @@
             font-size: 14px;
             color: #999;
             letter-spacing: 2px;
+            transition: 0.3s;
         }
 
         /* 身份選擇大卡片樣式 */
@@ -122,7 +131,7 @@
             box-shadow: 0 8px 20px rgba(6, 199, 85, 0.1);
         }
 
-        /* 次選單樣式 */
+        /* 次選單容器樣式 */
         .sub-menu {
             display: none;
             flex-direction: column;
@@ -151,10 +160,23 @@
             transform: scale(1.02);
         }
 
-        .classroom-btn { background: var(--primary); color: white; border-color: var(--primary); font-weight: 500; }
+        /* 特殊樣式：雲端教室亮點 */
+        .classroom-btn {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+            font-weight: 500;
+        }
         .classroom-btn:hover { background: var(--dark); color: white; }
-        .highlight-btn { background: #fdfaf3; border: 1px dashed #d4c09d !important; font-weight: 500; }
 
+        /* 特殊：預約試教按鈕 */
+        .highlight-btn {
+            background: #fdfaf3;
+            border: 1px dashed #d4c09d !important;
+            font-weight: 500;
+        }
+
+        /* 返回按鈕 */
         .back-btn {
             margin-top: 25px;
             font-size: 13px;
@@ -164,6 +186,7 @@
             display: none;
             letter-spacing: 1px;
         }
+        .back-btn:hover { color: var(--primary); }
 
         footer {
             margin-top: 50px;
@@ -172,6 +195,7 @@
             letter-spacing: 1px;
         }
 
+        /* 動畫 */
         @keyframes fadeInDown { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
         @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
         @keyframes fadeIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
@@ -225,7 +249,10 @@
 
 <script>
     function showMenu(role) {
+        // 隱藏初始區域
         document.getElementById('selection-zone').style.display = 'none';
+        
+        // 顯示對應選單與返回按鈕
         if(role === 'student') {
             document.getElementById('student-menu').style.display = 'flex';
             document.getElementById('sub-title').innerText = '我是學生';
@@ -233,20 +260,23 @@
             document.getElementById('parent-menu').style.display = 'flex';
             document.getElementById('sub-title').innerText = '我是家長';
         }
+        
         document.querySelector('.back-btn').style.display = 'inline-block';
         document.querySelector('.logo-text').style.fontSize = '30px';
     }
 
     function showSelection() {
+        // 返回初始狀態
         document.getElementById('selection-zone').style.display = 'block';
         document.getElementById('student-menu').style.display = 'none';
         document.getElementById('parent-menu').style.display = 'none';
         document.querySelector('.back-btn').style.display = 'none';
+        
+        // 還原 Header 文字
         document.querySelector('.logo-text').style.fontSize = '36px';
         document.getElementById('sub-title').innerText = '專業家教數位入口網';
     }
 </script>
 
 </body>
-
 </html>
