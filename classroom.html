@@ -306,10 +306,10 @@
                 const sid = Math.random().toString(36).substring(2);
                 localStorage.setItem('session_id', sid);
                 
-                // 【修改點】寫入 auth_status 節點，並確保 forceLogout 為 false
+                // 每次新登入，寫入 SID 並將「全體踢出(kick_all)」設為 false
                 db.ref('auth_status/' + cred.user.uid).set({
                     current_sid: sid,
-                    forceLogout: false
+                    kick_all: false
                 });
             }).catch(() => { 
                 alert("帳號或密碼驗證失敗"); 
@@ -320,8 +320,8 @@
         function logout() { 
             const user = auth.currentUser;
             if(user) { 
-                // 【修改點】對齊新路徑，清除 auth_status
-                db.ref('auth_status/' + user.uid).remove(); 
+                // 【關鍵修正】把 db.ref('auth_status...').remove() 拿掉！
+                // 只清除在線狀態，保留 auth_status 讓其他裝置有時間讀取踢人訊號
                 db.ref('presence/' + user.uid).remove(); 
             }
             auth.signOut().then(() => { 
@@ -343,7 +343,6 @@
             document.getElementById(viewId).classList.add('active');
             if(navEl) navEl.classList.add('active');
         }
-
         auth.onAuthStateChanged(async (user) => {
             if (user) {
                 const authStatusRef = db.ref('auth_status/' + user.uid);
@@ -352,20 +351,21 @@
                     const data = snap.val();
                     if (!data) return;
 
-                    // 【關鍵修正】必須在監聽器「內部」即時抓取本地 SID
                     const currentLocalSid = localStorage.getItem('session_id');
                     if (!currentLocalSid) return;
 
-                    // 邏輯 A：偵測到碰撞 (有新裝置登入)
-                    if (data.current_sid && data.current_sid !== currentLocalSid && data.forceLogout === false) {
-                        // 觸發全域強制登出指令
-                        authStatusRef.update({ forceLogout: true });
+                    // 邏輯 A：舊裝置偵測到新裝置登入 (碰撞)
+                    if (data.current_sid && data.current_sid !== currentLocalSid && data.kick_all === false) {
+                        // 舊裝置發送「全體強制登出」訊號
+                        authStatusRef.update({ kick_all: true });
                         return; 
                     }
 
-                    // 邏輯 B：執行全體強制登出
-                    if (data.forceLogout === true) {
-                        alert("偵測到此帳號已在其他裝置登入。為維護帳號安全，系統將自動登出！");
+                    // 邏輯 B：所有裝置接收到強制登出訊號
+                    if (data.kick_all === true) {
+                        // 【關鍵修正】先關閉監聽器，避免多重彈窗卡死瀏覽器
+                        authStatusRef.off();
+                        alert("系統偵測到帳號在其他裝置重複登入！\n為維護帳號安全，系統將自動登出。");
                         logout(); 
                     }
                 });
