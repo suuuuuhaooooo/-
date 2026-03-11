@@ -296,17 +296,21 @@
             const password = document.getElementById('password').value;
             const captchaInput = document.getElementById('captcha-input').value;
             
-            // --- 嚴格比對：不使用 toUpperCase()，大小寫必須完全一致 ---
             if (captchaInput !== currentCaptcha) { 
                 alert("驗證碼錯誤（請注意大小寫需完全一致）"); 
-                drawCaptcha(); // 失敗即更換新圖，增加宇宙級破解難度
+                drawCaptcha();
                 return; 
             }
             
             auth.signInWithEmailAndPassword(email, password).then(cred => {
                 const sid = Math.random().toString(36).substring(2);
                 localStorage.setItem('session_id', sid);
-                db.ref('sessions/' + cred.user.uid).set(sid);
+                
+                // 【修改點】寫入 auth_status 節點，並確保 forceLogout 為 false
+                db.ref('auth_status/' + cred.user.uid).set({
+                    current_sid: sid,
+                    forceLogout: false
+                });
             }).catch(() => { 
                 alert("帳號或密碼驗證失敗"); 
                 drawCaptcha(); 
@@ -316,7 +320,8 @@
         function logout() { 
             const user = auth.currentUser;
             if(user) { 
-                db.ref('sessions/' + user.uid).remove(); 
+                // 【修改點】對齊新路徑，清除 auth_status
+                db.ref('auth_status/' + user.uid).remove(); 
                 db.ref('presence/' + user.uid).remove(); 
             }
             auth.signOut().then(() => { 
@@ -341,15 +346,31 @@
 
         auth.onAuthStateChanged(async (user) => {
             if (user) {
-                db.ref('sessions/' + user.uid).on('value', snap => {
-                    const serverSid = snap.val();
-                    const localSid = localStorage.getItem('session_id');
-                    if (serverSid && localSid && serverSid !== localSid) {
-                        alert("偵測到此帳號已在其他裝置登入。");
-                        logout();
+                const authStatusRef = db.ref('auth_status/' + user.uid);
+
+                authStatusRef.on('value', snap => {
+                    const data = snap.val();
+                    if (!data) return;
+
+                    // 【關鍵修正】必須在監聽器「內部」即時抓取本地 SID
+                    const currentLocalSid = localStorage.getItem('session_id');
+                    if (!currentLocalSid) return;
+
+                    // 邏輯 A：偵測到碰撞 (有新裝置登入)
+                    if (data.current_sid && data.current_sid !== currentLocalSid && data.forceLogout === false) {
+                        // 觸發全域強制登出指令
+                        authStatusRef.update({ forceLogout: true });
+                        return; 
+                    }
+
+                    // 邏輯 B：執行全體強制登出
+                    if (data.forceLogout === true) {
+                        alert("偵測到此帳號已在其他裝置登入。為維護帳號安全，系統將自動登出！");
+                        logout(); 
                     }
                 });
 
+                // 在線狀態監控
                 const presenceRef = db.ref('presence/' + user.uid);
                 db.ref('.info/connected').on('value', snap => { 
                     if (snap.val()) { presenceRef.onDisconnect().remove(); presenceRef.set(true); } 
