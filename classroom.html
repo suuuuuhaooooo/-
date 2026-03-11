@@ -171,22 +171,41 @@
         window.onmousemove = window.onkeypress = window.ontouchstart = window.onclick = resetIdleTimer;
 
         // 分兩次彈窗邏輯
+               // 登入分析：歷史總次數累加（一天僅記錄一次）
         function runLoginAnalysis(uid, noticeText) {
             return new Promise((resolve) => {
-                const today = new Date().toISOString().split('T')[0];
-                const countRef = db.ref(`login_stats/${uid}/${today}`);
-                countRef.transaction(current => (current || 0) + 1, (err, comm, snap) => {
-                    if (comm) {
-                        const count = snap.val();
-                        alert(`登入成功！這是你今天第 ${count} 次回來學習。`);
-                        if (noticeText && noticeText.trim() !== "") {
-                            alert("【公告】\n" + noticeText.trim());
-                        }
+                const today = new Date().toLocaleDateString('zh-TW'); // 取得在地化日期字串
+                const userStatsRef = db.ref(`login_stats/${uid}`);
+                
+                userStatsRef.once('value').then(snap => {
+                    let data = snap.val() || { totalCount: 0, lastLoginDate: "" };
+                    
+                    // 判斷今天是否已經紀錄過
+                    if (data.lastLoginDate !== today) {
+                        // 如果是新的一天，總次數 +1，並更新最後登入日期
+                        data.totalCount = (data.totalCount || 0) + 1;
+                        data.lastLoginDate = today;
+                        
+                        // 回傳更新到資料庫
+                        userStatsRef.set(data);
                     }
+
+                    // 第一個彈窗：顯示歷史累計次數
+                    alert(`登入成功！這是你第 ${data.totalCount} 次回來學習。`);
+                    
+                    // 第二個彈窗：顯示公告（維持原狀）
+                    if (noticeText && noticeText.trim() !== "") {
+                        alert("【公告】\n" + noticeText.trim());
+                    }
+                    resolve();
+                }).catch(e => {
+                    console.error("次數紀錄失敗:", e);
                     resolve();
                 });
             });
         }
+
+
 
         let currentCaptcha = "";
         function generateCaptcha() {
