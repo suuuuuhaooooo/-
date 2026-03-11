@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <link rel="icon" href="https://suuuuuhaooooo.github.io/-/favicon.png" type="image/png">
+    <link rel="apple-touch-icon" href="https://suuuuuhaooooo.github.io/-/favicon.png">
+    
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>蘇昊數理｜雲端教室加入主畫面教學</title>
+    
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;700&display=swap');
+        
+        :root { 
+            --primary: #8e9775; 
+            --dark: #5b6348; 
+            --bg: #f8f8f6; 
+            --white: #ffffff; 
+        }
+        
+        body { 
+            font-family: "Noto Serif TC", serif; 
+            background-color: var(--bg); 
+            margin: 0; 
+            padding: 20px; 
+            color: #333; 
+            line-height: 1.6; 
+            /* 防止文字反白選取 */
+            user-select: none; 
+            -webkit-user-select: none;
+        }
+        
+        .container { 
+            max-width: 600px; 
+            margin: 0 auto; 
+            background: var(--white); 
+            padding: 30px; 
+            border-radius: 8px; 
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05); 
+            border-top: 6px solid var(--primary); 
+        }
+        
+        h1 { 
+            text-align: center; 
+            color: var(--dark); 
+            font-size: 22px; 
+            margin-bottom: 10px; 
+            letter-spacing: 2px; 
+        }
+        
+        .subtitle {
+            text-align: center; 
+            color: #888; 
+            font-size: 14px; 
+            margin-bottom: 30px;
+        }
+        
+        h2 { 
+            color: var(--primary); 
+            border-left: 5px solid var(--primary); 
+            padding-left: 12px; 
+            font-size: 18px; 
+            margin-top: 35px; 
+            margin-bottom: 20px;
+        }
+        
+        .step-card { 
+            background: #fafafa; 
+            border: 1px solid #eee; 
+            border-radius: 6px; 
+            padding: 20px; 
+            margin-bottom: 20px; 
+        }
+        
+        .step-title { 
+            font-weight: 700; 
+            color: var(--dark); 
+            margin-bottom: 10px; 
+            font-size: 16px; 
+        }
+        
+        .step-desc {
+            font-size: 14px; 
+            color: #555;
+            margin-bottom: 15px;
+        }
+        
+        .step-img { 
+            width: 100%; 
+            max-width: 280px; 
+            display: block; 
+            margin: 0 auto; 
+            border-radius: 8px; 
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08); 
+            border: 1px solid #f0f0f0;
+        }
+        
+        .android-step { 
+            margin-bottom: 12px; 
+            padding-left: 20px; 
+            position: relative; 
+            font-size: 14px;
+            color: #444;
+        }
+        
+        .android-step::before { 
+            content: '✓'; 
+            color: var(--primary); 
+            font-weight: bold; 
+            position: absolute; 
+            left: 0; 
+        }
+
+        .back-btn {
+            display: block;
+            text-align: center;
+            margin-top: 30px;
+            color: var(--primary);
+            text-decoration: none;
+            font-weight: 700;
+            font-size: 14px;
+            border: 1px solid var(--primary);
+            padding: 10px;
+            border-radius: 4px;
+            transition: 0.3s;
+        }
+
+        .back-btn:hover {
+            background: var(--primary);
+            color: white;
+        }
+    </style>
+</head>
+<body>
+
+    <script>
+        document.addEventListener('contextmenu', function(event) {
+            event.preventDefault();
+            alert("版權所有，翻印必究！");
+        });
+    </script>
+
+    <div class="container">
+        <h1>快速登入捷徑設定</h1>
+        <div class="subtitle">將雲端教室加入手機主畫面，像 App 一樣一鍵開啟</div>
+
+        <h2>以 iOS 系統為例 (iPhone / iPad)</h2>
+
+        <div class="step-card">
+            <div class="step-title">步驟一：點選「分享」按鈕</div>
+            <div class="step-desc">使用 Safari 瀏覽器開啟雲端教室後，點擊畫面正下方的「分享」圖示（帶有向上箭頭的方塊）。</div>
+            <img src="step1_share.jpg" alt="點擊分享按鈕" class="step-img">
+        </div>
+
+        <div class="step-card">
+            <div class="step-title">步驟二：向上滑動選單</div>
+            <div class="step-desc">此時會跳出分享選單（看到 AirDrop、LINE 等圖示），請直接將這個選單「往上滑動」。</div>
+            <img src="step2_swipe.jpg" alt="向上滑動選單" class="step-img">
+        </div>
+
+        <div class="step-card">
+            <div class="step-title">步驟三：選擇「加入主畫面」</div>
+            <div class="step-desc">在下方的功能列表中找到「加入主畫面」選項，並點擊它。接著在下一個畫面的右上角點擊「新增」。</div>
+            <img src="step3_add.jpg" alt="選擇加入主畫面" class="step-img">
+        </div>
+
+        <div class="step-card">
+            <div class="step-title">步驟四：完成設定</div>
+            <div class="step-desc">回到手機桌面後，您就會看到專屬的雲端教室捷徑圖示，以後點擊就能直接上課了！</div>
+            <img src="step4_desktop.jpg" alt="完成新增" class="step-img">
+        </div>
+
+        <h2>安卓 (Android) 系統設定方法</h2>
+        <div class="step-card">
+            <div style="font-size: 14px; color: #888; margin-bottom: 15px;">※ 建議使用 Google Chrome 瀏覽器操作：</div>
+            <div class="android-step">打開 Chrome 瀏覽器並進入雲端教室網頁。</div>
+            <div class="android-step">點擊畫面右上角的「⋮」（三個點）開啟瀏覽器選單。</div>
+            <div class="android-step">在選單中找到並點選「加到主畫面」或「新增至主畫面」。</div>
+            <div class="android-step">點擊「新增」，即可在手機桌面上建立專屬捷徑。</div>
+        </div>
+
+        <a href="classroom.html" class="back-btn">返回雲端教室登入頁</a>
+    </div>
+
+</body>
+</html>
