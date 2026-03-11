@@ -173,14 +173,14 @@
 
         // 圖形驗證碼邏輯
         let currentCaptcha = "";
-        // 強化版圖形驗證碼：加入噪點與弧線干擾
+        // 宇宙級複雜驗證碼：結合網格、高頻噪點與波浪干擾
         function drawCaptcha() {
             const canvas = document.getElementById('captcha-canvas');
             const ctx = canvas.getContext('2d');
             const chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjklmnpqrstuvwxyz23456789";
             
-            // 1. 填入淡灰色背景
-            ctx.fillStyle = "#eef1ec";
+            // 1. 底色：深淺不一的灰階背景
+            ctx.fillStyle = "#e0e4e0";
             ctx.fillRect(0, 0, canvas.width, canvas.height);
 
             // 2. 生成 4 位隨機驗證碼
@@ -190,48 +190,60 @@
             }
             currentCaptcha = code;
 
-            // 3. 繪製隨機背景噪點 (雪花感)
-            for (let i = 0; i < 150; i++) {
-                ctx.fillStyle = `rgba(${Math.random()*255},${Math.random()*255},${Math.random()*255}, 0.2)`;
-                ctx.beginPath();
-                ctx.arc(Math.random()*canvas.width, Math.random()*canvas.height, 0.5, 0, Math.PI*2);
-                ctx.fill();
+            // 3. 繪製背景背景網格 (Grid Noise)
+            ctx.lineWidth = 0.5;
+            for (let i = 0; i < canvas.width; i += 10) {
+                ctx.strokeStyle = `rgba(0,0,0,${Math.random() * 0.1})`;
+                ctx.beginPath(); ctx.moveTo(i, 0); ctx.lineTo(i, canvas.height); ctx.stroke();
+            }
+            for (let i = 0; i < canvas.height; i += 10) {
+                ctx.strokeStyle = `rgba(0,0,0,${Math.random() * 0.1})`;
+                ctx.beginPath(); ctx.moveTo(0, i); ctx.lineTo(canvas.width, i); ctx.stroke();
             }
 
-            // 4. 繪製隨機貝茲曲線 (弧形干擾)
-            for (let i = 0; i < 4; i++) {
-                ctx.strokeStyle = `rgba(${Math.random()*255},${Math.random()*255},${Math.random()*255}, 0.4)`;
-                ctx.lineWidth = 1;
+            // 4. 繪製極高密度噪點 (高頻雜訊)
+            for (let i = 0; i < 400; i++) {
+                ctx.fillStyle = `rgba(${Math.random()*255},${Math.random()*255},${Math.random()*255}, ${Math.random()*0.5})`;
+                ctx.fillRect(Math.random()*canvas.width, Math.random()*canvas.height, 1, 1);
+            }
+
+            // 5. 繪製多重貝茲曲線 (波浪干擾訊號)
+            for (let i = 0; i < 8; i++) {
+                ctx.strokeStyle = `rgba(${Math.random()*255},${Math.random()*255},${Math.random()*255}, 0.6)`;
+                ctx.lineWidth = Math.random() * 2;
                 ctx.beginPath();
-                ctx.moveTo(Math.random()*canvas.width, Math.random()*canvas.height);
+                ctx.moveTo(0, Math.random() * canvas.height);
                 ctx.bezierCurveTo(
-                    Math.random()*canvas.width, Math.random()*canvas.height,
-                    Math.random()*canvas.width, Math.random()*canvas.height,
-                    Math.random()*canvas.width, Math.random()*canvas.height
+                    canvas.width / 3, Math.random() * canvas.height,
+                    (canvas.width / 3) * 2, Math.random() * canvas.height,
+                    canvas.width, Math.random() * canvas.height
                 );
                 ctx.stroke();
             }
 
-            // 5. 逐字繪製驗證碼（加入位移與隨機字體大小）
+            // 6. 逐字繪製驗證碼（極端變形與顏色偏移）
             for (let i = 0; i < code.length; i++) {
-                const fontSize = Math.floor(Math.random() * 10) + 22; // 22px ~ 32px
-                ctx.font = `bold ${fontSize}px 'Arial'`;
+                // 隨機字體與粗細
+                const fontSize = Math.floor(Math.random() * 15) + 20; // 20px ~ 35px
+                ctx.font = `italic bold ${fontSize}px 'Courier New', Courier, monospace`;
                 
                 ctx.save();
-                // 增加位置的隨機偏移 (Offset)
-                const x = 15 + i * 25 + (Math.random() - 0.5) * 5;
-                const y = 32 + (Math.random() - 0.5) * 5;
+                // 劇烈的位置抖動
+                const x = 15 + i * 25 + (Math.random() - 0.5) * 8;
+                const y = 30 + (Math.random() - 0.5) * 10;
                 
                 ctx.translate(x, y);
-                ctx.rotate((Math.random() - 0.5) * 0.5); // 旋轉角度
+                ctx.rotate((Math.random() - 0.5) * 0.8); // 大角度旋轉
                 
-                // 隨機顏色
-                ctx.fillStyle = `rgb(${Math.random()*150},${Math.random()*150},${Math.random()*150})`;
+                // 隨機顏色與透明度
+                ctx.fillStyle = `rgba(${Math.random()*100},${Math.random()*100},${Math.random()*100}, 0.9)`;
+                ctx.shadowBlur = Math.random() * 5;
+                ctx.shadowColor = "rgba(0,0,0,0.3)";
+                
                 ctx.fillText(code[i], 0, 0);
                 ctx.restore();
             }
         }
-
         // 登入分析：三層彈窗
         function runLoginAnalysis(uid, noticeText, studentName) {
             return new Promise((resolve) => {
