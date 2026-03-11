@@ -173,36 +173,60 @@
 
         // 圖形驗證碼邏輯
         let currentCaptcha = "";
+        // 強化版圖形驗證碼：加入噪點與弧線干擾
         function drawCaptcha() {
             const canvas = document.getElementById('captcha-canvas');
             const ctx = canvas.getContext('2d');
             const chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjklmnpqrstuvwxyz23456789";
             
+            // 1. 填入淡灰色背景
             ctx.fillStyle = "#eef1ec";
             ctx.fillRect(0, 0, canvas.width, canvas.height);
 
+            // 2. 生成 4 位隨機驗證碼
             let code = "";
             for (let i = 0; i < 4; i++) {
                 code += chars.charAt(Math.floor(Math.random() * chars.length));
             }
             currentCaptcha = code;
 
-            // 背景干擾線
-            for (let i = 0; i < 8; i++) {
-                ctx.strokeStyle = `rgba(${Math.random()*255},${Math.random()*255},${Math.random()*255}, 0.2)`;
+            // 3. 繪製隨機背景噪點 (雪花感)
+            for (let i = 0; i < 150; i++) {
+                ctx.fillStyle = `rgba(${Math.random()*255},${Math.random()*255},${Math.random()*255}, 0.2)`;
+                ctx.beginPath();
+                ctx.arc(Math.random()*canvas.width, Math.random()*canvas.height, 0.5, 0, Math.PI*2);
+                ctx.fill();
+            }
+
+            // 4. 繪製隨機貝茲曲線 (弧形干擾)
+            for (let i = 0; i < 4; i++) {
+                ctx.strokeStyle = `rgba(${Math.random()*255},${Math.random()*255},${Math.random()*255}, 0.4)`;
+                ctx.lineWidth = 1;
                 ctx.beginPath();
                 ctx.moveTo(Math.random()*canvas.width, Math.random()*canvas.height);
-                ctx.lineTo(Math.random()*canvas.width, Math.random()*canvas.height);
+                ctx.bezierCurveTo(
+                    Math.random()*canvas.width, Math.random()*canvas.height,
+                    Math.random()*canvas.width, Math.random()*canvas.height,
+                    Math.random()*canvas.width, Math.random()*canvas.height
+                );
                 ctx.stroke();
             }
 
-            // 繪製扭曲文字
-            ctx.font = "bold 26px 'Arial'";
+            // 5. 逐字繪製驗證碼（加入位移與隨機字體大小）
             for (let i = 0; i < code.length; i++) {
+                const fontSize = Math.floor(Math.random() * 10) + 22; // 22px ~ 32px
+                ctx.font = `bold ${fontSize}px 'Arial'`;
+                
                 ctx.save();
-                ctx.translate(20 + i*25, 30);
-                ctx.rotate((Math.random()-0.5)*0.4);
-                ctx.fillStyle = `rgb(${Math.random()*100},${Math.random()*100},${Math.random()*100})`;
+                // 增加位置的隨機偏移 (Offset)
+                const x = 15 + i * 25 + (Math.random() - 0.5) * 5;
+                const y = 32 + (Math.random() - 0.5) * 5;
+                
+                ctx.translate(x, y);
+                ctx.rotate((Math.random() - 0.5) * 0.5); // 旋轉角度
+                
+                // 隨機顏色
+                ctx.fillStyle = `rgb(${Math.random()*150},${Math.random()*150},${Math.random()*150})`;
                 ctx.fillText(code[i], 0, 0);
                 ctx.restore();
             }
