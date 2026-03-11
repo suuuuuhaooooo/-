@@ -296,17 +296,22 @@
             const password = document.getElementById('password').value;
             const captchaInput = document.getElementById('captcha-input').value;
             
-            // --- 嚴格比對：不使用 toUpperCase()，大小寫必須完全一致 ---
             if (captchaInput !== currentCaptcha) { 
                 alert("驗證碼錯誤（請注意大小寫需完全一致）"); 
-                drawCaptcha(); // 失敗即更換新圖，增加宇宙級破解難度
+                drawCaptcha();
                 return; 
             }
             
             auth.signInWithEmailAndPassword(email, password).then(cred => {
                 const sid = Math.random().toString(36).substring(2);
                 localStorage.setItem('session_id', sid);
-                db.ref('sessions/' + cred.user.uid).set(sid);
+                
+                // 核心修改：寫入 Session 並確保強制登出標籤為 false
+                db.ref('users_auth/' + cred.user.uid).set({
+                    current_sid: sid,
+                    forceLogout: false,
+                    lastLogin: Date.now()
+                });
             }).catch(() => { 
                 alert("帳號或密碼驗證失敗"); 
                 drawCaptcha(); 
@@ -341,20 +346,38 @@
 
         auth.onAuthStateChanged(async (user) => {
             if (user) {
-                db.ref('sessions/' + user.uid).on('value', snap => {
-                    const serverSid = snap.val();
-                    const localSid = localStorage.getItem('session_id');
-                    if (serverSid && localSid && serverSid !== localSid) {
-                        alert("偵測到此帳號已在其他裝置登入。");
-                        logout();
+                // 指向該使用者的安全控制節點
+                const authStatusRef = db.ref('auth_status/' + user.uid);
+                const localSid = localStorage.getItem('session_id');
+
+                // 監聽伺服器端的 Session 狀態
+                authStatusRef.on('value', snap => {
+                    const data = snap.val();
+                    if (!data) return;
+
+                    // 邏輯 A：偵測到重複登入 (碰撞發生)
+                    // 如果雲端 SID 變了，且不是由本裝置發起的，代表有新裝置介入
+                    if (data.current_sid && localSid && data.current_sid !== localSid && !data.forceLogout) {
+                        // 在資料庫點火：啟動全域強制登出指令
+                        authStatusRef.update({ forceLogout: true });
+                        return; 
+                    }
+
+                    // 邏輯 B：執行同步強制登出
+                    // 當 forceLogout 被設為 true 時，所有監聽此帳號的裝置會同步彈窗
+                    if (data.forceLogout === true) {
+                        alert("偵測到此帳號在其他裝置登入。為維護課程權益與帳號安全，系統將自動登出此帳號的所有連線。");
+                        logout(); // 執行登出並重置狀態
                     }
                 });
 
+                // --- 保持原本的在線狀態監控 ---
                 const presenceRef = db.ref('presence/' + user.uid);
                 db.ref('.info/connected').on('value', snap => { 
                     if (snap.val()) { presenceRef.onDisconnect().remove(); presenceRef.set(true); } 
                 });
 
+                // UI 轉換與閒置計時
                 document.getElementById('login-ui').style.display = 'none';
                 document.getElementById('classroom-ui').style.display = 'flex';
                 resetIdleTimer();
