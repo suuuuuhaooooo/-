@@ -120,6 +120,7 @@
             <div class="online-counter">
                 <span class="online-dot"></span>
                 <span id="presence-text">雲端系統連線中</span>
+                <div style="font-size: 10px; color: #ddd; margin-top: 15px; letter-spacing: 1px;">v3.8.18</div>
             </div>
         </div>
     </div>
@@ -141,10 +142,15 @@
             <div class="sidebar-footer">
                 <div id="student-name" style="font-size: 15px; font-weight: 700; color: var(--dark);">資料同步中...</div>
                 <div id="student-meta" style="margin-top: 5px;"></div>
-                <div id="login-ip" style="font-size: 10px; color: #bbb; margin-top: 5px;">IP: 獲取中...</div>
-                <span class="logout-link" onclick="logout()">登出</span>
-                <div style="font-size: 10px; color: #ddd; text-align: center; margin-top: 15px;">v3.8.16</div>
-            </div>
+    
+                <div style="margin-top: 15px; display: flex; justify-content: space-between; align-items: flex-end;">
+                <div>
+                <div id="login-ip" style="font-size: 10px; color: #bbb;">IP: 獲取中...</div>
+                <span class="logout-link" style="color: #b03a2e; text-decoration: none; font-weight: 700; margin-top: 8px; display: inline-block; transition: 0.2s;" onclick="logout()">登出</span>
+                </div>
+                <div style="font-size: 11px; color: #ccc; font-family: monospace; letter-spacing: 1px;">v3.8.18</div>
+                </div>
+        </div>
         </nav>
 
         <main class="main-content">
@@ -193,7 +199,7 @@
             clearTimeout(idleTimer);
             if (auth.currentUser) {
                 idleTimer = setTimeout(() => { 
-                    alert("由於您已超過 3 分鐘未操作，系統已自動安全登出。"); 
+                    alert("由於您已長時間未操作，系統已自動將您安全登出。"); 
                     logout(); 
                 }, 180000); 
             }
