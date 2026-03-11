@@ -23,13 +23,32 @@
         @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;700&display=swap');
         :root { --primary: #8e9775; --dark: #5b6348; --bg: #f8f8f6; --white: #ffffff; }
         
-        body { font-family: "Noto Serif TC", serif; background-color: var(--bg); margin: 0; color: #333; height: 100vh; overflow: hidden; }
+        body { 
+            font-family: "Noto Serif TC", serif; 
+            background-color: var(--bg); 
+            margin: 0; 
+            color: #333; 
+            height: 100vh; 
+            overflow: hidden; 
+            user-select: none; 
+            -webkit-user-select: none;
+        }
         
         /* 登入介面 */
         #login-ui { display: flex; justify-content: center; align-items: center; height: 100vh; background: var(--bg); position: fixed; width: 100%; z-index: 1000; }
         .login-card { background: white; padding: 40px; border-radius: 4px; box-shadow: 0 15px 35px rgba(0,0,0,0.05); width: 340px; text-align: center; border-top: 6px solid var(--primary); }
         .input-group { position: relative; margin: 10px 0; }
-        input { width: 100%; padding: 14px; border: 1px solid #eee; background: #fafafa; box-sizing: border-box; outline: none; transition: 0.3s; }
+        input { 
+            width: 100%; 
+            padding: 14px; 
+            border: 1px solid #eee; 
+            background: #fafafa; 
+            box-sizing: border-box; 
+            outline: none; 
+            transition: 0.3s; 
+            user-select: auto;
+            -webkit-user-select: auto;
+        }
         input:focus { border-color: var(--primary); background: #fff; }
         .toggle-password { position: absolute; right: 15px; top: 14px; cursor: pointer; color: #ccc; font-size: 14px; }
 
@@ -137,6 +156,11 @@
     </div>
 
     <script>
+        document.addEventListener('contextmenu', function(event) {
+            event.preventDefault();
+            alert("版權所有，翻印必究！");
+        });
+        
         const firebaseConfig = {
             apiKey: "AIzaSyALkTnkYY3JZLCTyajahpi4IZKmFX9USdw",
             authDomain: "su-hao-classroom.firebaseapp.com",
@@ -173,28 +197,23 @@
 
         // 圖形驗證碼邏輯
         let currentCaptcha = "";
-        // 宇宙級複雜驗證碼：結合網格、高頻噪點與波浪干擾
-                // 宇宙終極版：隨機底色 + 高密度雜訊 + 嚴格比對
         function drawCaptcha() {
             const canvas = document.getElementById('captcha-canvas');
             const ctx = canvas.getContext('2d');
             const chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjklmnpqrstuvwxyz23456789";
             
-            // 1. 【核心升級】底色隨機：生成隨機的淺色調背景 (控制在 180-255 之間確保不會太暗)
             const r = Math.floor(Math.random() * 75 + 180);
             const g = Math.floor(Math.random() * 75 + 180);
             const b = Math.floor(Math.random() * 75 + 180);
             ctx.fillStyle = `rgb(${r},${g},${b})`;
             ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-            // 2. 生成 4 位隨機驗證碼
             let code = "";
             for (let i = 0; i < 4; i++) {
                 code += chars.charAt(Math.floor(Math.random() * chars.length));
             }
             currentCaptcha = code;
 
-            // 3. 繪製背景網格
             ctx.lineWidth = 0.5;
             for (let i = 0; i < canvas.width; i += 10) {
                 ctx.strokeStyle = `rgba(0,0,0,${Math.random() * 0.15})`;
@@ -205,13 +224,11 @@
                 ctx.beginPath(); ctx.moveTo(0, i); ctx.lineTo(canvas.width, i); ctx.stroke();
             }
 
-            // 4. 繪製極高密度噪點 (提升至 780 個)
             for (let i = 0; i < 780; i++) {
                 ctx.fillStyle = `rgba(${Math.random()*255},${Math.random()*255},${Math.random()*255}, ${Math.random()*0.5})`;
                 ctx.fillRect(Math.random()*canvas.width, Math.random()*canvas.height, 1, 1);
             }
 
-            // 5. 繪製多重貝茲曲線 (提升至 20 條)
             for (let i = 0; i < 20; i++) {
                 ctx.strokeStyle = `rgba(${Math.random()*255},${Math.random()*255},${Math.random()*255}, 0.6)`;
                 ctx.lineWidth = Math.random() * 1.5;
@@ -225,7 +242,6 @@
                 ctx.stroke();
             }
 
-            // 6. 逐字繪製驗證碼
             for (let i = 0; i < code.length; i++) {
                 const fontSize = Math.floor(Math.random() * 15) + 22; 
                 ctx.font = `italic bold ${fontSize}px 'Courier New', Courier, monospace`;
@@ -246,7 +262,6 @@
             }
         }
 
-        // 登入分析：三層彈窗
         function runLoginAnalysis(uid, noticeText, studentName) {
             return new Promise((resolve) => {
                 const now = new Date();
@@ -271,7 +286,6 @@
 
                     if (needsUpdate) userStatsRef.set(data);
 
-                    // 彈窗順序整合
                     alert(`${studentName} 您好：\n這是您第 ${data.totalCount} 次登入（每天計算一次）\n\n您首次登入時間為：${data.firstLoginTime}`);
                     
                     alert("★☆因系統伺服器進行維修與優化作業，為確保系統運作穩定，目前下午3~6點間為尖峰時間。若遇到觀看較不順情形，請同學多利用離峰時間觀看！☆★");
@@ -306,7 +320,6 @@
                 const sid = Math.random().toString(36).substring(2);
                 localStorage.setItem('session_id', sid);
                 
-                // 每次新登入，寫入 SID 並將「全體踢出(kick_all)」設為 false
                 db.ref('auth_status/' + cred.user.uid).set({
                     current_sid: sid,
                     kick_all: false
@@ -320,8 +333,7 @@
         function logout() { 
             const user = auth.currentUser;
             if(user) { 
-                // 【關鍵修正】把 db.ref('auth_status...').remove() 拿掉！
-                // 只清除在線狀態，保留 auth_status 讓其他裝置有時間讀取踢人訊號
+
                 db.ref('presence/' + user.uid).remove(); 
             }
             auth.signOut().then(() => { 
@@ -354,16 +366,16 @@
                     const currentLocalSid = localStorage.getItem('session_id');
                     if (!currentLocalSid) return;
 
-                    // 邏輯 A：舊裝置偵測到新裝置登入 (碰撞)
+
                     if (data.current_sid && data.current_sid !== currentLocalSid && data.kick_all === false) {
-                        // 舊裝置發送「全體強制登出」訊號
+
                         authStatusRef.update({ kick_all: true });
                         return; 
                     }
 
-                    // 邏輯 B：所有裝置接收到強制登出訊號
+
                     if (data.kick_all === true) {
-                        // 【關鍵修正】先關閉監聽器，避免多重彈窗卡死瀏覽器
+
                         authStatusRef.off();
                         alert("系統偵測到帳號在其他裝置重複登入！\n為維護帳號安全，系統將自動登出。");
                         logout(); 
@@ -391,7 +403,7 @@
                         
                         await runLoginAnalysis(user.uid, my.notice, my.name);
 
-                        // 渲染影片與教材 (與原本邏輯相同)
+                        // 渲染影片與教材
                         const vIds = my.vIds ? my.vIds.toString().split(',').filter(id => id.trim() !== "") : [];
                         const videoBox = document.getElementById('video-container');
                         if (vIds.length > 0) {
