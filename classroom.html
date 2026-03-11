@@ -202,13 +202,13 @@
             }
 
             // 4. 繪製極高密度噪點 (高頻雜訊)
-            for (let i = 0; i < 550; i++) {
+            for (let i = 0; i < 780; i++) {
                 ctx.fillStyle = `rgba(${Math.random()*255},${Math.random()*255},${Math.random()*255}, ${Math.random()*0.5})`;
                 ctx.fillRect(Math.random()*canvas.width, Math.random()*canvas.height, 1, 1);
             }
 
             // 5. 繪製多重貝茲曲線 (波浪干擾訊號)
-            for (let i = 0; i < 12; i++) {
+            for (let i = 0; i < 20; i++) {
                 ctx.strokeStyle = `rgba(${Math.random()*255},${Math.random()*255},${Math.random()*255}, 0.6)`;
                 ctx.lineWidth = Math.random() * 2;
                 ctx.beginPath();
