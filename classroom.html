@@ -286,22 +286,29 @@
             const pwd = document.getElementById('password');
             const icon = document.querySelector('.toggle-password');
             pwd.type = (pwd.type === "password") ? "text" : "password";
-            icon.innerText = (pwd.type === "password") ? "👁️" : "🔒";
+            icon.innerText = (pwd.type === "password") ? "🔓" : "🔒";
         }
 
         function login() {
             const email = document.getElementById('email').value;
             const password = document.getElementById('password').value;
             const captchaInput = document.getElementById('captcha-input').value;
-            if (captchaInput.toUpperCase() !== currentCaptcha.toUpperCase()) { 
-                alert("驗證碼錯誤"); drawCaptcha(); return; 
+            
+            // --- 嚴格比對：不使用 toUpperCase()，大小寫必須完全一致 ---
+            if (captchaInput !== currentCaptcha) { 
+                alert("驗證碼錯誤（請注意大小寫需完全一致）"); 
+                drawCaptcha(); // 失敗即更換新圖，增加宇宙級破解難度
+                return; 
             }
             
             auth.signInWithEmailAndPassword(email, password).then(cred => {
                 const sid = Math.random().toString(36).substring(2);
                 localStorage.setItem('session_id', sid);
                 db.ref('sessions/' + cred.user.uid).set(sid);
-            }).catch(() => { alert("帳密錯誤"); drawCaptcha(); });
+            }).catch(() => { 
+                alert("帳號或密碼驗證失敗"); 
+                drawCaptcha(); 
+            });
         }
 
         function logout() { 
