@@ -405,7 +405,10 @@
                         document.getElementById('student-name').innerText = my.name + " 同學";
                         document.getElementById('student-meta').innerHTML = `<span class="info-tag">${my.level} 年級</span><span class="info-tag">${my.subject}</span>`;
                         
-                        await runLoginAnalysis(user.uid, my.notice, my.name);
+                        if (!sessionStorage.getItem('hasSeenPopups')) {
+                            await runLoginAnalysis(user.uid, my.notice, my.name);
+                            sessionStorage.setItem('hasSeenPopups', 'true');
+                        }
 
                         // 渲染影片與教材
                         const vIds = my.vIds ? my.vIds.toString().split(',').filter(id => id.trim() !== "") : [];
