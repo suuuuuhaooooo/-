@@ -174,13 +174,17 @@
         // 圖形驗證碼邏輯
         let currentCaptcha = "";
         // 宇宙級複雜驗證碼：結合網格、高頻噪點與波浪干擾
+                // 宇宙終極版：隨機底色 + 高密度雜訊 + 嚴格比對
         function drawCaptcha() {
             const canvas = document.getElementById('captcha-canvas');
             const ctx = canvas.getContext('2d');
             const chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjklmnpqrstuvwxyz23456789";
             
-            // 1. 底色：深淺不一的灰階背景
-            ctx.fillStyle = "#e0e4e0";
+            // 1. 【核心升級】底色隨機：生成隨機的淺色調背景 (控制在 180-255 之間確保不會太暗)
+            const r = Math.floor(Math.random() * 75 + 180);
+            const g = Math.floor(Math.random() * 75 + 180);
+            const b = Math.floor(Math.random() * 75 + 180);
+            ctx.fillStyle = `rgb(${r},${g},${b})`;
             ctx.fillRect(0, 0, canvas.width, canvas.height);
 
             // 2. 生成 4 位隨機驗證碼
@@ -190,27 +194,27 @@
             }
             currentCaptcha = code;
 
-            // 3. 繪製背景背景網格 (Grid Noise)
+            // 3. 繪製背景網格
             ctx.lineWidth = 0.5;
             for (let i = 0; i < canvas.width; i += 10) {
-                ctx.strokeStyle = `rgba(0,0,0,${Math.random() * 0.1})`;
+                ctx.strokeStyle = `rgba(0,0,0,${Math.random() * 0.15})`;
                 ctx.beginPath(); ctx.moveTo(i, 0); ctx.lineTo(i, canvas.height); ctx.stroke();
             }
             for (let i = 0; i < canvas.height; i += 10) {
-                ctx.strokeStyle = `rgba(0,0,0,${Math.random() * 0.1})`;
+                ctx.strokeStyle = `rgba(0,0,0,${Math.random() * 0.15})`;
                 ctx.beginPath(); ctx.moveTo(0, i); ctx.lineTo(canvas.width, i); ctx.stroke();
             }
 
-            // 4. 繪製極高密度噪點 (高頻雜訊)
+            // 4. 繪製極高密度噪點 (提升至 780 個)
             for (let i = 0; i < 780; i++) {
                 ctx.fillStyle = `rgba(${Math.random()*255},${Math.random()*255},${Math.random()*255}, ${Math.random()*0.5})`;
                 ctx.fillRect(Math.random()*canvas.width, Math.random()*canvas.height, 1, 1);
             }
 
-            // 5. 繪製多重貝茲曲線 (波浪干擾訊號)
+            // 5. 繪製多重貝茲曲線 (提升至 20 條)
             for (let i = 0; i < 20; i++) {
                 ctx.strokeStyle = `rgba(${Math.random()*255},${Math.random()*255},${Math.random()*255}, 0.6)`;
-                ctx.lineWidth = Math.random() * 2;
+                ctx.lineWidth = Math.random() * 1.5;
                 ctx.beginPath();
                 ctx.moveTo(0, Math.random() * canvas.height);
                 ctx.bezierCurveTo(
@@ -221,29 +225,27 @@
                 ctx.stroke();
             }
 
-            // 6. 逐字繪製驗證碼（極端變形與顏色偏移）
+            // 6. 逐字繪製驗證碼
             for (let i = 0; i < code.length; i++) {
-                // 隨機字體與粗細
-                const fontSize = Math.floor(Math.random() * 20) + 20; // 20px ~ 35px
+                const fontSize = Math.floor(Math.random() * 15) + 22; 
                 ctx.font = `italic bold ${fontSize}px 'Courier New', Courier, monospace`;
                 
                 ctx.save();
-                // 劇烈的位置抖動
                 const x = 20 + i * 25 + (Math.random() - 0.5) * 8;
                 const y = 35 + (Math.random() - 0.5) * 10;
                 
                 ctx.translate(x, y);
-                ctx.rotate((Math.random() - 0.5) * 0.8); // 大角度旋轉
+                ctx.rotate((Math.random() - 0.5) * 0.8); 
                 
-                // 隨機顏色與透明度
-                ctx.fillStyle = `rgba(${Math.random()*100},${Math.random()*100},${Math.random()*100}, 0.9)`;
-                ctx.shadowBlur = Math.random() * 5;
-                ctx.shadowColor = "rgba(0,0,0,0.3)";
+                ctx.fillStyle = `rgba(${Math.random()*120},${Math.random()*120},${Math.random()*120}, 1)`;
+                ctx.shadowBlur = Math.random() * 6;
+                ctx.shadowColor = "rgba(0,0,0,0.4)";
                 
                 ctx.fillText(code[i], 0, 0);
                 ctx.restore();
             }
         }
+
         // 登入分析：三層彈窗
         function runLoginAnalysis(uid, noticeText, studentName) {
             return new Promise((resolve) => {
