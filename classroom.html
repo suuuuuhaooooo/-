@@ -171,35 +171,40 @@
         window.onmousemove = window.onkeypress = window.ontouchstart = window.onclick = resetIdleTimer;
 
         // 分兩次彈窗邏輯
-               // 登入分析：歷史總次數累加（一天僅記錄一次）
-        function runLoginAnalysis(uid, noticeText) {
+               // 登入分析：歷史總次數累加（一天僅記錄一次）並紀錄首次登入時間
+        function runLoginAnalysis(uid, noticeText, studentName) {
             return new Promise((resolve) => {
-                const today = new Date().toLocaleDateString('zh-TW'); // 取得在地化日期字串
+                const now = new Date();
+                const today = now.toLocaleDateString('zh-TW'); // 格式如：2024/5/20
                 const userStatsRef = db.ref(`login_stats/${uid}`);
                 
                 userStatsRef.once('value').then(snap => {
-                    let data = snap.val() || { totalCount: 0, lastLoginDate: "" };
+                    let data = snap.val() || { totalCount: 0, lastLoginDate: "", firstLoginTime: "" };
                     
-                    // 判斷今天是否已經紀錄過
+                    // 1. 如果是完全第一次登入，記錄下當前時間
+                    if (!data.firstLoginTime) {
+                        const timeStr = `${now.getFullYear()}-${(now.getMonth()+1).toString().padStart(2,'0')}-${now.getDate().toString().padStart(2,'0')} ${now.getHours().toString().padStart(2,'0')}:${now.getMinutes().toString().padStart(2,'0')}:${now.getSeconds().toString().padStart(2,'0')}`;
+                        data.firstLoginTime = timeStr;
+                    }
+
+                    // 2. 判斷今天是否已經紀錄過次數
                     if (data.lastLoginDate !== today) {
-                        // 如果是新的一天，總次數 +1，並更新最後登入日期
                         data.totalCount = (data.totalCount || 0) + 1;
                         data.lastLoginDate = today;
-                        
-                        // 回傳更新到資料庫
+                        // 寫回 Firebase
                         userStatsRef.set(data);
                     }
 
-                    // 第一個彈窗：顯示歷史累計次數
-                    alert(`登入成功！這是你第 ${data.totalCount} 次回來學習。`);
+                    // 3. 第一個系統視窗：個人化稱呼與統計
+                    alert(`${studentName} 您好：\n這是您第 ${data.totalCount} 次登入（每天計算一次）\n\n您首次登入時間為：${data.firstLoginTime}`);
                     
-                    // 第二個彈窗：顯示公告（維持原狀）
+                    // 4. 第二個系統視窗：維持原狀顯示公告
                     if (noticeText && noticeText.trim() !== "") {
                         alert("【公告】\n" + noticeText.trim());
                     }
                     resolve();
                 }).catch(e => {
-                    console.error("次數紀錄失敗:", e);
+                    console.error("紀錄失敗:", e);
                     resolve();
                 });
             });
@@ -298,7 +303,8 @@
                         document.getElementById('student-name').innerText = my.name + " 同學";
                         document.getElementById('student-meta').innerHTML = `<span class="info-tag">${my.level} 年級</span><span class="info-tag">${my.subject}</span>`;
                         
-                        await runLoginAnalysis(user.uid, my.notice);
+                        //await runLoginAnalysis(user.uid, my.notice);
+                        await runLoginAnalysis(user.uid, my.notice, my.name);
 
                         const vIds = my.vIds ? my.vIds.toString().split(',').filter(id => id.trim() !== "") : [];
                         const videoBox = document.getElementById('video-container');
