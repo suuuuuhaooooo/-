@@ -171,37 +171,46 @@
         window.onmousemove = window.onkeypress = window.ontouchstart = window.onclick = resetIdleTimer;
 
         // 分兩次彈窗邏輯
-               // 登入分析：歷史總次數累加（一天僅記錄一次）並紀錄首次登入時間
+        // 登入分析：整合三個彈窗（統計 -> 公播 -> 客製公告）
         function runLoginAnalysis(uid, noticeText, studentName) {
             return new Promise((resolve) => {
                 const now = new Date();
-                const today = now.toLocaleDateString('zh-TW'); // 格式如：2024/5/20
+                const today = now.toLocaleDateString('zh-TW'); 
                 const userStatsRef = db.ref(`login_stats/${uid}`);
                 
                 userStatsRef.once('value').then(snap => {
                     let data = snap.val() || { totalCount: 0, lastLoginDate: "", firstLoginTime: "" };
-                    
-                    // 1. 如果是完全第一次登入，記錄下當前時間
+                    let needsUpdate = false;
+
+                    // 1. 紀錄真實首次登入時間（僅執行一次）
                     if (!data.firstLoginTime) {
                         const timeStr = `${now.getFullYear()}-${(now.getMonth()+1).toString().padStart(2,'0')}-${now.getDate().toString().padStart(2,'0')} ${now.getHours().toString().padStart(2,'0')}:${now.getMinutes().toString().padStart(2,'0')}:${now.getSeconds().toString().padStart(2,'0')}`;
                         data.firstLoginTime = timeStr;
+                        needsUpdate = true;
                     }
 
-                    // 2. 判斷今天是否已經紀錄過次數
+                    // 2. 每天僅累計一次登入次數
                     if (data.lastLoginDate !== today) {
                         data.totalCount = (data.totalCount || 0) + 1;
                         data.lastLoginDate = today;
-                        // 寫回 Firebase
+                        needsUpdate = true;
+                    }
+
+                    if (needsUpdate) {
                         userStatsRef.set(data);
                     }
 
-                    // 3. 第一個系統視窗：個人化稱呼與統計
+                    // --- 第一個視窗：個人統計與首次登入紀錄 ---
                     alert(`${studentName} 您好：\n這是您第 ${data.totalCount} 次登入（每天計算一次）\n\n您首次登入時間為：${data.firstLoginTime}`);
                     
-                    // 4. 第二個系統視窗：維持原狀顯示公告
+                    // --- 第二個視窗：公播系統公告 ---
+                    alert("★☆因系統伺服器進行維修與優化作業，為確保系統運作穩定，目前下午3~6點間為尖峰時間。若遇到觀看較不順情形，請同學多利用離峰時間觀看！☆★");
+
+                    // --- 第三個視窗：後端 Excel 客製訊息 ---
                     if (noticeText && noticeText.trim() !== "") {
                         alert("【公告】\n" + noticeText.trim());
                     }
+
                     resolve();
                 }).catch(e => {
                     console.error("紀錄失敗:", e);
@@ -209,8 +218,6 @@
                 });
             });
         }
-
-
 
         let currentCaptcha = "";
         function generateCaptcha() {
