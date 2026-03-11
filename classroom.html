@@ -7,15 +7,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>蘇昊數理｜專業數位雲端教室</title>
-    <meta name="description" content="整合專屬教材、影音解題與課程資料庫。為學生打造不受時空限制的數位學習環境，提升學習成效。">
+    
+    <meta name="description" content="整合專屬教材、影音解題與課程資料庫。為學生打造不受時空限制的數位學習環境。">
     <meta property="og:title" content="蘇昊數理｜專業數位雲端教室">
     <meta property="og:description" content="整合課後講義、客製化題庫與影音解題，讓學習與複習更有效率。">
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://suuuuuhaooooo.github.io/-/classroom.html">
     <meta property="og:image" content="https://suuuuuhaooooo.github.io/-/og-image.png">
 
-
-    
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-database-compat.js"></script>
@@ -35,7 +34,7 @@
         .toggle-password { position: absolute; right: 15px; top: 14px; cursor: pointer; color: #ccc; font-size: 14px; }
 
         .captcha-container { display: flex; align-items: center; gap: 10px; margin: 10px 0; }
-        #captcha-code { background: #eef1ec; color: var(--dark); font-weight: 700; padding: 10px; flex: 1; letter-spacing: 5px; font-style: italic; text-decoration: line-through; user-select: none; border-radius: 2px; cursor: pointer; }
+        #captcha-canvas { background: #eef1ec; cursor: pointer; border-radius: 2px; flex: 1; height: 45px; }
 
         .main-btn { background: var(--primary); color: white; border: none; padding: 14px; width: 100%; cursor: pointer; letter-spacing: 2px; font-weight: 700; transition: 0.3s; margin-top: 10px; }
         .main-btn:hover { background: var(--dark); }
@@ -94,7 +93,7 @@
                 <span class="toggle-password" onclick="togglePassword()">👁️</span>
             </div>
             <div class="captcha-container">
-                <div id="captcha-code" title="點擊更換驗證碼" onclick="generateCaptcha()">載入中</div>
+                <canvas id="captcha-canvas" width="120" height="45" title="點擊更換驗證碼" onclick="drawCaptcha()"></canvas>
                 <input type="text" id="captcha-input" placeholder="驗證碼">
             </div>
             <button class="main-btn" onclick="login()">登入</button>
@@ -159,7 +158,7 @@
             textEl.innerHTML = count > 1 ? `目前有 <span style="font-weight:700; color:#666;">${count}</span> 位同學正在線上` : `目前有 <span style="font-weight:700; color:#666;">1</span> 位同學在線上`;
         });
 
-        // --- 核心功能：3 分鐘閒置機制 ---
+        // 3 分鐘閒置機制
         let idleTimer;
         function resetIdleTimer() {
             clearTimeout(idleTimer);
@@ -167,14 +166,49 @@
                 idleTimer = setTimeout(() => { 
                     alert("由於您已超過 3 分鐘未操作，系統已自動安全登出。"); 
                     logout(); 
-                }, 180000); // 3 分鐘
+                }, 180000); 
             }
         }
-        // 監聽所有互動行為
         window.onmousemove = window.onkeypress = window.ontouchstart = window.onclick = resetIdleTimer;
 
-        // 分兩次彈窗邏輯
-        // 登入分析：整合三個彈窗（統計 -> 公播 -> 客製公告）
+        // 圖形驗證碼邏輯
+        let currentCaptcha = "";
+        function drawCaptcha() {
+            const canvas = document.getElementById('captcha-canvas');
+            const ctx = canvas.getContext('2d');
+            const chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjklmnpqrstuvwxyz23456789";
+            
+            ctx.fillStyle = "#eef1ec";
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            let code = "";
+            for (let i = 0; i < 4; i++) {
+                code += chars.charAt(Math.floor(Math.random() * chars.length));
+            }
+            currentCaptcha = code;
+
+            // 背景干擾線
+            for (let i = 0; i < 8; i++) {
+                ctx.strokeStyle = `rgba(${Math.random()*255},${Math.random()*255},${Math.random()*255}, 0.2)`;
+                ctx.beginPath();
+                ctx.moveTo(Math.random()*canvas.width, Math.random()*canvas.height);
+                ctx.lineTo(Math.random()*canvas.width, Math.random()*canvas.height);
+                ctx.stroke();
+            }
+
+            // 繪製扭曲文字
+            ctx.font = "bold 26px 'Arial'";
+            for (let i = 0; i < code.length; i++) {
+                ctx.save();
+                ctx.translate(20 + i*25, 30);
+                ctx.rotate((Math.random()-0.5)*0.4);
+                ctx.fillStyle = `rgb(${Math.random()*100},${Math.random()*100},${Math.random()*100})`;
+                ctx.fillText(code[i], 0, 0);
+                ctx.restore();
+            }
+        }
+
+        // 登入分析：三層彈窗
         function runLoginAnalysis(uid, noticeText, studentName) {
             return new Promise((resolve) => {
                 const now = new Date();
@@ -185,52 +219,32 @@
                     let data = snap.val() || { totalCount: 0, lastLoginDate: "", firstLoginTime: "" };
                     let needsUpdate = false;
 
-                    // 1. 紀錄真實首次登入時間（僅執行一次）
                     if (!data.firstLoginTime) {
                         const timeStr = `${now.getFullYear()}-${(now.getMonth()+1).toString().padStart(2,'0')}-${now.getDate().toString().padStart(2,'0')} ${now.getHours().toString().padStart(2,'0')}:${now.getMinutes().toString().padStart(2,'0')}:${now.getSeconds().toString().padStart(2,'0')}`;
                         data.firstLoginTime = timeStr;
                         needsUpdate = true;
                     }
 
-                    // 2. 每天僅累計一次登入次數
                     if (data.lastLoginDate !== today) {
                         data.totalCount = (data.totalCount || 0) + 1;
                         data.lastLoginDate = today;
                         needsUpdate = true;
                     }
 
-                    if (needsUpdate) {
-                        userStatsRef.set(data);
-                    }
+                    if (needsUpdate) userStatsRef.set(data);
 
-                    // --- 第一個視窗：個人統計與首次登入紀錄 ---
+                    // 彈窗順序整合
                     alert(`${studentName} 您好：\n這是您第 ${data.totalCount} 次登入（每天計算一次）\n\n您首次登入時間為：${data.firstLoginTime}`);
                     
-                    // --- 第二個視窗：公播系統公告 ---
                     alert("★☆因系統伺服器進行維修與優化作業，為確保系統運作穩定，目前下午3~6點間為尖峰時間。若遇到觀看較不順情形，請同學多利用離峰時間觀看！☆★");
 
-                    // --- 第三個視窗：後端 Excel 客製訊息 ---
                     if (noticeText && noticeText.trim() !== "") {
                         alert("【公告】\n" + noticeText.trim());
                     }
-
-                    resolve();
-                }).catch(e => {
-                    console.error("紀錄失敗:", e);
                     resolve();
                 });
             });
         }
-
-        let currentCaptcha = "";
-        function generateCaptcha() {
-            const chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjklmnpqrstuvwxyz23456789";
-            let code = "";
-            for (let i = 0; i < 4; i++) code += chars.charAt(Math.floor(Math.random() * chars.length));
-            currentCaptcha = code;
-            document.getElementById('captcha-code').innerText = code;
-        }
-        generateCaptcha();
 
         function togglePassword() {
             const pwd = document.getElementById('password');
@@ -239,33 +253,19 @@
             icon.innerText = (pwd.type === "password") ? "👁️" : "🔒";
         }
 
-        fetch('https://api.ipify.org?format=json').then(res => res.json()).then(data => { 
-            document.getElementById('login-ip').innerText = "IP: " + data.ip; 
-        });
-
-        function showView(viewId, navEl) {
-            document.querySelectorAll('.view-section').forEach(v => v.classList.remove('active'));
-            document.querySelectorAll('.nav-link').forEach(n => n.classList.remove('active'));
-            document.getElementById(viewId).classList.add('active');
-            if(navEl) navEl.classList.add('active');
-        }
-
-        function playVideo(fileId) {
-            const url = `https://drive.google.com/file/d/${fileId.trim()}/view`;
-            window.open(url, '_blank');
-        }
-
         function login() {
             const email = document.getElementById('email').value;
             const password = document.getElementById('password').value;
             const captchaInput = document.getElementById('captcha-input').value;
-            if (captchaInput !== currentCaptcha) { alert("驗證碼錯誤(請注意大小寫)"); generateCaptcha(); return; }
+            if (captchaInput.toUpperCase() !== currentCaptcha.toUpperCase()) { 
+                alert("驗證碼錯誤"); drawCaptcha(); return; 
+            }
             
             auth.signInWithEmailAndPassword(email, password).then(cred => {
                 const sid = Math.random().toString(36).substring(2);
                 localStorage.setItem('session_id', sid);
                 db.ref('sessions/' + cred.user.uid).set(sid);
-            }).catch(() => { alert("驗證失敗"); generateCaptcha(); });
+            }).catch(() => { alert("帳密錯誤"); drawCaptcha(); });
         }
 
         function logout() { 
@@ -280,19 +280,31 @@
             });
         }
 
+        window.onload = function() {
+            drawCaptcha();
+            fetch('https://api.ipify.org?format=json').then(res => res.json()).then(data => { 
+                document.getElementById('login-ip').innerText = "IP: " + data.ip; 
+            });
+        };
+
+        function showView(viewId, navEl) {
+            document.querySelectorAll('.view-section').forEach(v => v.classList.remove('active'));
+            document.querySelectorAll('.nav-link').forEach(n => n.classList.remove('active'));
+            document.getElementById(viewId).classList.add('active');
+            if(navEl) navEl.classList.add('active');
+        }
+
         auth.onAuthStateChanged(async (user) => {
             if (user) {
-                // 重複登入檢查
                 db.ref('sessions/' + user.uid).on('value', snap => {
                     const serverSid = snap.val();
                     const localSid = localStorage.getItem('session_id');
                     if (serverSid && localSid && serverSid !== localSid) {
-                        alert("偵測到此帳號已在其他裝置登入，系統將自動登出。");
+                        alert("偵測到此帳號已在其他裝置登入。");
                         logout();
                     }
                 });
 
-                // 在線狀態
                 const presenceRef = db.ref('presence/' + user.uid);
                 db.ref('.info/connected').on('value', snap => { 
                     if (snap.val()) { presenceRef.onDisconnect().remove(); presenceRef.set(true); } 
@@ -300,8 +312,6 @@
 
                 document.getElementById('login-ui').style.display = 'none';
                 document.getElementById('classroom-ui').style.display = 'flex';
-                
-                // --- 登入後立即啟動閒置計時 ---
                 resetIdleTimer();
                 
                 try {
@@ -313,16 +323,16 @@
                         document.getElementById('student-name').innerText = my.name + " 同學";
                         document.getElementById('student-meta').innerHTML = `<span class="info-tag">${my.level} 年級</span><span class="info-tag">${my.subject}</span>`;
                         
-                        //await runLoginAnalysis(user.uid, my.notice);
                         await runLoginAnalysis(user.uid, my.notice, my.name);
 
+                        // 渲染影片與教材 (與原本邏輯相同)
                         const vIds = my.vIds ? my.vIds.toString().split(',').filter(id => id.trim() !== "") : [];
                         const videoBox = document.getElementById('video-container');
                         if (vIds.length > 0) {
                             const vNames = my.vNames ? my.vNames.toString().split(',') : [];
                             videoBox.innerHTML = `<div id="video-grid" class="video-grid"></div>`;
                             document.getElementById('video-grid').innerHTML = vIds.map((id, i) => `
-                                <div class="video-card" onclick="playVideo('${id}')">
+                                <div class="video-card" onclick="window.open('https://drive.google.com/file/d/${id.trim()}/view', '_blank')">
                                     <div style="color: var(--primary); font-weight: 700; font-size: 15px; margin-bottom: 5px;">${(vNames[i] || '單元 '+(i+1)).trim()}</div>
                                     <div style="font-size: 12px; color: #999;">點擊另開分頁播放影片</div>
                                 </div>`).join('');
