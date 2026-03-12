@@ -6,10 +6,8 @@
     
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>線上測驗中心｜蘇昊數理雲端教室</title>
+    <title>蘇昊數理｜測驗中心</title>
     
-    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-database-compat.js"></script>
@@ -76,7 +74,7 @@
 
     <script>
         document.addEventListener('contextmenu', function(event) { event.preventDefault(); alert("版權所有，翻印必究！"); });
-        let completedRecords = {};
+        let completedRecords = {}; // 全域變數，存放 Firebase 抓下來的成績
     </script>
 
     <div id="loading-screen">權限驗證中，請稍候...</div>
@@ -164,14 +162,16 @@
             }
         ];
 
-        // 登入狀態驗證
-        auth.onAuthStateChanged((user) => {
+        // 登入狀態驗證與 Firebase 成績抓取
+        auth.onAuthStateChanged(async (user) => {
             if (user) {
                 currentUserUid = user.uid; // 記住使用者 UID
-                document.getElementById('loading-screen').style.display = 'none';
+                
+                // 從 Firebase 抓取該學生的歷史測驗成績
                 const db = firebase.database();
                 const snap = await db.ref('exam_records/' + currentUserUid).once('value');
-                completedRecords = snap.val() || {}; // 抓下來存進變數裡
+                completedRecords = snap.val() || {}; // 存進全域變數裡
+
                 document.getElementById('loading-screen').style.display = 'none';
                 showExamList(); // 顯示列表
             } else {
@@ -192,13 +192,11 @@
             hideAllUI();
             document.getElementById('exam-list-ui').style.display = 'block';
             
-            // 從 localStorage 讀取該名學生的完成紀錄
-            const completedRecords = JSON.parse(localStorage.getItem('completed_exams_' + currentUserUid)) || {};
             const grid = document.getElementById('exam-grid');
             grid.innerHTML = "";
 
             examCatalog.forEach(exam => {
-                const isDone = completedRecords[exam.id]; // 檢查是否考過
+                const isDone = completedRecords[exam.id]; // 檢查 Firebase 紀錄是否有這張考卷
                 
                 const card = document.createElement('div');
                 card.className = 'exam-card';
@@ -304,9 +302,9 @@
                         <div class="review-exp"><strong>📝 老師解析：</strong><br>${q.explanation}</div>
                     </div>
                 `;
-            }); // 👈 迴圈在這裡結束
+            }); 
 
-            // 👇 就是加在這裡！計算總分並寫入 Firebase 雲端
+            // 計算總分
             const finalScore = Math.round((correctCount / currentExam.questions.length) * 100);
             
             // 1. 更新本地變數讓畫面立刻有反應
@@ -317,37 +315,20 @@
                 score: finalScore,
                 date: new Date().toISOString()
             });
-            // 👆 寫入結束
 
-            // 👇 下面是原本的：把分數顯示在畫面上並給予不同顏色的回饋
+            // 3. 顯示分數並給予不同顏色的回饋
             const scoreEl = document.getElementById('score-display');
             scoreEl.innerText = `${finalScore} 分`;
             if (finalScore === 100) { 
                 scoreEl.style.color = "#27ae60"; 
-                scoreEl.innerText += "滿分！太厲害了！"; 
+                scoreEl.innerText += " 🎉 滿分！太厲害了！"; 
             } else if (finalScore >= 60) { 
                 scoreEl.style.color = "#d35400"; 
             } else { 
                 scoreEl.style.color = "#c0392b"; 
-                scoreEl.innerText += "要再加油複習喔！"; 
+                scoreEl.innerText += " 💦 要再加油複習喔！"; 
             }
-            }
-
-            const finalScore = Math.round((correctCount / currentExam.questions.length) * 100);
-            
-            // 🔥 核心：將成績與完成狀態寫入 LocalStorage，綁定學生 UID
-            let completedRecords = JSON.parse(localStorage.getItem('completed_exams_' + currentUserUid)) || {};
-            completedRecords[currentExam.id] = { score: finalScore, date: new Date().toISOString() };
-            localStorage.setItem('completed_exams_' + currentUserUid, JSON.stringify(completedRecords));
-
-            // 顯示分數
-            const scoreEl = document.getElementById('score-display');
-            scoreEl.innerText = `${finalScore} 分`;
-            if (finalScore === 100) { scoreEl.style.color = "#27ae60"; scoreEl.innerText += " 🎉 滿分！太厲害了！"; }
-            else if (finalScore >= 60) { scoreEl.style.color = "#d35400"; }
-            else { scoreEl.style.color = "#c0392b"; scoreEl.innerText += " 💦 要再加油複習喔！"; }
         }
     </script>
 </body>
-
 </html>
