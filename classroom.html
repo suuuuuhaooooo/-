@@ -428,6 +428,7 @@
                         
                         if (!sessionStorage.getItem('hasSeenPopups')) {
                             // 👉 觸發登入提醒寄信
+                            console.log("嘗試寄信給:", my.studentEmail);
                             sendLoginNotify(my.name, my.studentEmail);
                             await runLoginAnalysis(user.uid, my.notice, my.name);
                             sessionStorage.setItem('hasSeenPopups', 'true');
