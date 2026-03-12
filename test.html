@@ -74,10 +74,10 @@
 
     <script>
         document.addEventListener('contextmenu', function(event) { event.preventDefault(); alert("版權所有，翻印必究！"); });
-        let completedRecords = {}; // 全域變數，存放 Firebase 抓下來的成績
+        let completedRecords = {}; 
     </script>
 
-    <div id="loading-screen">權限驗證中，請稍候...</div>
+    <div id="loading-screen">系統連線中，載入專屬測驗...</div>
 
     <div id="exam-list-ui" class="container-ui">
         <a href="classroom.html" class="back-btn">← 返回雲端教室</a>
@@ -118,62 +118,52 @@
         };
         firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth();
+        
+        // 🔥 剛剛部署好的全新 API 網址
+        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx884HoE5YwEpoWwKR3aIIvAUGrydmwRFC7ETpW_UowiSsIoMch9esQye_7WjRQrNQelQ/exec";
+        
         let currentUserUid = null;
+        let studentPersonalExams = []; // 存放該學生專屬的考卷清單
 
-        // 2. 測驗總目錄 (Exam Catalog)
-        const examCatalog = [
-            {
-                id: "exam_math_01",
-                title: "單元測驗：二次函數圖形與判別式",
-                desc: "共 2 題單選題，滿分 100 分。",
-                questions: [
-                    {
-                        question: "若一個二次函數 f(x) = ax² + bx + c 的圖形開口向上，且與 x 軸交於相異兩點，下列何者必為真？",
-                        options: ["a < 0 且 b² - 4ac > 0", "a > 0 且 b² - 4ac > 0", "a > 0 且 b² - 4ac = 0", "a < 0 且 b² - 4ac < 0"],
-                        correctAnswer: 1,
-                        explanation: "圖形開口向上代表 a > 0；與 x 軸交於「相異兩點」代表判別式 D = b² - 4ac 必須大於 0。"
-                    },
-                    {
-                        question: "若二次函數圖形的頂點在第一象限，且與 x 軸不相交，則開口方向為何？",
-                        options: ["一定向上", "一定向下", "向左", "向右"],
-                        correctAnswer: 0,
-                        explanation: "頂點在第一象限(y>0)，且不與x軸相交，代表整個圖形都在x軸上方，因此開口必然向上。"
-                    }
-                ]
-            },
-            {
-                id: "exam_phy_01",
-                title: "單元測驗：基礎物理與運動學",
-                desc: "共 2 題單選題，滿分 100 分。",
-                questions: [
-                    {
-                        question: "一顆小球由靜止狀態自由落下，忽略空氣阻力，第 3 秒末的瞬時速度為多少？ (重力加速度 g 代 9.8 m/s²)",
-                        options: ["9.8 m/s", "19.6 m/s", "29.4 m/s", "44.1 m/s"],
-                        correctAnswer: 2,
-                        explanation: "由等加速度直線運動公式 v = v0 + at。v0 = 0, a = 9.8, t = 3，故 v = 0 + 9.8 × 3 = 29.4 (m/s)。"
-                    },
-                    {
-                        question: "電路學中，若將三個 6 歐姆的電阻「並聯」，其總等效電阻為多少？",
-                        options: ["2 歐姆", "3 歐姆", "12 歐姆", "18 歐姆"],
-                        correctAnswer: 0,
-                        explanation: "並聯等效電阻公式為 1/R = 1/R1 + 1/R2 + 1/R3。即 1/R = 1/6 + 1/6 + 1/6 = 3/6 = 1/2。故 R = 2 歐姆。"
-                    }
-                ]
-            }
-        ];
-
-        // 登入狀態驗證與 Firebase 成績抓取
+        // 登入狀態驗證與「雙向 API」資料抓取
         auth.onAuthStateChanged(async (user) => {
             if (user) {
-                currentUserUid = user.uid; // 記住使用者 UID
+                currentUserUid = user.uid;
                 
-                // 從 Firebase 抓取該學生的歷史測驗成績
-                const db = firebase.database();
-                const snap = await db.ref('exam_records/' + currentUserUid).once('value');
-                completedRecords = snap.val() || {}; // 存進全域變數裡
+                try {
+                    // 1. 從 Firebase 抓取該學生的歷史測驗成績
+                    const db = firebase.database();
+                    const snap = await db.ref('exam_records/' + currentUserUid).once('value');
+                    completedRecords = snap.val() || {}; 
 
-                document.getElementById('loading-screen').style.display = 'none';
-                showExamList(); // 顯示列表
+                    // 2. 向 Excel API 抓取「學生資料」與「雲端題庫」
+                    const [studentRes, examRes] = await Promise.all([
+                        fetch(SCRIPT_URL),
+                        fetch(SCRIPT_URL + "?action=getExams")
+                    ]);
+                    
+                    const studentDataArray = await studentRes.json();
+                    const allExamsCatalog = await examRes.json();
+                    
+                    // 3. 找到這位登入的學生
+                    const myData = studentDataArray.find(i => i.uid === user.uid);
+
+                    // 4. 核心邏輯：比對 examIds 並過濾出專屬試卷
+                    if (myData && myData.examIds && myData.examIds.trim() !== "") {
+                        const assignedIds = myData.examIds.split(',').map(id => id.trim());
+                        // 從大題庫中，只挑選出有被指派的考卷
+                        studentPersonalExams = allExamsCatalog.filter(exam => assignedIds.includes(exam.id));
+                    } else {
+                        // 如果老師欄位留空，代表沒派考試
+                        studentPersonalExams = []; 
+                    }
+
+                    document.getElementById('loading-screen').style.display = 'none';
+                    showExamList(); 
+                } catch (e) {
+                    console.error("系統讀取失敗：", e);
+                    alert("資料庫連線異常，請重新整理頁面。");
+                }
             } else {
                 alert("未授權的存取！請先登入系統才能進行測驗。");
                 window.location.replace("classroom.html"); 
@@ -195,8 +185,14 @@
             const grid = document.getElementById('exam-grid');
             grid.innerHTML = "";
 
-            examCatalog.forEach(exam => {
-                const isDone = completedRecords[exam.id]; // 檢查 Firebase 紀錄是否有這張考卷
+            // 如果沒有被指派考卷的顯示畫面
+            if (studentPersonalExams.length === 0) {
+                grid.innerHTML = '<div style="text-align: center; color: #bbb; padding: 40px 0; border: 1px dashed #ccc; border-radius: 6px;">目前沒有待完成的測驗任務。</div>';
+                return;
+            }
+
+            studentPersonalExams.forEach(exam => {
+                const isDone = completedRecords[exam.id]; 
                 
                 const card = document.createElement('div');
                 card.className = 'exam-card';
@@ -225,7 +221,8 @@
         let userAnswers = [];
 
         function startExam(examId) {
-            currentExam = examCatalog.find(e => e.id === examId);
+            // 從過濾後的專屬清單中尋找
+            currentExam = studentPersonalExams.find(e => e.id === examId);
             currentQuestionIndex = 0;
             userAnswers = new Array(currentExam.questions.length).fill(null);
             
