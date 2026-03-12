@@ -42,10 +42,18 @@
         .exam-card:hover { border-color: var(--primary); box-shadow: 0 4px 10px rgba(0,0,0,0.03); }
         .exam-info h3 { margin: 0 0 5px 0; font-size: 16px; color: var(--dark); }
         .exam-info p { margin: 0; font-size: 12px; color: #888; }
-        .exam-status-btn { padding: 10px 20px; border-radius: 4px; font-weight: 700; font-size: 13px; cursor: pointer; border: none; transition: 0.2s; }
+        
+        /* 按鈕基礎樣式 */
+        .exam-status-btn { padding: 10px 18px; border-radius: 4px; font-weight: 700; font-size: 13px; cursor: pointer; border: none; transition: 0.2s; }
         .btn-start { background: var(--primary); color: white; }
         .btn-start:hover { background: var(--dark); }
-        .btn-done { background: #e0e0e0; color: #888; cursor: not-allowed; }
+        
+        /* 已完成的分數標籤 (不可點擊) */
+        .status-badge { display: inline-block; padding: 10px 15px; background: #e0e0e0; color: #777; border-radius: 4px; font-weight: 700; font-size: 13px; margin-right: 8px; }
+        
+        /* 查看解析按鈕 */
+        .btn-review { background: white; color: var(--primary); border: 1px solid var(--primary); }
+        .btn-review:hover { background: var(--primary); color: white; }
 
         .quiz-header-container { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px dashed #eee; padding-bottom: 15px; margin-bottom: 20px; }
         .quiz-header { font-size: 15px; color: #888; font-weight: 700; letter-spacing: 1px; margin: 0; }
@@ -76,7 +84,7 @@
         let completedRecords = {}; 
     </script>
 
-    <div id="loading-screen">系統連線中，載入專屬測驗...</div>
+    <div id="loading-screen">系統確認授權中，載入專屬測驗...</div>
 
     <div id="exam-list-ui" class="container-ui">
         <a href="classroom.html" class="back-btn">← 返回雲端教室</a>
@@ -109,7 +117,7 @@
     </div>
 
     <div id="result-ui" class="container-ui">
-        <h3 style="text-align: center; color: var(--dark); margin-bottom: 0;">測驗結算</h3>
+        <h3 id="result-title" style="text-align: center; color: var(--dark); margin-bottom: 0;">測驗結算</h3>
         <div id="score-display"></div>
         <h4 style="border-bottom: 2px solid #eee; padding-bottom: 10px; margin-top: 30px;">錯題與未作答檢討</h4>
         <div id="review-container"></div>
@@ -172,15 +180,13 @@
         });
 
         window.addEventListener('beforeunload', function (e) {
-            // 只有在「測驗進行中」才觸發攔截
             if (document.getElementById('test-ui').style.display === 'block') {
-                e.preventDefault(); // 阻擋預設關閉動作
-                e.returnValue = ''; // Chrome/Edge 規定必須要加這行 (即使給空字串)，才會彈出官方警告
-                return '';          // 舊版瀏覽器的相容性寫法
+                e.preventDefault();
+                e.returnValue = '';
+                return '';
             }
         });
 
-        // 輔助函式：陣列隨機洗牌
         function shuffleArray(array) {
             for (let i = array.length - 1; i > 0; i--) {
                 const j = Math.floor(Math.random() * (i + 1));
@@ -212,9 +218,18 @@
                 const card = document.createElement('div');
                 card.className = 'exam-card';
                 
-                let btnHtml = isDone 
-                    ? `<button class="exam-status-btn btn-done" disabled>✔ 已完成 (${isDone.score}分)</button>` 
-                    : `<button class="exam-status-btn btn-start" onclick="startExam('${exam.id}')">▶ 開始測驗</button>`;
+                let btnHtml = "";
+                if (isDone) {
+                    // 並排顯示：已完成標籤 + 查看解析按鈕
+                    btnHtml = `
+                        <div style="display: flex; align-items: center;">
+                            <span class="status-badge">✔ 已完成 (${isDone.score}分)</span>
+                            <button class="exam-status-btn btn-review" onclick="viewReview('${exam.id}')">查看解析</button>
+                        </div>
+                    `;
+                } else {
+                    btnHtml = `<button class="exam-status-btn btn-start" onclick="startExam('${exam.id}')">▶ 開始測驗</button>`;
+                }
 
                 card.innerHTML = `
                     <div class="exam-info">
@@ -232,11 +247,10 @@
         let userAnswers = [];
 
         function startExam(examId) {
-            // 開始前的最終確認彈跳視窗
             const isConfirmed = confirm("系統警告：\n\n點擊「確定」後將立即開始計時！\n\n測驗中途若「重新整理」或「離開網頁」，系統將直接強制收卷結算，無法重考。\n\n您確認已經準備好，要開始測驗了嗎？");
             
             if (!isConfirmed) {
-                return; // 學生按「取消」，中斷不扣次數
+                return;
             }
 
             const originalExam = studentPersonalExams.find(e => e.id === examId);
@@ -245,7 +259,6 @@
             currentQuestionIndex = 0;
             userAnswers = new Array(currentExam.questions.length).fill(null);
             
-            // 🔥 防作弊 1：進入考卷的瞬間，立刻在雲端寫入 0 分紀錄！
             firebase.database().ref('exam_records/' + currentUserUid + '/' + examId).set({
                 score: 0,
                 date: new Date().toISOString()
@@ -256,7 +269,6 @@
             document.getElementById('test-ui').style.display = 'block';
             document.getElementById('active-exam-title').innerText = currentExam.title;
             
-            // 倒數計時設定 (1800秒 = 30分鐘)
             timeRemaining = 1800; 
             updateTimerDisplay();
             
@@ -273,6 +285,33 @@
             }, 1000);
 
             renderQuestion();
+        }
+
+        function viewReview(examId) {
+            const exam = studentPersonalExams.find(e => e.id === examId);
+            const record = completedRecords[examId];
+            
+            hideAllUI();
+            document.getElementById('result-ui').style.display = 'block';
+            document.getElementById('result-title').innerText = `回顧測驗：${exam.title}`;
+            
+            const scoreEl = document.getElementById('score-display');
+            scoreEl.innerText = `${record.score} 分`;
+            scoreEl.style.color = record.score >= 60 ? "#27ae60" : "#c0392b";
+
+            const reviewContainer = document.getElementById('review-container');
+            reviewContainer.innerHTML = "";
+
+            exam.questions.forEach((q, index) => {
+                const correctAnswerText = q.options[q.correctAnswer];
+                reviewContainer.innerHTML += `
+                    <div class="review-card">
+                        <div class="review-q">Q${index + 1}. ${q.question}</div>
+                        <div class="review-ans">正確答案：<span class="review-correct">${correctAnswerText}</span></div>
+                        <div class="review-exp"><strong>解析：</strong><br>${q.explanation}</div>
+                    </div>
+                `;
+            });
         }
 
         function updateTimerDisplay() {
@@ -310,7 +349,6 @@
             buttons[index].classList.add('selected'); 
             document.getElementById('next-btn').disabled = false; 
 
-            // 🔥 防作弊 2：背景即時存檔。
             let tempCorrect = 0;
             currentExam.questions.forEach((q, i) => {
                 if (userAnswers[i] === q.correctAnswer) tempCorrect++;
@@ -332,24 +370,22 @@
             }
         }
 
-        // 學生主動按左上角提早放棄
         function abandonExam() {
             if (confirm("警告：現在離開測驗，未作答的題目將以 0 分計算，且無法重新測驗！\n\n確定要強制交卷嗎？")) {
                 finishAndShowResults();
             }
         }
 
-        // ================= 邏輯：完成測驗與紀錄 =================
         function finishAndShowResults() {
             hideAllUI(); 
             document.getElementById('result-ui').style.display = 'block';
+            document.getElementById('result-title').innerText = "測驗結算";
 
             let correctCount = 0;
             const reviewContainer = document.getElementById('review-container');
             reviewContainer.innerHTML = "";
 
             currentExam.questions.forEach((q, index) => {
-                // null 代表未作答，直接判定為答錯
                 const isCorrect = userAnswers[index] === q.correctAnswer;
                 if (isCorrect) correctCount++;
 
@@ -369,7 +405,6 @@
                 `;
             }); 
 
-            // 計算總分並最終寫入
             const finalScore = Math.round((correctCount / currentExam.questions.length) * 100);
             
             completedRecords[currentExam.id] = { score: finalScore, date: new Date().toISOString() };
@@ -378,7 +413,6 @@
                 date: new Date().toISOString()
             });
 
-            // 顯示分數
             const scoreEl = document.getElementById('score-display');
             scoreEl.innerText = `${finalScore} 分`;
             if (finalScore === 100) { 
@@ -394,5 +428,3 @@
     </script>
 </body>
 </html>
-
-
