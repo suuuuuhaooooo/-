@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <link rel="icon" href="https://suuuuuhaooooo.github.io/-/favicon.png" type="image/png">
+    <link rel="apple-touch-icon" href="https://suuuuuhaooooo.github.io/-/favicon.png">
+    
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>線上測驗中心｜蘇昊數理雲端教室</title>
+    
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
+    
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;700&display=swap');
+        
+        :root { --primary: #8e9775; --dark: #5b6348; --bg: #f8f8f6; --white: #ffffff; }
+        
+        body { 
+            font-family: "Noto Serif TC", serif; 
+            background-color: var(--bg); 
+            margin: 0; padding: 20px; color: #333; 
+            user-select: none; -webkit-user-select: none;
+        }
+        
+        #loading-screen { display: flex; justify-content: center; align-items: center; height: 100vh; font-size: 18px; color: var(--primary); font-weight: 700; letter-spacing: 2px; }
+
+        .container-ui { 
+            display: none; max-width: 800px; margin: 0 auto; background: var(--white);
+            padding: 40px; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            border-top: 6px solid var(--primary);
+        }
+
+        h2 { color: var(--dark); border-left: 5px solid var(--primary); padding-left: 15px; margin-top: 0; }
+        .back-btn { display: inline-block; margin-bottom: 20px; color: #888; text-decoration: none; font-size: 14px; transition: 0.2s; cursor: pointer; }
+        .back-btn:hover { color: var(--primary); }
+
+        /* 測驗列表專用樣式 */
+        .exam-grid { display: grid; grid-template-columns: 1fr; gap: 15px; margin-top: 20px; }
+        .exam-card { border: 1px solid #eee; padding: 20px; border-radius: 6px; display: flex; justify-content: space-between; align-items: center; background: #fafafa; transition: 0.3s; }
+        .exam-card:hover { border-color: var(--primary); box-shadow: 0 4px 10px rgba(0,0,0,0.03); }
+        .exam-info h3 { margin: 0 0 5px 0; font-size: 16px; color: var(--dark); }
+        .exam-info p { margin: 0; font-size: 12px; color: #888; }
+        .exam-status-btn { padding: 10px 20px; border-radius: 4px; font-weight: 700; font-size: 13px; cursor: pointer; border: none; transition: 0.2s; }
+        .btn-start { background: var(--primary); color: white; }
+        .btn-start:hover { background: var(--dark); }
+        .btn-done { background: #e0e0e0; color: #888; cursor: not-allowed; }
+
+        /* 測驗區塊樣式 */
+        .quiz-header { font-size: 14px; color: #888; margin-bottom: 15px; font-weight: 700; letter-spacing: 1px; }
+        .question-text { font-size: 18px; color: #333; line-height: 1.6; margin-bottom: 25px; font-weight: 700; }
+        .option-btn { display: block; width: 100%; text-align: left; padding: 15px 20px; margin-bottom: 12px; background: #fafafa; border: 2px solid #eee; border-radius: 6px; font-size: 16px; color: #555; cursor: pointer; transition: 0.2s; box-sizing: border-box; font-family: inherit; }
+        .option-btn:hover { background: #f0f3ef; border-color: #d1d8c8; }
+        .option-btn.selected { background: #eef1ec; border-color: var(--primary); color: var(--dark); font-weight: 700; }
+        
+        .main-btn { background: var(--primary); color: white; border: none; padding: 15px; width: 100%; cursor: pointer; letter-spacing: 2px; font-weight: 700; transition: 0.3s; margin-top: 20px; border-radius: 4px; font-size: 16px; }
+        .main-btn:hover { background: var(--dark); }
+        .main-btn:disabled { background: #ccc; cursor: not-allowed; }
+        .outline-btn { background: white; color: var(--primary); border: 2px solid var(--primary); padding: 15px; width: 100%; cursor: pointer; letter-spacing: 2px; font-weight: 700; transition: 0.3s; margin-top: 10px; border-radius: 4px; font-size: 16px; }
+        .outline-btn:hover { background: #f9faf9; }
+
+        /* 檢討區塊樣式 */
+        #score-display { text-align: center; font-size: 36px; color: var(--dark); font-weight: 700; margin: 20px 0; padding: 20px; background: #fafafa; border-radius: 8px; }
+        .review-card { background: white; border: 1px solid #eee; padding: 20px; margin-bottom: 20px; border-radius: 6px; }
+        .review-q { font-weight: 700; margin-bottom: 10px; font-size: 16px; }
+        .review-ans { font-size: 14px; margin-bottom: 5px; }
+        .review-correct { color: #27ae60; font-weight: 700; }
+        .review-wrong { color: #c0392b; font-weight: 700; }
+        .review-exp { margin-top: 12px; padding: 12px; background: #f9f9f9; border-left: 4px solid var(--primary); font-size: 13px; color: #666; line-height: 1.5; }
+    </style>
+</head>
+<body>
+
+    <script>
+        document.addEventListener('contextmenu', function(event) { event.preventDefault(); alert("版權所有，翻印必究！"); });
+    </script>
+
+    <div id="loading-screen">權限驗證中，請稍候...</div>
+
+    <div id="exam-list-ui" class="container-ui">
+        <a href="classroom.html" class="back-btn">← 返回雲端教室</a>
+        <h2>測驗中心：待辦任務</h2>
+        <p style="color: #666; font-size: 14px; margin-bottom: 20px;">請點擊「開始測驗」進行答題。已完成的測驗將會標記為完成狀態。</p>
+        <div id="exam-grid" class="exam-grid">
+            </div>
+    </div>
+
+    <div id="test-ui" class="container-ui">
+        <span class="back-btn" onclick="showExamList()">← 放棄本次作答，返回列表</span>
+        <h2 id="active-exam-title">測驗載入中...</h2>
+        <div id="quiz-container">
+            <div class="quiz-header" id="quiz-progress">題目 1 / X</div>
+            <div class="question-text" id="question-text">載入題目中...</div>
+            <div id="options-container"></div>
+            <button id="next-btn" class="main-btn" onclick="nextQuestion()" disabled>確認並下一題</button>
+        </div>
+    </div>
+
+    <div id="result-ui" class="container-ui">
+        <h3 style="text-align: center; color: var(--dark); margin-bottom: 0;">測驗完成</h3>
+        <div id="score-display"></div>
+        <h4 style="border-bottom: 2px solid #eee; padding-bottom: 10px; margin-top: 30px;">錯題檢討</h4>
+        <div id="review-container"></div>
+        <button class="main-btn" onclick="showExamList()">✔ 完成並返回測驗列表</button>
+    </div>
+
+    <script>
+        // 1. Firebase 權限驗證
+        const firebaseConfig = {
+            apiKey: "AIzaSyALkTnkYY3JZLCTyajahpi4IZKmFX9USdw",
+            authDomain: "su-hao-classroom.firebaseapp.com",
+            projectId: "su-hao-classroom",
+            storageBucket: "su-hao-classroom.firebasestorage.app",
+            messagingSenderId: "764168135846",
+            appId: "1:764168135846:web:f2923a5f4952fa1ca64067"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        let currentUserUid = null;
+
+        // 2. 測驗總目錄 (Exam Catalog)
+        const examCatalog = [
+            {
+                id: "exam_math_01",
+                title: "單元測驗：二次函數圖形與判別式",
+                desc: "共 2 題單選題，滿分 100 分。",
+                questions: [
+                    {
+                        question: "若一個二次函數 f(x) = ax² + bx + c 的圖形開口向上，且與 x 軸交於相異兩點，下列何者必為真？",
+                        options: ["a < 0 且 b² - 4ac > 0", "a > 0 且 b² - 4ac > 0", "a > 0 且 b² - 4ac = 0", "a < 0 且 b² - 4ac < 0"],
+                        correctAnswer: 1,
+                        explanation: "圖形開口向上代表 a > 0；與 x 軸交於「相異兩點」代表判別式 D = b² - 4ac 必須大於 0。"
+                    },
+                    {
+                        question: "若二次函數圖形的頂點在第一象限，且與 x 軸不相交，則開口方向為何？",
+                        options: ["一定向上", "一定向下", "向左", "向右"],
+                        correctAnswer: 0,
+                        explanation: "頂點在第一象限(y>0)，且不與x軸相交，代表整個圖形都在x軸上方，因此開口必然向上。"
+                    }
+                ]
+            },
+            {
+                id: "exam_phy_01",
+                title: "單元測驗：基礎物理與運動學",
+                desc: "共 2 題單選題，滿分 100 分。",
+                questions: [
+                    {
+                        question: "一顆小球由靜止狀態自由落下，忽略空氣阻力，第 3 秒末的瞬時速度為多少？ (重力加速度 g 代 9.8 m/s²)",
+                        options: ["9.8 m/s", "19.6 m/s", "29.4 m/s", "44.1 m/s"],
+                        correctAnswer: 2,
+                        explanation: "由等加速度直線運動公式 v = v0 + at。v0 = 0, a = 9.8, t = 3，故 v = 0 + 9.8 × 3 = 29.4 (m/s)。"
+                    },
+                    {
+                        question: "電路學中，若將三個 6 歐姆的電阻「並聯」，其總等效電阻為多少？",
+                        options: ["2 歐姆", "3 歐姆", "12 歐姆", "18 歐姆"],
+                        correctAnswer: 0,
+                        explanation: "並聯等效電阻公式為 1/R = 1/R1 + 1/R2 + 1/R3。即 1/R = 1/6 + 1/6 + 1/6 = 3/6 = 1/2。故 R = 2 歐姆。"
+                    }
+                ]
+            }
+        ];
+
+        // 登入狀態驗證
+        auth.onAuthStateChanged((user) => {
+            if (user) {
+                currentUserUid = user.uid; // 記住使用者 UID
+                document.getElementById('loading-screen').style.display = 'none';
+                showExamList(); // 顯示列表
+            } else {
+                alert("未授權的存取！請先登入系統才能進行測驗。");
+                window.location.replace("classroom.html"); 
+            }
+        });
+
+        // ================= UI 切換控制 =================
+        function hideAllUI() {
+            document.getElementById('exam-list-ui').style.display = 'none';
+            document.getElementById('test-ui').style.display = 'none';
+            document.getElementById('result-ui').style.display = 'none';
+        }
+
+        // ================= 邏輯：渲染測驗列表 =================
+        function showExamList() {
+            hideAllUI();
+            document.getElementById('exam-list-ui').style.display = 'block';
+            
+            // 從 localStorage 讀取該名學生的完成紀錄
+            const completedRecords = JSON.parse(localStorage.getItem('completed_exams_' + currentUserUid)) || {};
+            const grid = document.getElementById('exam-grid');
+            grid.innerHTML = "";
+
+            examCatalog.forEach(exam => {
+                const isDone = completedRecords[exam.id]; // 檢查是否考過
+                
+                const card = document.createElement('div');
+                card.className = 'exam-card';
+                
+                let btnHtml = "";
+                if (isDone) {
+                    btnHtml = `<button class="exam-status-btn btn-done" disabled>✔ 已完成 (${isDone.score}分)</button>`;
+                } else {
+                    btnHtml = `<button class="exam-status-btn btn-start" onclick="startExam('${exam.id}')">▶ 開始測驗</button>`;
+                }
+
+                card.innerHTML = `
+                    <div class="exam-info">
+                        <h3>${exam.title}</h3>
+                        <p>${exam.desc}</p>
+                    </div>
+                    <div>${btnHtml}</div>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        // ================= 邏輯：開始單一測驗 =================
+        let currentExam = null;
+        let currentQuestionIndex = 0;
+        let userAnswers = [];
+
+        function startExam(examId) {
+            currentExam = examCatalog.find(e => e.id === examId);
+            currentQuestionIndex = 0;
+            userAnswers = new Array(currentExam.questions.length).fill(null);
+            
+            hideAllUI();
+            document.getElementById('test-ui').style.display = 'block';
+            document.getElementById('active-exam-title').innerText = currentExam.title;
+            
+            renderQuestion();
+        }
+
+        function renderQuestion() {
+            const qData = currentExam.questions[currentQuestionIndex];
+            document.getElementById('quiz-progress').innerText = `題目 ${currentQuestionIndex + 1} / ${currentExam.questions.length}`;
+            document.getElementById('question-text').innerText = qData.question;
+            
+            const optionsContainer = document.getElementById('options-container');
+            optionsContainer.innerHTML = ""; 
+            
+            qData.options.forEach((opt, index) => {
+                const btn = document.createElement('button');
+                btn.className = 'option-btn';
+                btn.innerText = `${String.fromCharCode(65 + index)}. ${opt}`; 
+                btn.onclick = () => selectOption(index);
+                if (userAnswers[currentQuestionIndex] === index) btn.classList.add('selected');
+                optionsContainer.appendChild(btn);
+            });
+
+            const nextBtn = document.getElementById('next-btn');
+            nextBtn.disabled = userAnswers[currentQuestionIndex] === null;
+            nextBtn.innerText = currentQuestionIndex === currentExam.questions.length - 1 ? "交卷並看成績" : "確認並下一題";
+        }
+
+        function selectOption(index) {
+            userAnswers[currentQuestionIndex] = index; 
+            const buttons = document.querySelectorAll('.option-btn');
+            buttons.forEach(btn => btn.classList.remove('selected'));
+            buttons[index].classList.add('selected'); 
+            document.getElementById('next-btn').disabled = false; 
+        }
+
+        function nextQuestion() {
+            if (currentQuestionIndex < currentExam.questions.length - 1) {
+                currentQuestionIndex++;
+                renderQuestion();
+            } else {
+                finishAndShowResults();
+            }
+        }
+
+        // ================= 邏輯：完成測驗與紀錄 =================
+        function finishAndShowResults() {
+            hideAllUI();
+            document.getElementById('result-ui').style.display = 'block';
+
+            let correctCount = 0;
+            const reviewContainer = document.getElementById('review-container');
+            reviewContainer.innerHTML = "";
+
+            currentExam.questions.forEach((q, index) => {
+                const isCorrect = userAnswers[index] === q.correctAnswer;
+                if (isCorrect) correctCount++;
+
+                const userAnswerText = userAnswers[index] !== null ? q.options[userAnswers[index]] : "未作答";
+                const correctAnswerText = q.options[q.correctAnswer];
+                const statusHtml = isCorrect 
+                    ? `<span class="review-correct">✔ 答對了！</span>` 
+                    : `<span class="review-wrong">✘ 答錯了 (你的答案：${userAnswerText})</span>`;
+
+                reviewContainer.innerHTML += `
+                    <div class="review-card">
+                        <div class="review-q">Q${index + 1}. ${q.question}</div>
+                        <div class="review-ans">正確答案：${correctAnswerText}</div>
+                        <div class="review-ans">${statusHtml}</div>
+                        <div class="review-exp"><strong>📝 老師解析：</strong><br>${q.explanation}</div>
+                    </div>
+                `;
+            });
+
+            const finalScore = Math.round((correctCount / currentExam.questions.length) * 100);
+            
+            // 🔥 核心：將成績與完成狀態寫入 LocalStorage，綁定學生 UID
+            let completedRecords = JSON.parse(localStorage.getItem('completed_exams_' + currentUserUid)) || {};
+            completedRecords[currentExam.id] = { score: finalScore, date: new Date().toISOString() };
+            localStorage.setItem('completed_exams_' + currentUserUid, JSON.stringify(completedRecords));
+
+            // 顯示分數
+            const scoreEl = document.getElementById('score-display');
+            scoreEl.innerText = `${finalScore} 分`;
+            if (finalScore === 100) { scoreEl.style.color = "#27ae60"; scoreEl.innerText += " 🎉 滿分！太厲害了！"; }
+            else if (finalScore >= 60) { scoreEl.style.color = "#d35400"; }
+            else { scoreEl.style.color = "#c0392b"; scoreEl.innerText += " 💦 要再加油複習喔！"; }
+        }
+    </script>
+</body>
+</html>
