@@ -148,7 +148,13 @@
                 <div id="login-ip" style="font-size: 10px; color: #bbb;">IP: 獲取中...</div>
                 <span class="logout-link" style="color: #b03a2e; text-decoration: none; font-weight: 700; margin-top: 8px; display: inline-block; transition: 0.2s;" onclick="logout()">登出</span>
                 </div>
-                <div style="font-size: 11px; color: #ccc; font-family: monospace; letter-spacing: 1px;">v3.8.20</div>
+                <div style="text-align: right;">
+                    <div style="font-size: 11px; color: #27ae60; font-weight: 700; margin-bottom: 5px; display: flex; align-items: center; justify-content: flex-end; gap: 4px;">
+                        <span class="online-dot" style="width: 6px; height: 6px;"></span>
+                        <span id="classroom-presence">連線中...</span>
+                    </div>
+                    <div style="font-size: 11px; color: #ccc; font-family: monospace; letter-spacing: 1px;">v3.8.20</div>
+                </div>
                 </div>
         </div>
         </nav>
@@ -187,14 +193,23 @@
         const db = firebase.database();
         const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx884HoE5YwEpoWwKR3aIIvAUGrydmwRFC7ETpW_UowiSsIoMch9esQye_7WjRQrNQelQ/exec";
 
-        // 在線人數統計
+        // 在線人數統計 (全域同步)
         db.ref('presence').on('value', snap => {
             const count = snap.numChildren() || 0;
-            const textEl = document.getElementById('presence-text');
-            textEl.innerHTML = count > 1 ? `目前有 <span style="font-weight:700; color:#666;">${count}</span> 位同學正在線上` : `目前有 <span style="font-weight:700; color:#666;">1</span> 位同學在線上`;
+            // 邏輯優化：確保至少顯示 1 人 (自己)
+            const displayCount = count > 0 ? count : 1; 
+            const textStr = `目前有 <span style="font-weight:700; color:#666;">${displayCount}</span> 位同學在線`;
+            
+            // 1. 更新登入畫面
+            const loginTextEl = document.getElementById('presence-text');
+            if (loginTextEl) loginTextEl.innerHTML = textStr;
+
+            // 2. 更新教室側邊欄
+            const classTextEl = document.getElementById('classroom-presence');
+            if (classTextEl) classTextEl.innerHTML = textStr;
         });
 
-        // 3 分鐘閒置機制
+        // 閒置機制
         let idleTimer;
         function resetIdleTimer() {
             clearTimeout(idleTimer);
