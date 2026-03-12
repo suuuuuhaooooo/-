@@ -171,12 +171,12 @@
             }
         });
 
-        // 🔥 防作弊：瀏覽器原生重整/關閉警告
         window.addEventListener('beforeunload', function (e) {
-            // 如果是在測驗畫面中，才觸發警告
+            // 只有在「測驗進行中」才觸發攔截
             if (document.getElementById('test-ui').style.display === 'block') {
-                e.preventDefault();
-                e.returnValue = '測驗正在進行中，現在重新整理或離開將會強制交卷！確定要離開嗎？';
+                e.preventDefault(); // 阻擋預設關閉動作
+                e.returnValue = ''; // Chrome/Edge 規定必須要加這行 (即使給空字串)，才會彈出官方警告
+                return '';          // 舊版瀏覽器的相容性寫法
             }
         });
 
@@ -394,4 +394,5 @@
     </script>
 </body>
 </html>
+
 
