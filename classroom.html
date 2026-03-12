@@ -289,10 +289,28 @@
         }
 
         // 👉 新增：自動寄信通知函式
+        // 👉 強化版：自動寄信通知函式 (增加錯誤回報)
         function sendLoginNotify(studentName, studentEmail) {
-            if (!studentEmail || studentEmail.trim() === "") return;
-            const url = `${SCRIPT_URL}?action=sendLoginNotify&email=${studentEmail}&name=${encodeURIComponent(studentName)}`;
-            fetch(url).then(() => console.log("Login notification sent to " + studentEmail)).catch(e => console.error("Email notify error:", e));
+            if (!studentEmail || studentEmail.trim() === "") {
+                console.error("寄信失敗：找不到學生的 Email 資料");
+                return;
+            }
+            
+            const url = `${SCRIPT_URL}?action=sendLoginNotify&email=${encodeURIComponent(studentEmail)}&name=${encodeURIComponent(studentName)}`;
+            
+            fetch(url)
+                .then(res => res.text())
+                .then(result => {
+                    console.log("GAS 寄信結果回報:", result);
+                    if (result.includes("Success")) {
+                        console.log("✅ 恭喜！信件已成功進入寄件備份。");
+                    } else {
+                        console.warn("⚠️ GAS 執行成功但寄信可能有問題:", result);
+                    }
+                })
+                .catch(e => {
+                    console.error("❌ 網路請求失敗，請檢查 SCRIPT_URL 是否正確:", e);
+                });
         }
 
         function runLoginAnalysis(uid, noticeText, studentName) {
