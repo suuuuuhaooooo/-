@@ -90,7 +90,7 @@
         <div id="quiz-container">
             <div class="quiz-header-container">
                 <div class="quiz-header" id="quiz-progress">題目 1 / X</div>
-                <div class="timer-display" id="timer-display">⏳ 30:00</div>
+                <div class="timer-display" id="timer-display">時間還剩 30:00</div>
             </div>
             <div class="question-text" id="question-text">載入題目中...</div>
             <div id="options-container"></div>
@@ -242,7 +242,7 @@
                 
                 if (timeRemaining <= 0) {
                     clearInterval(timerInterval);
-                    alert("⏳ 測驗時間到！系統即將自動為您交卷結算。");
+                    alert("測驗時間到！系統即將自動為您交卷結算。");
                     finishAndShowResults(); // 時間到強制觸發交卷
                 }
             }, 1000);
@@ -253,7 +253,7 @@
         function updateTimerDisplay() {
             const m = Math.floor(timeRemaining / 60);
             const s = timeRemaining % 60;
-            document.getElementById('timer-display').innerText = `⏳ ${m < 10 ? '0' : ''}${m}:${s < 10 ? '0' : ''}${s}`;
+            document.getElementById('timer-display').innerText = `時間還剩 ${m < 10 ? '0' : ''}${m}:${s < 10 ? '0' : ''}${s}`;
         }
 
         function renderQuestion() {
@@ -351,4 +351,5 @@
     </script>
 </body>
 </html>
+
 
