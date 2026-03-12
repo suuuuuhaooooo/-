@@ -143,20 +143,22 @@
                 <div id="student-name" style="font-size: 15px; font-weight: 700; color: var(--dark);">資料同步中...</div>
                 <div id="student-meta" style="margin-top: 5px;"></div>
     
-                <div style="margin-top: 15px; display: flex; justify-content: space-between; align-items: flex-end;">
-                <div>
-                <div id="login-ip" style="font-size: 10px; color: #bbb;">IP: 獲取中...</div>
-                <span class="logout-link" style="color: #b03a2e; text-decoration: none; font-weight: 700; margin-top: 8px; display: inline-block; transition: 0.2s;" onclick="logout()">登出</span>
-                </div>
-                <div style="text-align: right;">
-                    <div style="font-size: 11px; color: #27ae60; font-weight: 700; margin-bottom: 5px; display: flex; align-items: center; justify-content: flex-end; gap: 4px;">
+                <div style="margin-top: 20px; border-top: 1px solid #f5f5f5; padding-top: 15px;">
+                    
+                    <div style="font-size: 12px; color: #27ae60; font-weight: 700; margin-bottom: 12px; display: flex; align-items: center; gap: 6px;">
                         <span class="online-dot" style="width: 6px; height: 6px;"></span>
                         <span id="classroom-presence">連線中...</span>
                     </div>
-                    <div style="font-size: 11px; color: #ccc; font-family: monospace; letter-spacing: 1px;">v3.8.20</div>
+                    
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                        <span class="logout-link" style="color: #b03a2e; text-decoration: none; font-weight: 700; margin-top: 0; transition: 0.2s;" onclick="logout()">登出系統</span>
+                        <div style="font-size: 11px; color: #ccc; font-family: monospace; letter-spacing: 1px;">v3.8.20</div>
+                    </div>
+    
+                    <div id="login-ip" style="font-size: 10px; color: #bbb;">IP: 獲取中...</div>
+                    
                 </div>
-                </div>
-        </div>
+            </div>
         </nav>
 
         <main class="main-content">
