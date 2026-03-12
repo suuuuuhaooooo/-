@@ -34,7 +34,7 @@
 
         h2 { color: var(--dark); border-left: 5px solid var(--primary); padding-left: 15px; margin-top: 0; }
         .back-btn { display: inline-block; margin-bottom: 20px; color: #888; text-decoration: none; font-size: 14px; transition: 0.2s; cursor: pointer; }
-        .back-btn:hover { color: var(--primary); }
+        .back-btn:hover { color: var(--primary); font-weight: 700; }
 
         .exam-grid { display: grid; grid-template-columns: 1fr; gap: 15px; margin-top: 20px; }
         .exam-card { border: 1px solid #eee; padding: 20px; border-radius: 6px; display: flex; justify-content: space-between; align-items: center; background: #fafafa; transition: 0.3s; }
@@ -80,12 +80,21 @@
     <div id="exam-list-ui" class="container-ui">
         <a href="classroom.html" class="back-btn">← 返回雲端教室</a>
         <h2>測驗中心：待辦任務</h2>
-        <p style="color: #666; font-size: 14px; margin-bottom: 20px;">請點擊「開始測驗」進行答題。已完成的測驗將會標記為完成狀態。</p>
+        
+        <div style="background: #fdf2f0; border-left: 4px solid #e74c3c; padding: 15px; margin-bottom: 25px; border-radius: 4px;">
+            <strong style="color: #c0392b; font-size: 15px;">測驗嚴格規範（請務必詳閱）：</strong>
+            <ul style="color: #c0392b; font-size: 13px; margin: 8px 0 0; padding-left: 20px; line-height: 1.6;">
+                <li>點選「開始測驗」即視同正式進場，<strong>無法取消或重考</strong>。</li>
+                <li>測驗中途嚴禁<strong>「重新整理網頁」</strong>、<strong>「按上一頁」</strong>或<strong>「關閉視窗」</strong>。</li>
+                <li>若違規跳出，系統將強制收卷，未作答題目一律以 0 分計算。</li>
+            </ul>
+        </div>
+
         <div id="exam-grid" class="exam-grid"></div>
     </div>
 
     <div id="test-ui" class="container-ui">
-        <span class="back-btn" onclick="showExamList()">← 放棄本次作答，返回列表</span>
+        <span class="back-btn" onclick="abandonExam()">← 放棄本次作答，提早交卷</span>
         <h2 id="active-exam-title">測驗載入中...</h2>
         <div id="quiz-container">
             <div class="quiz-header-container">
@@ -99,9 +108,9 @@
     </div>
 
     <div id="result-ui" class="container-ui">
-        <h3 style="text-align: center; color: var(--dark); margin-bottom: 0;">測驗完成</h3>
+        <h3 style="text-align: center; color: var(--dark); margin-bottom: 0;">測驗結算</h3>
         <div id="score-display"></div>
-        <h4 style="border-bottom: 2px solid #eee; padding-bottom: 10px; margin-top: 30px;">錯題檢討</h4>
+        <h4 style="border-bottom: 2px solid #eee; padding-bottom: 10px; margin-top: 30px;">錯題與未作答檢討</h4>
         <div id="review-container"></div>
         <button class="main-btn" onclick="showExamList()">✔ 完成並返回測驗列表</button>
     </div>
@@ -122,8 +131,8 @@
         
         let currentUserUid = null;
         let studentPersonalExams = []; 
-        let timerInterval = null; // 計時器變數
-        let timeRemaining = 0;    // 剩餘秒數
+        let timerInterval = null; 
+        let timeRemaining = 0;    
 
         auth.onAuthStateChanged(async (user) => {
             if (user) {
@@ -161,7 +170,16 @@
             }
         });
 
-        // ================= 輔助函式：陣列隨機洗牌 =================
+        // 🔥 防作弊：瀏覽器原生重整/關閉警告
+        window.addEventListener('beforeunload', function (e) {
+            // 如果是在測驗畫面中，才觸發警告
+            if (document.getElementById('test-ui').style.display === 'block') {
+                e.preventDefault();
+                e.returnValue = '測驗正在進行中，現在重新整理或離開將會強制交卷！確定要離開嗎？';
+            }
+        });
+
+        // 輔助函式：陣列隨機洗牌
         function shuffleArray(array) {
             for (let i = array.length - 1; i > 0; i--) {
                 const j = Math.floor(Math.random() * (i + 1));
@@ -170,15 +188,13 @@
             return array;
         }
 
-        // ================= UI 切換控制 =================
         function hideAllUI() {
             document.getElementById('exam-list-ui').style.display = 'none';
             document.getElementById('test-ui').style.display = 'none';
             document.getElementById('result-ui').style.display = 'none';
-            clearInterval(timerInterval); // 切換畫面時務必清除計時器
+            clearInterval(timerInterval); 
         }
 
-        // ================= 邏輯：渲染測驗列表 =================
         function showExamList() {
             hideAllUI();
             document.getElementById('exam-list-ui').style.display = 'block';
@@ -210,28 +226,36 @@
             });
         }
 
-        // ================= 邏輯：開始單一測驗 =================
         let currentExam = null;
         let currentQuestionIndex = 0;
         let userAnswers = [];
 
         function startExam(examId) {
-            // 找到該份考卷，並使用 JSON 進行深拷貝 (避免洗牌影響到原始題庫資料)
+            // 開始前的最終確認彈跳視窗
+            const isConfirmed = confirm("系統警告：\n\n點擊「確定」後將立即開始計時！\n\n測驗中途若「重新整理」或「離開網頁」，系統將直接強制收卷結算，無法重考。\n\n您確認已經準備好，要開始測驗了嗎？");
+            
+            if (!isConfirmed) {
+                return; // 學生按「取消」，中斷不扣次數
+            }
+
             const originalExam = studentPersonalExams.find(e => e.id === examId);
             currentExam = JSON.parse(JSON.stringify(originalExam)); 
-            
-            // 🔥 核心：將題目順序隨機洗牌
             currentExam.questions = shuffleArray(currentExam.questions);
-            
             currentQuestionIndex = 0;
             userAnswers = new Array(currentExam.questions.length).fill(null);
             
+            // 🔥 防作弊 1：進入考卷的瞬間，立刻在雲端寫入 0 分紀錄！
+            firebase.database().ref('exam_records/' + currentUserUid + '/' + examId).set({
+                score: 0,
+                date: new Date().toISOString()
+            });
+            completedRecords[examId] = { score: 0 };
+
             hideAllUI();
             document.getElementById('test-ui').style.display = 'block';
             document.getElementById('active-exam-title').innerText = currentExam.title;
             
-            // 🔥 核心：啟動倒數計時器 (預設 60 分鐘 = 3600 秒)
-            // 💡 若要修改時間，請直接修改下方的 3600 數字 (例如 30 分鐘就改為 1800)
+            // 倒數計時設定 (1800秒 = 30分鐘)
             timeRemaining = 1800; 
             updateTimerDisplay();
             
@@ -243,7 +267,7 @@
                 if (timeRemaining <= 0) {
                     clearInterval(timerInterval);
                     alert("測驗時間到！系統即將自動為您交卷結算。");
-                    finishAndShowResults(); // 時間到強制觸發交卷
+                    finishAndShowResults(); 
                 }
             }, 1000);
 
@@ -284,6 +308,18 @@
             buttons.forEach(btn => btn.classList.remove('selected'));
             buttons[index].classList.add('selected'); 
             document.getElementById('next-btn').disabled = false; 
+
+            // 🔥 防作弊 2：背景即時存檔。
+            let tempCorrect = 0;
+            currentExam.questions.forEach((q, i) => {
+                if (userAnswers[i] === q.correctAnswer) tempCorrect++;
+            });
+            const currentScore = Math.round((tempCorrect / currentExam.questions.length) * 100);
+            
+            firebase.database().ref('exam_records/' + currentUserUid + '/' + currentExam.id).update({
+                score: currentScore
+            });
+            completedRecords[currentExam.id].score = currentScore;
         }
 
         function nextQuestion() {
@@ -295,9 +331,16 @@
             }
         }
 
+        // 學生主動按左上角提早放棄
+        function abandonExam() {
+            if (confirm("警告：現在離開測驗，未作答的題目將以 0 分計算，且無法重新測驗！\n\n確定要強制交卷嗎？")) {
+                finishAndShowResults();
+            }
+        }
+
         // ================= 邏輯：完成測驗與紀錄 =================
         function finishAndShowResults() {
-            hideAllUI(); // 這裡面已經包含清除計時器的邏輯了
+            hideAllUI(); 
             document.getElementById('result-ui').style.display = 'block';
 
             let correctCount = 0;
@@ -305,11 +348,11 @@
             reviewContainer.innerHTML = "";
 
             currentExam.questions.forEach((q, index) => {
-                // 如果是強制交卷，userAnswers[index] 可能是 null，就會被判斷為答錯 (不加分)
+                // null 代表未作答，直接判定為答錯
                 const isCorrect = userAnswers[index] === q.correctAnswer;
                 if (isCorrect) correctCount++;
 
-                const userAnswerText = userAnswers[index] !== null ? q.options[userAnswers[index]] : "未作答";
+                const userAnswerText = userAnswers[index] !== null ? q.options[userAnswers[index]] : "未作答 (直接扣分)";
                 const correctAnswerText = q.options[q.correctAnswer];
                 const statusHtml = isCorrect 
                     ? `<span class="review-correct">✔ 答對了！</span>` 
@@ -325,10 +368,9 @@
                 `;
             }); 
 
-            // 計算總分
+            // 計算總分並最終寫入
             const finalScore = Math.round((correctCount / currentExam.questions.length) * 100);
             
-            // 寫入 Firebase 雲端資料庫
             completedRecords[currentExam.id] = { score: finalScore, date: new Date().toISOString() };
             firebase.database().ref('exam_records/' + currentUserUid + '/' + currentExam.id).set({
                 score: finalScore,
@@ -351,5 +393,3 @@
     </script>
 </body>
 </html>
-
-
