@@ -17,7 +17,7 @@
     window.MathJax = {
             tex: {
                 inlineMath: [['$', '$'], ['\\(', '\\)']],
-                processEscapes: true  // 🚀 關鍵：這行沒加，MathJax 有時會忽略單錢字號
+                processEscapes: true 
             },
             options: {
                 skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre']
@@ -183,7 +183,7 @@
         window.onmousemove = window.onkeypress = window.ontouchstart = window.onclick = resetIdleTimer;
 
         // -----------------------------------------
-        // 🔐 原有邏輯：權限驗證門神
+        // 權限驗證
         // -----------------------------------------
         auth.onAuthStateChanged(async (user) => {
             if (user) {
@@ -371,7 +371,7 @@
 
         // 成績回報與寫入邏輯
         function finishAndShowResults() {
-            // 🚀 新增：停止計時器
+            // 停止計時器
             if (timerInterval) clearInterval(timerInterval);
             
             hideAllUI(); 
@@ -397,7 +397,7 @@
                     ? `<span class="review-correct">✔ 答對了！</span>` 
                     : `<span class="review-wrong">✘ 答錯了 (你的答案：${userAnswerText})</span>`;
 
-                // 🚀 強化點：確保正確答案與解析都能渲染數學式
+                // 答案與解析渲染數學式
                 reviewContainer.innerHTML += `
                     <div class="review-card">
                         <div class="review-q">Q${index + 1}. ${q.question}</div>
@@ -441,7 +441,7 @@
                 scoreEl.innerText += " (要再加油複習喔！)";
             }
 
-            // 🚀 強化點：加入 setTimeout 確保 HTML 畫完後再渲染數學式，最保險
+            // HTML 畫完後再渲染數學式
             if (window.MathJax) {
                 setTimeout(() => {
                     MathJax.typesetPromise([reviewContainer]).catch(err => console.log(err));
@@ -451,6 +451,7 @@
     </script>
 </body>
 </html>
+
 
 
 
