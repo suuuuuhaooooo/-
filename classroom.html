@@ -288,8 +288,7 @@
             }
         }
 
-        // 👉 新增：自動寄信通知函式
-        // 👉 強化版：自動寄信通知函式 (增加錯誤回報)
+        // 自動寄信通知函式
         function sendLoginNotify(studentName, studentEmail) {
             if (!studentEmail || studentEmail.trim() === "") {
                 console.error("寄信失敗：找不到學生的 Email 資料");
@@ -357,16 +356,44 @@
         }
 
         function login() {
-            const email = document.getElementById('email').value;
-            const password = document.getElementById('password').value;
-            const captchaInput = document.getElementById('captcha-input').value;
+            // 1. 取得 DOM 元素
+            const emailEl = document.getElementById('email');
+            const passwordEl = document.getElementById('password');
+            const captchaInputEl = document.getElementById('captcha-input');
+            const errorMsgEl = document.getElementById('error-msg');
+
+            // 2. 取得並清理輸入值
+            const email = emailEl.value.trim();
+            const password = passwordEl.value.trim();
+            const captchaInput = captchaInputEl.value.trim();
             
+            // 3. 精確檢查各欄位是否為空 (優化點)
+            if (!email) {
+                alert("請輸入學員帳號");
+                emailEl.focus();
+                return;
+            }
+            if (!password) {
+                alert("請輸入密碼");
+                passwordEl.focus();
+                return;
+            }
+            if (!captchaInput) {
+                alert("請輸入驗證碼");
+                captchaInputEl.focus();
+                return;
+            }
+
+            // 4. 驗證碼比對
             if (captchaInput !== currentCaptcha) { 
                 alert("驗證碼錯誤（請注意大小寫需完全一致）"); 
                 drawCaptcha();
+                captchaInputEl.value = ""; // 清空錯誤的驗證碼
+                captchaInputEl.focus();
                 return; 
             }
             
+            // 5. 執行 Firebase 登入
             auth.signInWithEmailAndPassword(email, password).then(cred => {
                 const sid = Math.random().toString(36).substring(2);
                 localStorage.setItem('session_id', sid);
@@ -375,8 +402,15 @@
                     current_sid: sid,
                     kick_all: false
                 });
-            }).catch(() => { 
-                alert("帳號或密碼驗證失敗"); 
+            }).catch((error) => { 
+
+                if (error.code === 'auth/user-not-found') {
+                    alert("查無此帳號，請確認輸入是否正確");
+                } else if (error.code === 'auth/wrong-password') {
+                    alert("密碼輸入錯誤，請重新確認");
+                } else {
+                    alert("帳號或密碼驗證失敗，請稍後再試");
+                }
                 drawCaptcha(); 
             });
         }
