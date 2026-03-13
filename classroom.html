@@ -176,8 +176,6 @@
     </div>
 
     <script>
-        let loginFailCount = 0; 
-        let lockUntil = 0; 
         document.addEventListener('contextmenu', function(event) {
             event.preventDefault();
             alert("版權所有，翻印必究！");
@@ -356,7 +354,8 @@
             pwd.type = (pwd.type === "password") ? "text" : "password";
             icon.innerText = (pwd.type === "password") ? "🔓" : "🔒";
         }
-
+        let loginFailCount = 0; 
+        let lockUntil = 0; 
         function login() {
             const now = Date.now();
         
@@ -369,103 +368,85 @@
                 return;
             }
         
-            // 2. 取得 DOM 元素
+            // 2. 取得 DOM 元素與原始值 (不使用 trim)
             const emailEl = document.getElementById('email');
             const passwordEl = document.getElementById('password');
             const captchaInputEl = document.getElementById('captcha-input');
         
-            // 3. 取得原始輸入值
-            const email = String(emailEl.value);
-            const password = String(passwordEl.value);
-            const captchaInput = String(captchaInputEl.value);
+            const email = emailEl.value;
+            const password = passwordEl.value;
+            const captchaInput = captchaInputEl.value;
             
-            // 4. 定義空格偵測規則
-            const hasSpace = /\s/;
+            // 3. 嚴格定義空白偵測 (包含所有不可見字元)
+            const hasSpace = /\s/g;
         
-            // 5. 精確攔截邏輯
-            // 帳號檢查
-            if (!email) {
+            // 4. 【強烈攔截邏輯】 - 帳號部分 (分開判斷確保執行)
+            if (!email || email.length === 0) {
                 alert("請輸入學員帳號");
                 emailEl.focus();
                 return;
-            } else if (hasSpace.test(email)) {
+            } 
+            if (hasSpace.test(email)) {
                 alert("帳號格式錯誤。");
                 emailEl.focus();
                 return;
             }
         
-            // 密碼檢查
-            if (!password) {
+            // 5. 【強烈攔截邏輯】 - 密碼部分
+            if (!password || password.length === 0) {
                 alert("請輸入密碼");
                 passwordEl.focus();
                 return;
-            } else if (hasSpace.test(password)) {
+            } 
+            if (hasSpace.test(password)) {
                 alert("密碼格式錯誤。");
                 passwordEl.focus();
                 return;
             }
         
-            // 驗證碼檢查
-            if (!captchaInput) {
+            // 6. 【強烈攔截邏輯】 - 驗證碼部分
+            if (!captchaInput || captchaInput.length === 0) {
                 alert("請輸入驗證碼");
                 captchaInputEl.focus();
                 return;
-            } else if (hasSpace.test(captchaInput)) {
+            } 
+            if (hasSpace.test(captchaInput)) {
                 alert("驗證碼格式錯誤。");
                 captchaInputEl.focus();
                 return;
             }
         
-            // 6. 驗證碼比對
+            // 7. 驗證碼比對
             if (captchaInput !== currentCaptcha) { 
                 alert("驗證碼錯誤（請注意大小寫需完全一致）"); 
                 drawCaptcha();
-                captchaInputEl.value = ""; // 清空輸入方便重填
+                captchaInputEl.value = ""; 
                 captchaInputEl.focus();
                 return; 
             }
             
-            // 7. 執行 Firebase 驗證
+            // 8. 執行 Firebase 驗證
             auth.signInWithEmailAndPassword(email, password).then(cred => {
-                // 登入成功：重置所有計次與狀態
                 loginFailCount = 0;
                 lockUntil = 0;
-        
                 const sid = Math.random().toString(36).substring(2);
                 localStorage.setItem('session_id', sid);
-                
-                db.ref('auth_status/' + cred.user.uid).set({
-                    current_sid: sid,
-                    kick_all: false
-                });
-        
-                console.log("登入成功，正在導向教室...");
+                db.ref('auth_status/' + cred.user.uid).set({ current_sid: sid, kick_all: false });
             }).catch((error) => { 
-                // 登入失敗：累計次數
                 loginFailCount++;
-        
                 if (loginFailCount >= 3) {
-                    // 觸發 3 分鐘鎖定
                     lockUntil = Date.now() + (3 * 60 * 1000); 
-                    loginFailCount = 0; // 鎖定後歸零，等待下一次解除後重新計算
-                    alert("偵測到多次登入失敗！\n為維護帳號安全，系統已暫時停止您的登入權限 3 分鐘。");
+                    loginFailCount = 0; 
+                    alert("偵測到多次登入失敗！\n系統已暫時停止您的登入權限 3 分鐘。");
                 } else {
-                    // 根據 Firebase 回傳的錯誤代碼給予精確提醒
                     switch (error.code) {
-                        case 'auth/user-not-found':
-                            alert("查無此帳號，請重新確認。");
-                            break;
-                        case 'auth/wrong-password':
-                            alert("密碼輸入錯誤，請重新確認。");
-                            break;
-                        case 'auth/too-many-requests':
-                            alert("該帳號嘗試次數過多，已被伺服器端暫時封鎖，請稍後再試。");
-                            break;
-                        default:
-                            alert("帳號或密碼驗證失敗。");
+                        case 'auth/user-not-found': alert("查無此帳號，請重新確認。"); break;
+                        case 'auth/wrong-password': alert("密碼輸入錯誤，請重新確認。"); break;
+                        case 'auth/too-many-requests': alert("嘗試次數過多，請稍後再試。"); break;
+                        default: alert("帳號或密碼驗證失敗。");
                     }
                 }
-                drawCaptcha(); // 無論如何都刷新驗證碼，增加安全性
+                drawCaptcha(); 
             });
         }
         function logout() { 
