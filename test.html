@@ -25,205 +25,53 @@
         body { 
             font-family: "Noto Serif TC", serif; 
             background-color: var(--bg); 
-            margin: 0; 
-            padding: 20px; 
-            color: #333; 
-            user-select: none; 
-            -webkit-user-select: none;
+            margin: 0; padding: 20px; color: #333; 
+            user-select: none; -webkit-user-select: none;
             overscroll-behavior-y: none;
         }
         
-        #loading-screen { 
-            display: flex; 
-            justify-content: center; 
-            align-items: center; 
-            height: 100vh; 
-            font-size: 18px; 
-            color: var(--primary); 
-            font-weight: 700; 
-            letter-spacing: 2px; 
-        }
+        #loading-screen { display: flex; justify-content: center; align-items: center; height: 100vh; font-size: 18px; color: var(--primary); font-weight: 700; letter-spacing: 2px; }
 
         .container-ui { 
-            display: none; 
-            max-width: 800px; 
-            margin: 0 auto; 
-            background: var(--white);
-            padding: 40px; 
-            border-radius: 8px; 
-            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            display: none; max-width: 800px; margin: 0 auto; background: var(--white);
+            padding: 40px; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.05);
             border-top: 6px solid var(--primary);
         }
 
-        h2 { 
-            color: var(--dark); 
-            border-left: 5px solid var(--primary); 
-            padding-left: 15px; 
-            margin-top: 0; 
-        }
-        
-        .back-btn { 
-            display: inline-block; 
-            margin-bottom: 20px; 
-            color: #888; 
-            text-decoration: none; 
-            font-size: 14px; 
-            transition: 0.2s; 
-            cursor: pointer; 
-        }
-        
-        .back-btn:hover { 
-            color: var(--primary); 
-            font-weight: 700; 
-        }
+        h2 { color: var(--dark); border-left: 5px solid var(--primary); padding-left: 15px; margin-top: 0; }
+        .back-btn { display: inline-block; margin-bottom: 20px; color: #888; text-decoration: none; font-size: 14px; transition: 0.2s; cursor: pointer; }
+        .back-btn:hover { color: var(--primary); font-weight: 700; }
 
-        .exam-grid { 
-            display: grid; 
-            grid-template-columns: 1fr; 
-            gap: 15px; 
-            margin-top: 20px; 
-        }
+        .exam-grid { display: grid; grid-template-columns: 1fr; gap: 15px; margin-top: 20px; }
+        .exam-card { border: 1px solid #eee; padding: 20px; border-radius: 6px; display: flex; justify-content: space-between; align-items: center; background: #fafafa; transition: 0.3s; }
+        .exam-card:hover { border-color: var(--primary); box-shadow: 0 4px 10px rgba(0,0,0,0.03); }
         
-        .exam-card { 
-            border: 1px solid #eee; 
-            padding: 20px; 
-            border-radius: 6px; 
-            display: flex; 
-            justify-content: space-between; 
-            align-items: center; 
-            background: #fafafa; 
-            transition: 0.3s; 
-        }
+        .exam-info h3 { margin: 0 0 5px 0; font-size: 16px; color: var(--dark); }
+        .exam-info p { margin: 0; font-size: 12px; color: #888; }
         
-        .exam-card:hover { 
-            border-color: var(--primary); 
-            box-shadow: 0 4px 10px rgba(0,0,0,0.03); 
-        }
-        
-        .exam-info h3 { 
-            margin: 0 0 5px 0; 
-            font-size: 16px; 
-            color: var(--dark); 
-        }
-        
-        .exam-info p { 
-            margin: 0; 
-            font-size: 12px; 
-            color: #888; 
-        }
-        
-        .exam-status-btn { 
-            padding: 10px 18px; 
-            border-radius: 4px; 
-            font-weight: 700; 
-            font-size: 13px; 
-            cursor: pointer; 
-            border: none; 
-            transition: 0.2s; 
-        }
-        
+        .exam-status-btn { padding: 10px 18px; border-radius: 4px; font-weight: 700; font-size: 13px; cursor: pointer; border: none; transition: 0.2s; }
         .btn-start { background: var(--primary); color: white; }
         .btn-start:hover { background: var(--dark); }
         
-        .status-badge { 
-            display: inline-block; 
-            padding: 10px 15px; 
-            background: #e0e0e0; 
-            color: #777; 
-            border-radius: 4px; 
-            font-weight: 700; 
-            font-size: 13px; 
-            margin-right: 8px; 
-            cursor: not-allowed; 
-        }
+        .status-badge { display: inline-block; padding: 10px 15px; background: #e0e0e0; color: #777; border-radius: 4px; font-weight: 700; font-size: 13px; margin-right: 8px; cursor: not-allowed; }
         
         .btn-review { background: white; color: var(--primary); border: 1px solid var(--primary); }
         .btn-review:hover { background: var(--primary); color: white; }
 
-        .quiz-header-container { 
-            display: flex; 
-            justify-content: space-between; 
-            align-items: center; 
-            border-bottom: 2px dashed #eee; 
-            padding-bottom: 15px; 
-            margin-bottom: 20px; 
-        }
+        .quiz-header-container { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px dashed #eee; padding-bottom: 15px; margin-bottom: 20px; }
+        .quiz-header { font-size: 15px; color: #888; font-weight: 700; letter-spacing: 1px; margin: 0; }
+        .timer-display { font-size: 18px; color: #c0392b; font-weight: 700; background: #fdf2f0; padding: 5px 12px; border-radius: 4px; border: 1px solid #fadbd8; }
         
-        .quiz-header { 
-            font-size: 15px; 
-            color: #888; 
-            font-weight: 700; 
-            letter-spacing: 1px; 
-            margin: 0; 
-        }
-        
-        .timer-display { 
-            font-size: 18px; 
-            color: #c0392b; 
-            font-weight: 700; 
-            background: #fdf2f0; 
-            padding: 5px 12px; 
-            border-radius: 4px; 
-            border: 1px solid #fadbd8; 
-        }
-        
-        .question-text { 
-            font-size: 18px; 
-            color: #333; 
-            line-height: 1.6; 
-            margin-bottom: 25px; 
-            font-weight: 700; 
-        }
-        
-        .option-btn { 
-            display: block; 
-            width: 100%; 
-            text-align: left; 
-            padding: 15px 20px; 
-            margin-bottom: 12px; 
-            background: #fafafa; 
-            border: 2px solid #eee; 
-            border-radius: 6px; 
-            font-size: 16px; 
-            color: #555; 
-            cursor: pointer; 
-            transition: 0.2s; 
-            box-sizing: border-box; 
-            font-family: inherit; 
-        }
-        
+        .question-text { font-size: 18px; color: #333; line-height: 1.6; margin-bottom: 25px; font-weight: 700; }
+        .option-btn { display: block; width: 100%; text-align: left; padding: 15px 20px; margin-bottom: 12px; background: #fafafa; border: 2px solid #eee; border-radius: 6px; font-size: 16px; color: #555; cursor: pointer; transition: 0.2s; box-sizing: border-box; font-family: inherit; }
         .option-btn:hover { background: #f0f3ef; border-color: #d1d8c8; }
         .option-btn.selected { background: #eef1ec; border-color: var(--primary); color: var(--dark); font-weight: 700; }
         
-        .main-btn { 
-            background: var(--primary); 
-            color: white; 
-            border: none; 
-            padding: 15px; 
-            width: 100%; 
-            cursor: pointer; 
-            letter-spacing: 2px; 
-            font-weight: 700; 
-            transition: 0.3s; 
-            margin-top: 20px; 
-            border-radius: 4px; 
-            font-size: 16px; 
-        }
-        
+        .main-btn { background: var(--primary); color: white; border: none; padding: 15px; width: 100%; cursor: pointer; letter-spacing: 2px; font-weight: 700; transition: 0.3s; margin-top: 20px; border-radius: 4px; font-size: 16px; }
         .main-btn:hover { background: var(--dark); }
         .main-btn:disabled { background: #ccc; cursor: not-allowed; }
 
-        #score-display { 
-            text-align: center; 
-            font-size: 36px; 
-            color: var(--dark); 
-            font-weight: 700; 
-            margin: 20px 0; 
-            padding: 20px; 
-            background: #fafafa; 
-            border-radius: 8px; 
-        }
-        
+        #score-display { text-align: center; font-size: 36px; color: var(--dark); font-weight: 700; margin: 20px 0; padding: 20px; background: #fafafa; border-radius: 8px; }
         .review-card { background: white; border: 1px solid #eee; padding: 20px; margin-bottom: 20px; border-radius: 6px; }
         .review-q { font-weight: 700; margin-bottom: 10px; font-size: 16px; }
         .review-ans { font-size: 14px; margin-bottom: 5px; }
@@ -235,10 +83,7 @@
 <body>
 
     <script>
-        document.addEventListener('contextmenu', function(event) { 
-            event.preventDefault(); 
-            alert("版權所有，翻印必究！"); 
-        });
+        document.addEventListener('contextmenu', function(event) { event.preventDefault(); alert("版權所有，翻印必究！"); });
         let completedRecords = {}; 
     </script>
 
@@ -247,7 +92,6 @@
     <div id="exam-list-ui" class="container-ui">
         <a href="classroom.html" class="back-btn">← 返回雲端教室</a>
         <h2>測驗中心：待辦任務</h2>
-        
         <div style="background: #fdf2f0; border-left: 4px solid #e74c3c; padding: 15px; margin-bottom: 25px; border-radius: 4px;">
             <strong style="color: #c0392b; font-size: 15px;">測驗嚴格規範（請務必詳閱）：</strong>
             <ul style="color: #c0392b; font-size: 13px; margin: 8px 0 0; padding-left: 20px; line-height: 1.6;">
@@ -256,7 +100,6 @@
                 <li>若違規跳出，系統將強制收卷，未作答題目一律以 0 分計算。</li>
             </ul>
         </div>
-
         <div id="exam-grid" class="exam-grid"></div>
     </div>
 
@@ -283,7 +126,7 @@
     </div>
 
     <script>
-        // 1. Firebase 權限驗證
+        // 1. Firebase 配置與初始化
         const firebaseConfig = {
             apiKey: "AIzaSyALkTnkYY3JZLCTyajahpi4IZKmFX9USdw",
             authDomain: "su-hao-classroom.firebaseapp.com",
@@ -292,7 +135,6 @@
             messagingSenderId: "764168135846",
             appId: "1:764168135846:web:f2923a5f4952fa1ca64067"
         };
-        
         firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth();
         const db = firebase.database();
@@ -304,7 +146,7 @@
         let timeRemaining = 0;    
 
         // -----------------------------------------
-        // 🚀 閒置登出與防跳出旗標
+        // 🚀 核心邏輯：閒置登出機制
         // -----------------------------------------
         let idleTimer;
         let isAutoLoggingOut = false; 
@@ -325,12 +167,14 @@
                 idleTimer = setTimeout(() => {
                     alert("由於您已長時間未操作，系統已自動將您安全登出。");
                     logout();
-                }, 180000); // 3 分鐘
+                }, 180000); 
             }
         }
-
         window.onmousemove = window.onkeypress = window.ontouchstart = window.onclick = resetIdleTimer;
 
+        // -----------------------------------------
+        // 🔐 核心邏輯：系統授權驗證
+        // -----------------------------------------
         auth.onAuthStateChanged(async (user) => {
             if (user) {
                 currentUserUid = user.uid;
@@ -354,18 +198,18 @@
                     document.getElementById('loading-screen').style.display = 'none';
                     showExamList(); 
                 } catch (e) {
-                    alert("資料庫連線異常，請重新整理頁面。");
+                    alert("系統讀取失敗，請重新整理頁面。");
                 }
             } else {
+                alert("未授權的存取！請先登入系統。");
                 window.location.replace("classroom.html"); 
             }
         });
 
+        // 防跳出警告
         window.addEventListener('beforeunload', function (e) {
             if (document.getElementById('test-ui').style.display === 'block' && !isAutoLoggingOut) {
-                e.preventDefault();
-                e.returnValue = '';
-                return '';
+                e.preventDefault(); e.returnValue = ''; return '';
             }
         });
 
@@ -421,17 +265,11 @@
             hideAllUI();
             document.getElementById('test-ui').style.display = 'block';
             document.getElementById('active-exam-title').innerText = currentExam.title;
-            timeRemaining = 1800; 
-            updateTimerDisplay();
+            timeRemaining = 1800; updateTimerDisplay();
             clearInterval(timerInterval);
             timerInterval = setInterval(() => {
-                timeRemaining--;
-                updateTimerDisplay();
-                if (timeRemaining <= 0) {
-                    clearInterval(timerInterval);
-                    alert("測驗時間到！系統自動交卷。");
-                    finishAndShowResults(); 
-                }
+                timeRemaining--; updateTimerDisplay();
+                if (timeRemaining <= 0) { clearInterval(timerInterval); alert("測驗時間到！自動交卷。"); finishAndShowResults(); }
             }, 1000);
             renderQuestion();
         }
@@ -441,7 +279,6 @@
             const record = completedRecords[examId];
             hideAllUI();
             document.getElementById('result-ui').style.display = 'block';
-            document.getElementById('result-title').innerText = `回顧測驗：${exam.title}`;
             const scoreEl = document.getElementById('score-display');
             scoreEl.innerText = `${record.score} 分`;
             scoreEl.style.color = record.score >= 60 ? "#27ae60" : "#c0392b";
@@ -453,8 +290,7 @@
         }
 
         function updateTimerDisplay() {
-            const m = Math.floor(timeRemaining / 60);
-            const s = timeRemaining % 60;
+            const m = Math.floor(timeRemaining / 60); const s = timeRemaining % 60;
             document.getElementById('timer-display').innerText = `時間還剩 ${m < 10 ? '0' : ''}${m}:${s < 10 ? '0' : ''}${s}`;
         }
 
@@ -487,18 +323,17 @@
 
         function nextQuestion() {
             if (currentQuestionIndex < currentExam.questions.length - 1) {
-                currentQuestionIndex++;
-                renderQuestion();
-            } else {
-                finishAndShowResults();
-            }
+                currentQuestionIndex++; renderQuestion();
+            } else { finishAndShowResults(); }
         }
 
         function abandonExam() {
             if (confirm("確定要強制交卷嗎？未作答題目將計為 0 分。")) { finishAndShowResults(); }
         }
 
-        // 🏁 最終整合：成績回報與後台寫入
+        // -----------------------------------------
+        // 🏁 最終整合：成績回報與寫入
+        // -----------------------------------------
         function finishAndShowResults() {
             hideAllUI(); 
             document.getElementById('result-ui').style.display = 'block';
@@ -510,16 +345,19 @@
             currentExam.questions.forEach((q, index) => {
                 const isCorrect = userAnswers[index] === q.correctAnswer;
                 if (isCorrect) correctCount++;
+                
                 detailedResults.push({
                     originalQuestion: q.question,
                     userPick: userAnswers[index] !== null ? q.options[userAnswers[index]] : "未作答",
                     isCorrect: isCorrect,
                     correctAnswer: q.options[q.correctAnswer]
                 });
+
                 const userAnswerText = userAnswers[index] !== null ? q.options[userAnswers[index]] : "未作答";
                 const statusHtml = isCorrect 
                     ? `<span class="review-correct">✔ 答對了！</span>` 
                     : `<span class="review-wrong">✘ 答錯了 (你的答案：${userAnswerText})</span>`;
+                
                 reviewContainer.innerHTML += `<div class="review-card"><div class="review-q">Q${index + 1}. ${q.question}</div><div class="review-ans">正確答案：${q.options[q.correctAnswer]}</div><div class="review-ans">${statusHtml}</div><div class="review-exp"><strong>解析：</strong><br>${q.explanation}</div></div>`;
             }); 
 
@@ -530,16 +368,18 @@
             completedRecords[currentExam.id] = recordData;
             db.ref('exam_records/' + currentUserUid + '/' + currentExam.id).set(recordData);
 
-            // 2. 寄信回報給蘇昊老師
+            // 2. 寄信回報給老師
             const studentName = localStorage.getItem('studentName') || "雲端同學";
             const reportUrl = `${SCRIPT_URL}?action=submitExam&email=${encodeURIComponent(auth.currentUser.email)}&name=${encodeURIComponent(studentName)}&examTitle=${encodeURIComponent(currentExam.title)}&score=${finalScore}&details=${encodeURIComponent(JSON.stringify(detailedResults))}`;
+            
             fetch(reportUrl, { mode: 'no-cors' })
-                .then(() => console.log("成績已同步發送"))
+                .then(() => console.log("成績報告已發送"))
                 .catch(err => console.error("寄信失敗", err));
 
             const scoreEl = document.getElementById('score-display');
             scoreEl.innerText = `${finalScore} 分`;
             scoreEl.style.color = finalScore >= 60 ? "#27ae60" : "#c0392b";
+            if (finalScore === 100) scoreEl.innerText += " 滿分！";
         }
     </script>
 </body>
