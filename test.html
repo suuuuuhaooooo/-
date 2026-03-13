@@ -299,18 +299,19 @@
             reviewContainer.innerHTML = "";
             
             exam.questions.forEach((q, index) => {
-                const expContent = q.explanation || q.exp || "無解析";
+                const currentExp = q.exp || q.explanation || "無解析資料";
+                
                 reviewContainer.innerHTML += `
                     <div class="review-card">
                         <div class="review-q">Q${index + 1}. ${q.question}</div>
                         <div class="review-ans">正確答案：<span class="review-correct">${q.options[q.correctAnswer]}</span></div>
-                        <div class="review-exp"><strong>解析：</strong><br>${expContent}</div>
+                        <div class="review-exp"><strong>解析：</strong><br>${currentExp}</div>
                     </div>`;
             });
             if (window.MathJax) {
                 setTimeout(() => {
-                    MathJax.typesetPromise([reviewContainer]).catch(err => console.log('渲染解析失敗:', err));
-                }, 100);
+                    MathJax.typesetPromise().catch(err => console.log('渲染失敗:', err));
+                }, 150); 
             }
         }
 
@@ -449,6 +450,7 @@
     </script>
 </body>
 </html>
+
 
 
 
