@@ -368,16 +368,41 @@
             db.ref('exam_records/' + currentUserUid + '/' + currentExam.id).set(recordData);
 
             // 🚀 寄信回報給蘇昊老師
+            // 🚀 寄信回報給蘇昊老師 (穩定 POST 版)
             const studentName = localStorage.getItem('studentName') || "雲端同學";
-            const reportUrl = `${SCRIPT_URL}?action=submitExam&email=${encodeURIComponent(auth.currentUser.email)}&name=${encodeURIComponent(studentName)}&examTitle=${encodeURIComponent(currentExam.title)}&score=${finalScore}&details=${encodeURIComponent(JSON.stringify(detailedResults))}`;
-            fetch(reportUrl, { mode: 'no-cors' });
+    
+            // 使用 URLSearchParams 封裝資料，這可以處理極長字串，不會被截斷
+            const formData = new URLSearchParams();
+            formData.append("action", "submitExam");
+            formData.append("email", auth.currentUser.email);
+            formData.append("name", studentName);
+            formData.append("examTitle", currentExam.title);
+            formData.append("score", finalScore);
+            formData.append("details", JSON.stringify(detailedResults));
 
+            // 使用 POST 方式發送
+            fetch(SCRIPT_URL, {
+                method: "POST",
+                body: formData,
+                mode: 'no-cors' // 依然保持非同步，不干擾學生畫面
+            })
+            .then(() => console.log("成績報告已成功發送至老師信箱"))
+            .catch(err => console.error("發送報錯：", err));
+        
+            // --- 以下 UI 顯示保持不變 ---
             const scoreEl = document.getElementById('score-display');
             scoreEl.innerText = `${finalScore} 分`;
-            if (finalScore === 100) { scoreEl.style.color = "#27ae60"; scoreEl.innerText += "滿分！太厲害了！"; }
-            else if (finalScore >= 60) { scoreEl.style.color = "#d35400"; }
-            else { scoreEl.style.color = "#c0392b"; scoreEl.innerText += "要再加油複習喔！"; }
+            if (finalScore === 100) { 
+                scoreEl.style.color = "#27ae60"; 
+                scoreEl.innerText += "滿分！太厲害了！"; 
+            } else if (finalScore >= 60) { 
+                scoreEl.style.color = "#d35400"; 
+            } else { 
+                scoreEl.style.color = "#c0392b"; 
+                scoreEl.innerText += "要再加油複習喔！"; 
+            }
         }
     </script>
 </body>
 </html>
+
