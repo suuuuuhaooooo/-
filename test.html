@@ -436,7 +436,7 @@
             }
         });
 
-        // ⚠️ 修正防跳出警告：如果是系統閒置踢人，就不攔截
+        //修正防跳出警告：如果是系統閒置踢人，就不攔截
         window.addEventListener('beforeunload', function (e) {
             if (document.getElementById('test-ui').style.display === 'block' && !isAutoLoggingOut) {
                 e.preventDefault();
@@ -634,54 +634,82 @@
         }
 
         function finishAndShowResults() {
-            hideAllUI(); 
-            document.getElementById('result-ui').style.display = 'block';
-            document.getElementById('result-title').innerText = "測驗結算";
+    hideAllUI(); 
+    document.getElementById('result-ui').style.display = 'block';
+    document.getElementById('result-title').innerText = "測驗結算";
 
-            let correctCount = 0;
-            const reviewContainer = document.getElementById('review-container');
-            reviewContainer.innerHTML = "";
+    let correctCount = 0;
+    // 🚀 【新增】建立詳細作答紀錄清單，用於回報老師
+    let detailedResults = []; 
+    
+    const reviewContainer = document.getElementById('review-container');
+    reviewContainer.innerHTML = "";
 
-            currentExam.questions.forEach((q, index) => {
-                const isCorrect = userAnswers[index] === q.correctAnswer;
-                if (isCorrect) correctCount++;
+    currentExam.questions.forEach((q, index) => {
+        const isCorrect = userAnswers[index] === q.correctAnswer;
+        if (isCorrect) correctCount++;
 
-                const userAnswerText = userAnswers[index] !== null ? q.options[userAnswers[index]] : "未作答 (直接扣分)";
-                const correctAnswerText = q.options[q.correctAnswer];
-                const statusHtml = isCorrect 
-                    ? `<span class="review-correct">✔ 答對了！</span>` 
-                    : `<span class="review-wrong">✘ 答錯了 (你的答案：${userAnswerText})</span>`;
+        // 🚀 【新增】整理每一題的內容、學生選什麼、正確答案
+        detailedResults.push({
+            originalQuestion: q.question,
+            userPick: userAnswers[index] !== null ? q.options[userAnswers[index]] : "未作答",
+            isCorrect: isCorrect,
+            correctAnswer: q.options[q.correctAnswer]
+        });
 
-                reviewContainer.innerHTML += `
-                    <div class="review-card">
-                        <div class="review-q">Q${index + 1}. ${q.question}</div>
-                        <div class="review-ans">正確答案：${correctAnswerText}</div>
-                        <div class="review-ans">${statusHtml}</div>
-                        <div class="review-exp"><strong>解析：</strong><br>${q.explanation}</div>
-                    </div>
-                `;
-            }); 
+        const userAnswerText = userAnswers[index] !== null ? q.options[userAnswers[index]] : "未作答 (直接扣分)";
+        const correctAnswerText = q.options[q.correctAnswer];
+        const statusHtml = isCorrect 
+            ? `<span class="review-correct">✔ 答對了！</span>` 
+            : `<span class="review-wrong">✘ 答錯了 (你的答案：${userAnswerText})</span>`;
 
-            const finalScore = Math.round((correctCount / currentExam.questions.length) * 100);
-            
-            completedRecords[currentExam.id] = { score: finalScore, date: new Date().toISOString() };
-            firebase.database().ref('exam_records/' + currentUserUid + '/' + currentExam.id).set({
-                score: finalScore,
-                date: new Date().toISOString()
-            });
+        reviewContainer.innerHTML += `
+            <div class="review-card">
+                <div class="review-q">Q${index + 1}. ${q.question}</div>
+                <div class="review-ans">正確答案：${correctAnswerText}</div>
+                <div class="review-ans">${statusHtml}</div>
+                <div class="review-exp"><strong>解析：</strong><br>${q.explanation}</div>
+            </div>
+        `;
+    }); 
 
-            const scoreEl = document.getElementById('score-display');
-            scoreEl.innerText = `${finalScore} 分`;
-            if (finalScore === 100) { 
-                scoreEl.style.color = "#27ae60"; 
-                scoreEl.innerText += "滿分！太厲害了！"; 
-            } else if (finalScore >= 60) { 
-                scoreEl.style.color = "#d35400"; 
-            } else { 
-                scoreEl.style.color = "#c0392b"; 
-                scoreEl.innerText += "要再加油複習喔！"; 
-            }
-        }
+    const finalScore = Math.round((correctCount / currentExam.questions.length) * 100);
+    
+    // 1. 寫入 Firebase 後台 (這裡多存了 details)
+    const recordData = { 
+        score: finalScore, 
+        date: new Date().toISOString(),
+        details: detailedResults // 🚀 【新增】讓 Firebase 也能看到錯哪題
+    };
+    
+    completedRecords[currentExam.id] = recordData;
+    firebase.database().ref('exam_records/' + currentUserUid + '/' + currentExam.id).set(recordData);
+
+    // 🚀 2. 【核心新增】寄信成績回報給老師
+    // 取得學生姓名 (請確保 classroom.html 有執行 localStorage.setItem('studentName', my.name))
+    const studentName = localStorage.getItem('studentName') || "雲端同學";
+    
+    const reportUrl = `${SCRIPT_URL}?action=submitExam&email=${encodeURIComponent(auth.currentUser.email)}&name=${encodeURIComponent(studentName)}&examTitle=${encodeURIComponent(currentExam.title)}&score=${finalScore}&details=${encodeURIComponent(JSON.stringify(detailedResults))}`;
+    
+    // 用 fetch 發送請求給 GAS 寄信
+    fetch(reportUrl, { mode: 'no-cors' })
+        .then(() => console.log("成績已同步發送至老師信箱"))
+        .catch(err => console.error("寄信失敗：", err));
+
+    // --- 以下為顯示分數 UI，保持不變 ---
+    const scoreEl = document.getElementById('score-display');
+    scoreEl.innerText = `${finalScore} 分`;
+    if (finalScore === 100) { 
+        scoreEl.style.color = "#27ae60"; 
+        scoreEl.innerText += "滿分！太厲害了！"; 
+    } else if (finalScore >= 60) { 
+        scoreEl.style.color = "#d35400"; 
+    } else { 
+        scoreEl.style.color = "#c0392b"; 
+        scoreEl.innerText += "要再加油複習喔！"; 
+    }
+}
     </script>
 </body>
 </html>
+
