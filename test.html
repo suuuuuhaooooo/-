@@ -13,6 +13,13 @@
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-database-compat.js"></script>
     <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
     <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script>
+    window.MathJax = {
+    tex: {
+        inlineMath: [['$', '$'], ['\\(', '\\)']]
+    }
+    };
+    </script>
     
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;700&display=swap');
@@ -298,13 +305,13 @@
         function renderQuestion() {
             const qData = currentExam.questions[currentQuestionIndex];
             document.getElementById('quiz-progress').innerText = `題目 ${currentQuestionIndex + 1} / ${currentExam.questions.length}`;
-            document.getElementById('question-text').innerText = qData.question;
+            document.getElementById('question-text').innerHTML = qData.question;
             const optionsContainer = document.getElementById('options-container');
             optionsContainer.innerHTML = ""; 
             qData.options.forEach((opt, index) => {
                 const btn = document.createElement('button');
                 btn.className = 'option-btn';
-                btn.innerText = `${String.fromCharCode(65 + index)}. ${opt}`; 
+                btn.innerHTML = `${String.fromCharCode(65 + index)}. ${opt}`;
                 btn.onclick = () => selectOption(index);
                 if (userAnswers[currentQuestionIndex] === index) btn.classList.add('selected');
                 optionsContainer.appendChild(btn);
@@ -408,6 +415,7 @@
     </script>
 </body>
 </html>
+
 
 
 
