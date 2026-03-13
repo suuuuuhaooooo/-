@@ -11,6 +11,8 @@
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-database-compat.js"></script>
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;700&display=swap');
@@ -310,6 +312,7 @@
             const nextBtn = document.getElementById('next-btn');
             nextBtn.disabled = userAnswers[currentQuestionIndex] === null;
             nextBtn.innerText = currentQuestionIndex === currentExam.questions.length - 1 ? "交卷並看成績" : "確認並下一題";
+            if (window.MathJax) { MathJax.typesetPromise(); }
         }
 
         function selectOption(index) {
@@ -338,72 +341,73 @@
 
         // 🏁 最終整合：成績回報與寫入邏輯
         function finishAndShowResults() {
-            hideAllUI(); 
-            document.getElementById('result-ui').style.display = 'block';
-            document.getElementById('result-title').innerText = "測驗結算";
-            let correctCount = 0;
-            let detailedResults = []; 
-            const reviewContainer = document.getElementById('review-container');
-            reviewContainer.innerHTML = "";
-
-            currentExam.questions.forEach((q, index) => {
-                const isCorrect = userAnswers[index] === q.correctAnswer;
-                if (isCorrect) correctCount++;
-                detailedResults.push({
-                    originalQuestion: q.question,
-                    userPick: userAnswers[index] !== null ? q.options[userAnswers[index]] : "未作答",
-                    isCorrect: isCorrect,
-                    correctAnswer: q.options[q.correctAnswer]
-                });
-                const userAnswerText = userAnswers[index] !== null ? q.options[userAnswers[index]] : "未作答";
-                const statusHtml = isCorrect 
-                    ? `<span class="review-correct">✔ 答對了！</span>` 
-                    : `<span class="review-wrong">✘ 答錯了 (你的答案：${userAnswerText})</span>`;
-                reviewContainer.innerHTML += `<div class="review-card"><div class="review-q">Q${index + 1}. ${q.question}</div><div class="review-ans">正確答案：${q.options[q.correctAnswer]}</div><div class="review-ans">${statusHtml}</div><div class="review-exp"><strong>解析：</strong><br>${q.explanation}</div></div>`;
-            }); 
-
-            const finalScore = Math.round((correctCount / currentExam.questions.length) * 100);
-            const recordData = { score: finalScore, date: new Date().toISOString(), details: detailedResults };
-            completedRecords[currentExam.id] = recordData;
-            db.ref('exam_records/' + currentUserUid + '/' + currentExam.id).set(recordData);
-
-            // 🚀 寄信回報給蘇昊老師
-            // 🚀 寄信回報給蘇昊老師 (穩定 POST 版)
-            const studentName = localStorage.getItem('studentName') || "雲端同學";
-    
-            // 使用 URLSearchParams 封裝資料，這可以處理極長字串，不會被截斷
-            const formData = new URLSearchParams();
-            formData.append("action", "submitExam");
-            formData.append("email", auth.currentUser.email);
-            formData.append("name", studentName);
-            formData.append("examTitle", currentExam.title);
-            formData.append("score", finalScore);
-            formData.append("details", JSON.stringify(detailedResults));
-
-            // 使用 POST 方式發送
-            fetch(SCRIPT_URL, {
-                method: "POST",
-                body: formData.toString(), // 轉為字串格式發送
-                mode: 'no-cors' 
-            })
-            .then(() => console.log("成績報告已發送"))
-            .catch(err => console.error("發送報錯：", err));
+                    hideAllUI(); 
+                    document.getElementById('result-ui').style.display = 'block';
+                    document.getElementById('result-title').innerText = "測驗結算";
+                    let correctCount = 0;
+                    let detailedResults = []; 
+                    const reviewContainer = document.getElementById('review-container');
+                    reviewContainer.innerHTML = "";
         
-            // --- 以下 UI 顯示保持不變 ---
-            const scoreEl = document.getElementById('score-display');
-            scoreEl.innerText = `${finalScore} 分`;
-            if (finalScore === 100) { 
-                scoreEl.style.color = "#27ae60"; 
-                scoreEl.innerText += "滿分！太厲害了！"; 
-            } else if (finalScore >= 60) { 
-                scoreEl.style.color = "#d35400"; 
-            } else { 
-                scoreEl.style.color = "#c0392b"; 
-                scoreEl.innerText += "要再加油複習喔！"; 
-            }
-        }
+                    currentExam.questions.forEach((q, index) => {
+                        const isCorrect = userAnswers[index] === q.correctAnswer;
+                        if (isCorrect) correctCount++;
+                        detailedResults.push({
+                            originalQuestion: q.question,
+                            userPick: userAnswers[index] !== null ? q.options[userAnswers[index]] : "未作答",
+                            isCorrect: isCorrect,
+                            correctAnswer: q.options[q.correctAnswer]
+                        });
+                        const userAnswerText = userAnswers[index] !== null ? q.options[userAnswers[index]] : "未作答";
+                        const statusHtml = isCorrect 
+                            ? `<span class="review-correct">✔ 答對了！</span>` 
+                            : `<span class="review-wrong">✘ 答錯了 (你的答案：${userAnswerText})</span>`;
+                        reviewContainer.innerHTML += `<div class="review-card"><div class="review-q">Q${index + 1}. ${q.question}</div><div class="review-ans">正確答案：${q.options[q.correctAnswer]}</div><div class="review-ans">${statusHtml}</div><div class="review-exp"><strong>解析：</strong><br>${q.explanation}</div></div>`;
+                    }); 
+        
+                    const finalScore = Math.round((correctCount / currentExam.questions.length) * 100);
+                    const recordData = { score: finalScore, date: new Date().toISOString(), details: detailedResults };
+                    completedRecords[currentExam.id] = recordData;
+                    db.ref('exam_records/' + currentUserUid + '/' + currentExam.id).set(recordData);
+        
+                    // 🚀 寄信回報給老師
+                    const studentName = localStorage.getItem('studentName') || "雲端同學";
+                    const formData = new URLSearchParams();
+                    formData.append("action", "submitExam");
+                    formData.append("email", auth.currentUser.email);
+                    formData.append("name", studentName);
+                    formData.append("examTitle", currentExam.title);
+                    formData.append("score", finalScore);
+                    formData.append("details", JSON.stringify(detailedResults));
+        
+                    fetch(SCRIPT_URL, {
+                        method: "POST",
+                        body: formData.toString(),
+                        mode: 'no-cors' 
+                    })
+                    .then(() => console.log("成績報告已發送"))
+                    .catch(err => console.error("發送報錯：", err));
+                
+                    // --- UI 顯示 ---
+                    const scoreEl = document.getElementById('score-display');
+                    scoreEl.innerText = `${finalScore} 分`;
+                    if (finalScore === 100) { 
+                        scoreEl.style.color = "#27ae60"; 
+                        scoreEl.innerText += "滿分！太厲害了！"; 
+                    } else if (finalScore >= 60) { 
+                        scoreEl.style.color = "#d35400"; 
+                    } else { 
+                        scoreEl.style.color = "#c0392b"; 
+                        scoreEl.innerText += "要再加油複習喔！";
+                    }
+        
+                    if (window.MathJax) {
+                        MathJax.typesetPromise();
+                    }
+                } // 這一封大括號才是 finishAndShowResults 的終點
     </script>
 </body>
 </html>
+
 
 
