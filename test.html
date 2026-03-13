@@ -15,121 +15,37 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;700&display=swap');
         
-        :root { 
-            --primary: #8e9775; 
-            --dark: #5b6348; 
-            --bg: #f8f8f6; 
-            --white: #ffffff; 
-        }
+        :root { --primary: #8e9775; --dark: #5b6348; --bg: #f8f8f6; --white: #ffffff; }
         
         body { 
             font-family: "Noto Serif TC", serif; 
             background-color: var(--bg); 
-            margin: 0; 
-            padding: 20px; 
-            color: #333; 
-            user-select: none; 
-            -webkit-user-select: none;
+            margin: 0; padding: 20px; color: #333; 
+            user-select: none; -webkit-user-select: none;
             overscroll-behavior-y: none;
         }
         
-        #loading-screen { 
-            display: flex; 
-            justify-content: center; 
-            align-items: center; 
-            height: 100vh; 
-            font-size: 18px; 
-            color: var(--primary); 
-            font-weight: 700; 
-            letter-spacing: 2px; 
-        }
+        #loading-screen { display: flex; justify-content: center; align-items: center; height: 100vh; font-size: 18px; color: var(--primary); font-weight: 700; letter-spacing: 2px; }
 
         .container-ui { 
-            display: none; 
-            max-width: 800px; 
-            margin: 0 auto; 
-            background: var(--white);
-            padding: 40px; 
-            border-radius: 8px; 
-            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            display: none; max-width: 800px; margin: 0 auto; background: var(--white);
+            padding: 40px; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.05);
             border-top: 6px solid var(--primary);
         }
 
-        h2 { 
-            color: var(--dark); 
-            border-left: 5px solid var(--primary); 
-            padding-left: 15px; 
-            margin-top: 0; 
-        }
-        
-        .back-btn { 
-            display: inline-block; 
-            margin-bottom: 20px; 
-            color: #888; 
-            text-decoration: none; 
-            font-size: 14px; 
-            transition: 0.2s; 
-            cursor: pointer; 
-        }
-        
-        .back-btn:hover { 
-            color: var(--primary); 
-            font-weight: 700; 
-        }
+        h2 { color: var(--dark); border-left: 5px solid var(--primary); padding-left: 15px; margin-top: 0; }
+        .back-btn { display: inline-block; margin-bottom: 20px; color: #888; text-decoration: none; font-size: 14px; transition: 0.2s; cursor: pointer; }
+        .back-btn:hover { color: var(--primary); font-weight: 700; }
 
-        .exam-grid { 
-            display: grid; 
-            grid-template-columns: 1fr; 
-            gap: 15px; 
-            margin-top: 20px; 
-        }
+        .exam-grid { display: grid; grid-template-columns: 1fr; gap: 15px; margin-top: 20px; }
+        .exam-card { border: 1px solid #eee; padding: 20px; border-radius: 6px; display: flex; justify-content: space-between; align-items: center; background: #fafafa; transition: 0.3s; }
+        .exam-card:hover { border-color: var(--primary); box-shadow: 0 4px 10px rgba(0,0,0,0.03); }
+        .exam-info h3 { margin: 0 0 5px 0; font-size: 16px; color: var(--dark); }
+        .exam-info p { margin: 0; font-size: 12px; color: #888; }
         
-        .exam-card { 
-            border: 1px solid #eee; 
-            padding: 20px; 
-            border-radius: 6px; 
-            display: flex; 
-            justify-content: space-between; 
-            align-items: center; 
-            background: #fafafa; 
-            transition: 0.3s; 
-        }
-        
-        .exam-card:hover { 
-            border-color: var(--primary); 
-            box-shadow: 0 4px 10px rgba(0,0,0,0.03); 
-        }
-        
-        .exam-info h3 { 
-            margin: 0 0 5px 0; 
-            font-size: 16px; 
-            color: var(--dark); 
-        }
-        
-        .exam-info p { 
-            margin: 0; 
-            font-size: 12px; 
-            color: #888; 
-        }
-        
-        .exam-status-btn { 
-            padding: 10px 18px; 
-            border-radius: 4px; 
-            font-weight: 700; 
-            font-size: 13px; 
-            cursor: pointer; 
-            border: none; 
-            transition: 0.2s; 
-        }
-        
-        .btn-start { 
-            background: var(--primary); 
-            color: white; 
-        }
-        
-        .btn-start:hover { 
-            background: var(--dark); 
-        }
+        .exam-status-btn { padding: 10px 18px; border-radius: 4px; font-weight: 700; font-size: 13px; cursor: pointer; border: none; transition: 0.2s; }
+        .btn-start { background: var(--primary); color: white; }
+        .btn-start:hover { background: var(--dark); }
         
         /* 已完成的分數標籤樣式 */
         .status-badge { 
@@ -145,167 +61,39 @@
             cursor: not-allowed; 
         }
         
-        .btn-review { 
-            background: white; 
-            color: var(--primary); 
-            border: 1px solid var(--primary); 
-        }
-        
-        .btn-review:hover { 
-            background: var(--primary); 
-            color: white; 
-        }
+        .btn-review { background: white; color: var(--primary); border: 1px solid var(--primary); }
+        .btn-review:hover { background: var(--primary); color: white; }
 
-        .quiz-header-container { 
-            display: flex; 
-            justify-content: space-between; 
-            align-items: center; 
-            border-bottom: 2px dashed #eee; 
-            padding-bottom: 15px; 
-            margin-bottom: 20px; 
-        }
+        .quiz-header-container { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px dashed #eee; padding-bottom: 15px; margin-bottom: 20px; }
+        .quiz-header { font-size: 15px; color: #888; font-weight: 700; letter-spacing: 1px; margin: 0; }
+        .timer-display { font-size: 18px; color: #c0392b; font-weight: 700; background: #fdf2f0; padding: 5px 12px; border-radius: 4px; border: 1px solid #fadbd8; }
         
-        .quiz-header { 
-            font-size: 15px; 
-            color: #888; 
-            font-weight: 700; 
-            letter-spacing: 1px; 
-            margin: 0; 
-        }
+        .question-text { font-size: 18px; color: #333; line-height: 1.6; margin-bottom: 25px; font-weight: 700; }
+        .option-btn { display: block; width: 100%; text-align: left; padding: 15px 20px; margin-bottom: 12px; background: #fafafa; border: 2px solid #eee; border-radius: 6px; font-size: 16px; color: #555; cursor: pointer; transition: 0.2s; box-sizing: border-box; font-family: inherit; }
+        .option-btn:hover { background: #f0f3ef; border-color: #d1d8c8; }
+        .option-btn.selected { background: #eef1ec; border-color: var(--primary); color: var(--dark); font-weight: 700; }
         
-        .timer-display { 
-            font-size: 18px; 
-            color: #c0392b; 
-            font-weight: 700; 
-            background: #fdf2f0; 
-            padding: 5px 12px; 
-            border-radius: 4px; 
-            border: 1px solid #fadbd8; 
-        }
-        
-        .question-text { 
-            font-size: 18px; 
-            color: #333; 
-            line-height: 1.6; 
-            margin-bottom: 25px; 
-            font-weight: 700; 
-        }
-        
-        .option-btn { 
-            display: block; 
-            width: 100%; 
-            text-align: left; 
-            padding: 15px 20px; 
-            margin-bottom: 12px; 
-            background: #fafafa; 
-            border: 2px solid #eee; 
-            border-radius: 6px; 
-            font-size: 16px; 
-            color: #555; 
-            cursor: pointer; 
-            transition: 0.2s; 
-            box-sizing: border-box; 
-            font-family: inherit; 
-        }
-        
-        .option-btn:hover { 
-            background: #f0f3ef; 
-            border-color: #d1d8c8; 
-        }
-        
-        .option-btn.selected { 
-            background: #eef1ec; 
-            border-color: var(--primary); 
-            color: var(--dark); 
-            font-weight: 700; 
-        }
-        
-        .main-btn { 
-            background: var(--primary); 
-            color: white; 
-            border: none; 
-            padding: 15px; 
-            width: 100%; 
-            cursor: pointer; 
-            letter-spacing: 2px; 
-            font-weight: 700; 
-            transition: 0.3s; 
-            margin-top: 20px; 
-            border-radius: 4px; 
-            font-size: 16px; 
-        }
-        
-        .main-btn:hover { 
-            background: var(--dark); 
-        }
-        
-        .main-btn:disabled { 
-            background: #ccc; 
-            cursor: not-allowed; 
-        }
+        .main-btn { background: var(--primary); color: white; border: none; padding: 15px; width: 100%; cursor: pointer; letter-spacing: 2px; font-weight: 700; transition: 0.3s; margin-top: 20px; border-radius: 4px; font-size: 16px; }
+        .main-btn:hover { background: var(--dark); }
+        .main-btn:disabled { background: #ccc; cursor: not-allowed; }
 
-        #score-display { 
-            text-align: center; 
-            font-size: 36px; 
-            color: var(--dark); 
-            font-weight: 700; 
-            margin: 20px 0; 
-            padding: 20px; 
-            background: #fafafa; 
-            border-radius: 8px; 
-        }
-        
-        .review-card { 
-            background: white; 
-            border: 1px solid #eee; 
-            padding: 20px; 
-            margin-bottom: 20px; 
-            border-radius: 6px; 
-        }
-        
-        .review-q { 
-            font-weight: 700; 
-            margin-bottom: 10px; 
-            font-size: 16px; 
-        }
-        
-        .review-ans { 
-            font-size: 14px; 
-            margin-bottom: 5px; 
-        }
-        
-        .review-correct { 
-            color: #27ae60; 
-            font-weight: 700; 
-        }
-        
-        .review-wrong { 
-            color: #c0392b; 
-            font-weight: 700; 
-        }
-        
-        .review-exp { 
-            margin-top: 12px; 
-            padding: 12px; 
-            background: #f9f9f9; 
-            border-left: 4px solid var(--primary); 
-            font-size: 13px; 
-            color: #666; 
-            line-height: 1.5; 
-        }
+        #score-display { text-align: center; font-size: 36px; color: var(--dark); font-weight: 700; margin: 20px 0; padding: 20px; background: #fafafa; border-radius: 8px; }
+        .review-card { background: white; border: 1px solid #eee; padding: 20px; margin-bottom: 20px; border-radius: 6px; }
+        .review-q { font-weight: 700; margin-bottom: 10px; font-size: 16px; }
+        .review-ans { font-size: 14px; margin-bottom: 5px; }
+        .review-correct { color: #27ae60; font-weight: 700; }
+        .review-wrong { color: #c0392b; font-weight: 700; }
+        .review-exp { margin-top: 12px; padding: 12px; background: #f9f9f9; border-left: 4px solid var(--primary); font-size: 13px; color: #666; line-height: 1.5; }
     </style>
 </head>
 <body>
 
     <script>
-        document.addEventListener('contextmenu', function(event) { 
-            event.preventDefault(); 
-            alert("版權所有，翻印必究！"); 
-        });
+        document.addEventListener('contextmenu', function(event) { event.preventDefault(); alert("版權所有，翻印必究！"); });
         let completedRecords = {}; 
     </script>
 
-    <div id="loading-screen">系統確認授權中，載入測驗...</div>
+    <div id="loading-screen">系統確認授權中，載入專屬測驗...</div>
 
     <div id="exam-list-ui" class="container-ui">
         <a href="classroom.html" class="back-btn">← 返回雲端教室</a>
@@ -355,57 +143,20 @@
             messagingSenderId: "764168135846",
             appId: "1:764168135846:web:f2923a5f4952fa1ca64067"
         };
-        
         firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth();
-        const db = firebase.database(); // 確保 db 宣告在外層
         const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwxFfufe0b7eJpDxSmLgnbVvlq1itLvoD6ZCpvDJKtJg7ChcWn7lpf9LgZqQ4ZsThJiXQ/exec";
-
+        
         let currentUserUid = null;
         let studentPersonalExams = []; 
         let timerInterval = null; 
         let timeRemaining = 0;    
 
-        // -----------------------------------------
-        // 🚀 新增：閒置登出機制
-        // -----------------------------------------
-        let idleTimer;
-        let isAutoLoggingOut = false; // 旗標：用來判斷是否為系統自動踢出
-
-        function logout() {
-            isAutoLoggingOut = true; // 標記為強制登出，放行 beforeunload
-            const user = auth.currentUser;
-            if (user) {
-                db.ref('presence/' + user.uid).remove(); // 同步清除在線狀態
-            }
-            auth.signOut().then(() => {
-                localStorage.clear();
-                window.location.replace("classroom.html"); // 踢回雲端教室首頁
-            });
-        }
-
-        function resetIdleTimer() {
-            clearTimeout(idleTimer);
-            if (auth.currentUser) {
-                // 設定 3 分鐘 (180000 毫秒) 閒置自動登出
-                idleTimer = setTimeout(() => {
-                    alert("由於您已長時間未操作，系統已自動將您安全登出。");
-                    // 如果剛好在測驗中被踢出，這裡可以加上強制收卷的邏輯，目前設定為直接登出
-                    logout();
-                }, 180000); 
-            }
-        }
-
-        // 監聽使用者的滑鼠、鍵盤、觸控動作來重置計時器
-        window.onmousemove = window.onkeypress = window.ontouchstart = window.onclick = resetIdleTimer;
-        // -----------------------------------------
-
         auth.onAuthStateChanged(async (user) => {
             if (user) {
                 currentUserUid = user.uid;
-                resetIdleTimer(); // 登入成功後啟動計時器
-
                 try {
+                    const db = firebase.database();
                     const snap = await db.ref('exam_records/' + currentUserUid).once('value');
                     completedRecords = snap.val() || {}; 
 
@@ -437,9 +188,8 @@
             }
         });
 
-        // ⚠️ 修正防跳出警告：如果是系統閒置踢人，就不攔截
         window.addEventListener('beforeunload', function (e) {
-            if (document.getElementById('test-ui').style.display === 'block' && !isAutoLoggingOut) {
+            if (document.getElementById('test-ui').style.display === 'block') {
                 e.preventDefault();
                 e.returnValue = '';
                 return '';
@@ -517,7 +267,7 @@
             currentQuestionIndex = 0;
             userAnswers = new Array(currentExam.questions.length).fill(null);
             
-            firebase.database().ref('exam_records/' + currentUserUid + '/' + examId).update({
+            firebase.database().ref('exam_records/' + currentUserUid + '/' + examId).set({
                 score: 0,
                 date: new Date().toISOString()
             });
@@ -640,21 +390,12 @@
             document.getElementById('result-title').innerText = "測驗結算";
 
             let correctCount = 0;
-            let detailedResults = []; // 🎯 新增：用於整理寄信內容
             const reviewContainer = document.getElementById('review-container');
             reviewContainer.innerHTML = "";
 
             currentExam.questions.forEach((q, index) => {
                 const isCorrect = userAnswers[index] === q.correctAnswer;
                 if (isCorrect) correctCount++;
-
-                // 🎯 整理每一題的作答狀況
-                detailedResults.push({
-                    originalQuestion: q.question,
-                    userPick: userAnswers[index] !== null ? q.options[userAnswers[index]] : "未作答",
-                    isCorrect: isCorrect,
-                    correctAnswer: q.options[q.correctAnswer]
-                });
 
                 const userAnswerText = userAnswers[index] !== null ? q.options[userAnswers[index]] : "未作答 (直接扣分)";
                 const correctAnswerText = q.options[q.correctAnswer];
@@ -674,21 +415,12 @@
 
             const finalScore = Math.round((correctCount / currentExam.questions.length) * 100);
             
-            // 1. 寫入 Firebase (增加 details)
-            const recordData = { 
-                score: finalScore, 
-                date: new Date().toISOString(),
-                details: detailedResults
-            };
-            completedRecords[currentExam.id] = recordData;
-            firebase.database().ref('exam_records/' + currentUserUid + '/' + currentExam.id).set(recordData);
+            completedRecords[currentExam.id] = { score: finalScore, date: new Date().toISOString() };
+            firebase.database().ref('exam_records/' + currentUserUid + '/' + currentExam.id).set({
+                score: finalScore,
+                date: new Date().toISOString()
+            });
 
-            // 2. 🚀 新增：寄信回報給老師
-            const studentName = localStorage.getItem('studentName') || "雲端同學";
-            const reportUrl = `${SCRIPT_URL}?action=submitExam&email=${encodeURIComponent(auth.currentUser.email)}&name=${encodeURIComponent(studentName)}&examTitle=${encodeURIComponent(currentExam.title)}&score=${finalScore}&details=${encodeURIComponent(JSON.stringify(detailedResults))}`;
-            fetch(reportUrl, { mode: 'no-cors' });
-
-            // 下方 UI 邏輯保持不變
             const scoreEl = document.getElementById('score-display');
             scoreEl.innerText = `${finalScore} 分`;
             if (finalScore === 100) { 
