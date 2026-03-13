@@ -383,10 +383,10 @@
             // 使用 POST 方式發送
             fetch(SCRIPT_URL, {
                 method: "POST",
-                body: formData,
-                mode: 'no-cors' // 依然保持非同步，不干擾學生畫面
+                body: formData.toString(), // 轉為字串格式發送
+                mode: 'no-cors' 
             })
-            .then(() => console.log("成績報告已成功發送至老師信箱"))
+            .then(() => console.log("成績報告已發送"))
             .catch(err => console.error("發送報錯：", err));
         
             // --- 以下 UI 顯示保持不變 ---
@@ -405,4 +405,5 @@
     </script>
 </body>
 </html>
+
 
