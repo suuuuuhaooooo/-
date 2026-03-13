@@ -442,6 +442,7 @@
                     
                     if (my) {
                         document.getElementById('student-name').innerText = my.name + " 同學";
+                        localStorage.setItem('studentName', my.name);
                         document.getElementById('student-meta').innerHTML = `<span class="info-tag">${my.level} 年級</span><span class="info-tag">${my.subject}</span>`;
                         
                         if (!sessionStorage.getItem('hasSeenPopups')) {
