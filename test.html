@@ -294,11 +294,24 @@
             const scoreEl = document.getElementById('score-display');
             scoreEl.innerText = `${record.score} 分`;
             scoreEl.style.color = record.score >= 60 ? "#27ae60" : "#c0392b";
+            
             const reviewContainer = document.getElementById('review-container');
             reviewContainer.innerHTML = "";
+            
             exam.questions.forEach((q, index) => {
-                reviewContainer.innerHTML += `<div class="review-card"><div class="review-q">Q${index + 1}. ${q.question}</div><div class="review-ans">正確答案：<span class="review-correct">${q.options[q.correctAnswer]}</span></div><div class="review-exp"><strong>解析：</strong><br>${q.explanation}</div></div>`;
+                const expContent = q.explanation || q.exp || "無解析";
+                reviewContainer.innerHTML += `
+                    <div class="review-card">
+                        <div class="review-q">Q${index + 1}. ${q.question}</div>
+                        <div class="review-ans">正確答案：<span class="review-correct">${q.options[q.correctAnswer]}</span></div>
+                        <div class="review-exp"><strong>解析：</strong><br>${expContent}</div>
+                    </div>`;
             });
+            if (window.MathJax) {
+                setTimeout(() => {
+                    MathJax.typesetPromise([reviewContainer]).catch(err => console.log('渲染解析失敗:', err));
+                }, 100);
+            }
         }
 
         function updateTimerDisplay() {
@@ -436,6 +449,7 @@
     </script>
 </body>
 </html>
+
 
 
 
