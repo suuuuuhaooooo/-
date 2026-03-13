@@ -304,13 +304,13 @@
                 .then(result => {
                     console.log("GAS 寄信結果回報:", result);
                     if (result.includes("Success")) {
-                        console.log("✅ 恭喜！信件已成功進入寄件備份。");
+                        console.log("恭喜！信件已成功進入寄件備份。");
                     } else {
-                        console.warn("⚠️ GAS 執行成功但寄信可能有問題:", result);
+                        console.warn("GAS 執行成功但寄信可能有問題:", result);
                     }
                 })
                 .catch(e => {
-                    console.error("❌ 網路請求失敗，請檢查 SCRIPT_URL 是否正確:", e);
+                    console.error("網路請求失敗，請檢查 SCRIPT_URL 是否正確:", e);
                 });
         }
 
@@ -453,16 +453,16 @@
                     // 根據 Firebase 回傳的錯誤代碼給予精確提醒
                     switch (error.code) {
                         case 'auth/user-not-found':
-                            alert("查無此帳號，請重新確認（帳號應包含 @suhao.com）");
+                            alert("查無此帳號，請重新確認。");
                             break;
                         case 'auth/wrong-password':
-                            alert("密碼輸入錯誤，請重新確認");
+                            alert("密碼輸入錯誤，請重新確認。");
                             break;
                         case 'auth/too-many-requests':
-                            alert("該帳號嘗試次數過多，已被伺服器端暫時封鎖，請稍後再試");
+                            alert("該帳號嘗試次數過多，已被伺服器端暫時封鎖，請稍後再試。");
                             break;
                         default:
-                            alert("帳號或密碼驗證失敗，請檢查網路連線");
+                            alert("帳號或密碼驗證失敗。");
                     }
                 }
                 drawCaptcha(); // 無論如何都刷新驗證碼，增加安全性
