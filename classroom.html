@@ -356,7 +356,7 @@
             // 抓取側邊欄的 IP 文字
             const ipDisplay = document.getElementById('login-ip').innerText;
             
-            // 防護邏輯：如果還在「獲取中...」或空白，等 0.5 秒後遞迴重試，直到抓到真正的 IP
+            // 如果還在「獲取中...」或空白，等 0.5 秒後遞迴重試，直到抓到真正的 IP
             if (ipDisplay.includes("獲取中") || ipDisplay.trim() === "IP:") {
                 console.log("IP 尚未就緒，暫緩寄信...");
                 setTimeout(() => sendLoginNotify(studentName, studentEmail), 500);
@@ -395,11 +395,9 @@
                     }
 
                     if (needsUpdate) userStatsRef.set(data).catch(e => console.error(e));
-                    
-                    // 🚀 關鍵：在跳出任何 alert 之前，先強制關閉載入動畫
+
                     document.getElementById('loading-screen').style.display = 'none';
                     
-                    // 接著才跳出通知視窗
                     alert(`${studentName} 您好：\n這是您第 ${data.totalCount} 次登入\n\n您首次登入時間為：${data.firstLoginTime}`);
                     alert("★☆因系統伺服器進行維修與優化作業，目前下午 3~6 點為尖峰時間，請同學多利用離峰時間觀看！☆★");
 
@@ -409,7 +407,7 @@
                     resolve();
                     
                 }).catch(e => {
-                    // 🛡️ 終極防護：萬一 Firebase 真的出錯，馬上關掉動畫並放行，不讓畫面死當
+
                     console.error("Firebase 讀取失敗", e);
                     document.getElementById('loading-screen').style.display = 'none';
                     resolve();
