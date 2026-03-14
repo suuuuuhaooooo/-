@@ -409,7 +409,7 @@
                 const remainingSec = Math.ceil((lockUntil - now) / 1000);
                 const min = Math.floor(remainingSec / 60);
                 const sec = remainingSec % 60;
-                alert(`【系統暫時鎖定】\n因連續登入失敗多次，請等待 ${min} 分 ${sec} 秒後再嘗試。`);
+                alert(`【系統通知】\n因連續登入失敗多次，請等待 ${min} 分 ${sec} 秒後再嘗試。`);
                 return;
             }
         
@@ -424,7 +424,7 @@
             
             const hasSpace = /\s/g;
         
-            // 3. 原本的【強烈攔截邏輯】完全回歸
+            // 3. 攔截邏輯
             if (!email || email.length === 0) {
                 alert("請輸入學員帳號");
                 emailEl.focus(); return;
@@ -458,19 +458,22 @@
                 return; 
             }
             
-            // ✅ 通過攔截後，顯示動畫並發起連線
             document.getElementById('loading-screen').style.display = 'flex';
+            document.querySelector('#loading-screen .loading-text').innerText = "身分驗證中...";
 
             auth.signInWithEmailAndPassword(email, password).then(cred => {
+                // 登入成功：清除紀錄
                 localStorage.removeItem('login_fail_count');
                 localStorage.removeItem('login_lock_until');
                 
                 const sid = Math.random().toString(36).substring(2);
                 localStorage.setItem('session_id', sid);
                 db.ref('auth_status/' + cred.user.uid).set({ current_sid: sid, kick_all: false });
+
             }).catch((error) => { 
-                // 登入失敗，關閉動畫並還原原本的詳細報錯
+
                 document.getElementById('loading-screen').style.display = 'none';
+                
                 loginFailCount++;
                 localStorage.setItem('login_fail_count', loginFailCount);
         
