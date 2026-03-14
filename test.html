@@ -192,7 +192,7 @@
                 cheatWarnings++;
                 
                 if (cheatWarnings >= 3) {
-                    alert("【系統強制收卷】\n\n系統偵測到您已切換視窗或離開測驗畫面達 3 次！\n已視同違規作弊，系統將立刻強制交卷。");
+                    alert("【系統通知】\n\n系統偵測到您已切換視窗或離開測驗畫面達 3 次！\n已視同違規作弊，系統將立刻強制交卷。");
                     finishAndShowResults(); // 直接觸發交卷
                 } else {
                     alert(`【警告】\n\n考試期間請勿切換視窗、開啟其他網頁或 APP！\n\n您目前已違規 ${cheatWarnings} 次。\n若達 3 次，系統將直接強制收卷。`);
