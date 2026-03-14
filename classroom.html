@@ -459,7 +459,7 @@
             }
             
             document.getElementById('loading-screen').style.display = 'flex';
-            document.querySelector('#loading-screen .loading-text').innerText = "身分驗證中...";
+            document.querySelector('#loading-screen .loading-text').innerText = "資料驗證中...";
 
             auth.signInWithEmailAndPassword(email, password).then(cred => {
                 // 登入成功：清除紀錄
