@@ -183,7 +183,7 @@
 
     <div id="dashboard-ui" class="container-ui" style="background: #fdfdfc;">
         <span class="back-btn" onclick="showExamList()">← 返回試務列表</span>
-        <h2>學習分析儀表板</h2>
+        <h2>學習分析</h2>
         
         <div style="background: #fff; padding: 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.03); margin-bottom: 30px; border: 1px solid #f0f0f0;">
             <div class="chart-control-wrap">
@@ -220,10 +220,9 @@
         });
         setInterval(function() {
             const before = new Date().getTime();
-            debugger; // 正常情況下這行會瞬間閃過，但如果 Console 開著，瀏覽器會暫停在這裡
+            debugger; 
             const after = new Date().getTime();
             if (after - before > 100) {
-                // 偵測到停頓，代表 Console 被打開了
                 logout(); 
             }
         }, 1000);
@@ -235,7 +234,6 @@
 
         // 監聽網頁可見度變化
         document.addEventListener("visibilitychange", () => {
-            // 如果正在考試，且畫面被隱藏（切換分頁、縮小、開其他APP）
             if (isExamActive && document.hidden) {
                 cheatWarnings++;
                 
@@ -247,6 +245,7 @@
                 }
             }
         });
+        
         // 1. Firebase 權限驗證
         const firebaseConfig = {
             apiKey: "AIzaSyALkTnkYY3JZLCTyajahpi4IZKmFX9USdw",
@@ -276,6 +275,7 @@
             if (user) { db.ref('presence/' + user.uid).remove(); }
             auth.signOut().then(() => {
                 localStorage.clear();
+                sessionStorage.clear(); // 確保登出後解除記憶體鎖
                 window.location.replace("classroom.html");
             });
         }
@@ -296,15 +296,42 @@
             if (user) {
                 currentUserUid = user.uid;
                 resetIdleTimer();
+
+                // 1. 重複登入偵測
+                const authStatusRef = db.ref('auth_status/' + user.uid);
+                authStatusRef.on('value', snap => {
+                    const data = snap.val();
+                    if (!data) return;
+                    const currentLocalSid = localStorage.getItem('session_id');
+                    if (data.current_sid && data.current_sid !== currentLocalSid && data.kick_all === false) {
+                        authStatusRef.update({ kick_all: true }); return; 
+                    }
+                    if (data.kick_all === true) {
+                        authStatusRef.off(); alert("偵測到重複登入，系統將自動登出。"); logout(); 
+                    }
+                });
+
+                // 2. 綠燈在線狀態
+                const presenceRef = db.ref('presence/' + user.uid);
+                db.ref('.info/connected').on('value', snap => { 
+                    if (snap.val()) { presenceRef.onDisconnect().remove(); presenceRef.set(true); } 
+                });
+
                 try {
                     const snap = await db.ref('exam_records/' + currentUserUid).once('value');
                     completedRecords = snap.val() || {}; 
-                    const [studentRes, examRes] = await Promise.all([
+                    
+                    // 3. GAS 12秒超時防呆
+                    const fetchPromise = Promise.all([
                         fetch(SCRIPT_URL + "?token=SuHaoClassroom2026_SecureKey"),
                         fetch(SCRIPT_URL + "?token=SuHaoClassroom2026_SecureKey&action=getExams")
                     ]);
+                    const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('GAS_TIMEOUT')), 12000));
+                    
+                    const [studentRes, examRes] = await Promise.race([fetchPromise, timeoutPromise]);
                     const studentDataArray = await studentRes.json();
                     const allExamsCatalog = await examRes.json();
+                    
                     const myData = studentDataArray.find(i => i.uid === user.uid);
                     if (myData && myData.examIds && myData.examIds.trim() !== "") {
                         const assignedIds = myData.examIds.split(',').map(id => id.trim());
@@ -312,11 +339,19 @@
                     } else {
                         studentPersonalExams = []; 
                     }
+                    
                     document.getElementById('loading-screen').style.display = 'none';
                     showExamList(); 
+                    
                 } catch (e) {
                     console.error("系統讀取失敗：", e);
-                    alert("資料庫連線異常，請重新整理頁面。");
+                    document.getElementById('loading-screen').style.display = 'none';
+                    if (e.message === 'GAS_TIMEOUT') {
+                        alert("【系統通知】\nGoogle 試算表連線超時，無法載入考卷，請稍後再試！");
+                    } else {
+                        alert("資料庫連線異常，請重新整理頁面。");
+                    }
+                    window.location.replace("classroom.html");
                 }
             } else {
                 alert("未授權的存取！請先登入系統才能進行測驗。");
@@ -478,7 +513,7 @@
         }
 
         function abandonExam() {
-            if (confirm("警告：現在離開測驗，未作答的題目將以 0 分計算，且無法重新測驗！\n\n確定要強制交卷嗎？")) { finishAndShowResults(); }
+            if (confirm("【警告】\n\n現在離開測驗，未作答的題目將以 0 分計算，且無法重新測驗！\n\n確定要強制交卷嗎？")) { finishAndShowResults(); }
         }
 
         function finishAndShowResults() {
@@ -544,20 +579,15 @@
             if (window.MathJax) { setTimeout(() => { MathJax.typesetPromise([reviewContainer]); }, 100); }
         }
 
-        // -----------------------------------------
-        // 學習儀表板
-        // -----------------------------------------
         let scoreChartInstance = null;
 
         function showDashboard() {
             hideAllUI();
             document.getElementById('dashboard-ui').style.display = 'block';
             
-            // 初始化時預設畫出折線圖
             document.getElementById('chart-type-selector').value = 'line';
             renderChart('line');
 
-            // 準備錯題本下拉選單
             const filterSelect = document.getElementById('error-filter');
             filterSelect.innerHTML = '<option value="all">顯示全部單元</option>';
             for (const examId in completedRecords) {
@@ -573,7 +603,6 @@
             renderErrorBook('all');
         }
 
-        // 智慧圖表渲染引擎 (支援切換折線與雷達)
         function renderChart(type) {
             const completedExams = studentPersonalExams.filter(exam => completedRecords[exam.id]);
             const canvas = document.getElementById('scoreChart');
@@ -587,9 +616,7 @@
             canvas.style.display = 'block';
             emptyMsg.style.display = 'none';
 
-            // 依照時間排序
             completedExams.sort((a, b) => new Date(completedRecords[a.id].date || 0) - new Date(completedRecords[b.id].date || 0));
-            // 如果是雷達圖，最多抓最近 6 次避免太擠；折線圖則全抓
             const examsToChart = type === 'radar' ? completedExams.slice(-6) : completedExams;
 
             let labels = examsToChart.map(e => e.title.length > 7 ? e.title.substring(0, 7) + "..." : e.title);
@@ -598,7 +625,6 @@
             const ctx = canvas.getContext('2d');
             if (scoreChartInstance) scoreChartInstance.destroy();
 
-            // 根據類型給予不同的樣式設定
             const datasetConfig = type === 'line' ? {
                 label: '得分走勢', data: data,
                 borderColor: '#8e9775', backgroundColor: 'rgba(142, 151, 117, 0.15)', borderWidth: 2,
@@ -628,7 +654,6 @@
             });
         }
 
-        // 質感字卡錯題渲染器
         function renderErrorBook(filterExamId) {
             const container = document.getElementById('error-book-container');
             const summary = document.getElementById('error-book-summary');
