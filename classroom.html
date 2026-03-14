@@ -522,6 +522,7 @@
             if(user) db.ref('presence/' + user.uid).remove();
             auth.signOut().then(() => { 
                 localStorage.clear(); 
+                sessionStorage.clear();
                 location.reload(); 
             });
         }
