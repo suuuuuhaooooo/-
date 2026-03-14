@@ -143,6 +143,14 @@
         <div style="background: #fdf2f0; border-left: 4px solid #e74c3c; padding: 15px; margin-bottom: 25px; border-radius: 4px; color: #c0392b; font-size: 14px; line-height: 1.6;">
             系統已自動為你整理歷次測驗中答錯的題目。請務必針對解析反覆練習，<strong>弄懂錯在哪裡，才是真正的進步！</strong>
         </div>
+        
+        <div style="margin-bottom: 20px; background: #fafafa; padding: 15px; border-radius: 6px; border: 1px solid #eee;">
+            <label for="error-filter" style="font-weight: bold; color: var(--dark); margin-right: 10px;">篩選試卷：</label>
+            <select id="error-filter" onchange="renderErrorBook(this.value)" style="padding: 8px 12px; border-radius: 4px; border: 1px solid #ccc; font-family: inherit; font-size: 15px; outline: none; width: 60%; max-width: 300px; cursor: pointer;">
+                <option value="all">顯示全部錯題</option>
+            </select>
+        </div>
+
         <div id="error-book-summary" style="margin-bottom: 15px; font-weight: bold; color: #e74c3c;"></div>
         <div id="error-book-container"></div>
     </div>
@@ -400,6 +408,35 @@
         function showErrorBook() {
             hideAllUI();
             document.getElementById('error-book-ui').style.display = 'block';
+            
+            const filterSelect = document.getElementById('error-filter');
+            // 重置選單
+            filterSelect.innerHTML = '<option value="all">顯示全部錯題</option>';
+            
+            // 掃描資料庫，把「有錯題」的考卷加入下拉選單
+            for (const examId in completedRecords) {
+                const record = completedRecords[examId];
+                const examInfo = studentPersonalExams.find(e => e.id === examId);
+                const examTitle = examInfo ? examInfo.title : "歷史測驗";
+
+                if (record && record.details) {
+                    // 檢查這份考卷是不是至少有一題錯
+                    const hasErrorInThisExam = record.details.some(detail => !detail.isCorrect);
+                    if (hasErrorInThisExam) {
+                        const option = document.createElement('option');
+                        option.value = examId;
+                        option.textContent = examTitle;
+                        filterSelect.appendChild(option);
+                    }
+                }
+            }
+
+            // 預設先渲染「全部」錯題
+            renderErrorBook('all');
+        }
+
+        // 將題目印在畫面上的渲染器
+        function renderErrorBook(filterExamId) {
             const container = document.getElementById('error-book-container');
             const summary = document.getElementById('error-book-summary');
             container.innerHTML = "";
@@ -408,24 +445,23 @@
             let hasErrors = false;
             let errorCount = 0;
 
-            // 遍歷所有已完成的測驗紀錄
             for (const examId in completedRecords) {
+                // 如果選單不是選「全部」，且考卷 ID 對不上，就直接跳過不印
+                if (filterExamId !== 'all' && examId !== filterExamId) continue;
+
                 const record = completedRecords[examId];
                 const examInfo = studentPersonalExams.find(e => e.id === examId);
                 const examTitle = examInfo ? examInfo.title : "歷史測驗";
 
                 if (record && record.details) {
                     record.details.forEach((detail) => {
-                        // 只抓出「答錯」的題目
                         if (!detail.isCorrect) {
                             hasErrors = true;
                             errorCount++;
                             
-                            // 抓取原本的解析
                             const originalQ = examInfo ? examInfo.questions.find(q => q.question === detail.originalQuestion) : null;
                             const currentExp = originalQ ? (originalQ.exp || originalQ.explanation) : "無解析資料";
 
-                            // 印出錯題卡片
                             container.innerHTML += `
                                 <div class="review-card" style="border-left: 4px solid #e74c3c; margin-bottom: 15px; background: #fff;">
                                     <div style="font-size: 13px; color: #e67e22; margin-bottom: 10px; font-weight: bold;">
@@ -442,11 +478,11 @@
                 }
             }
 
-            // 判斷是否全對
+            // 結算與畫面提示
             if (!hasErrors) {
-                container.innerHTML = `<div style="text-align: center; color: #27ae60; padding: 40px; border: 2px dashed #27ae60; border-radius: 8px; font-weight: bold; font-size: 18px;">🎉 太棒了！目前沒有任何錯題紀錄，請繼續保持！</div>`;
+                container.innerHTML = `<div style="text-align: center; color: #27ae60; padding: 40px; border: 2px dashed #27ae60; border-radius: 8px; font-weight: bold; font-size: 18px;">🎉 太棒了！目前沒有錯題紀錄！</div>`;
             } else {
-                summary.innerHTML = `總共累積：${errorCount} 題需複習`;
+                summary.innerHTML = `篩選結果：共 ${errorCount} 題需複習`;
             }
 
             // 重新渲染 MathJax 數學算式
