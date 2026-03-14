@@ -39,8 +39,31 @@
             overscroll-behavior-y: none;
         }
         
-        #loading-screen { display: flex; justify-content: center; align-items: center; height: 100vh; font-size: 18px; color: var(--primary); font-weight: 700; letter-spacing: 2px; }
+        /* 🚀 升級版：載入動畫 UI */
+        #loading-screen { 
+            display: flex; 
+            flex-direction: column; 
+            justify-content: center; 
+            align-items: center; 
+            height: 100vh; 
+            background-color: var(--bg);
+            position: fixed; 
+            width: 100%; 
+            z-index: 9999; 
+            top: 0; 
+            left: 0;
+        }
 
+        .loading-dots { display: flex; gap: 10px; margin-bottom: 20px; }
+        .loading-dots div { width: 14px; height: 14px; background-color: var(--primary); border-radius: 50%; animation: bounce 0.5s infinite alternate; }
+        .loading-dots div:nth-child(2) { animation-delay: 0.15s; }
+        .loading-dots div:nth-child(3) { animation-delay: 0.3s; }
+        @keyframes bounce { from { transform: translateY(0); opacity: 0.6; } to { transform: translateY(-12px); opacity: 1; box-shadow: 0 4px 10px rgba(142,151,117,0.4); } }
+        
+        .loading-text { font-size: 16px; color: var(--dark); font-weight: 700; letter-spacing: 3px; animation: pulse-text 1.5s infinite ease-in-out; }
+        @keyframes pulse-text { 0% { opacity: 0.4; } 50% { opacity: 1; } 100% { opacity: 0.4; } }
+
+        /* 介面容器 */
         .container-ui { 
             display: none; max-width: 800px; margin: 0 auto; background: var(--white);
             padding: 40px; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.05);
@@ -107,14 +130,21 @@
         let completedRecords = {}; 
     </script>
 
-    <div id="loading-screen">系統確認授權中，載入測驗...</div>
+    <div id="loading-screen">
+        <div class="loading-dots">
+            <div></div>
+            <div></div>
+            <div></div>
+        </div>
+        <div class="loading-text">雲端資料同步中...</div>
+    </div>
 
     <div id="exam-list-ui" class="container-ui">
         <a href="classroom.html" class="back-btn">← 返回雲端教室</a>
         <h2>試務中心</h2>
         
         <button class="dashboard-btn" onclick="showDashboard()">
-            <span style="font-size: 20px;"></span> 進入學習分析與錯題本
+            <span style="font-size: 20px;">📊</span> 進入學習分析與錯題本
         </button>
 
         <div style="background: #fdf2f0; border-left: 4px solid #e74c3c; padding: 15px; margin-bottom: 25px; border-radius: 4px;">
@@ -624,7 +654,7 @@
                                     <div style="font-size: 14px; margin-bottom: 6px; color: #555;">正確答案：<span style="color: #27ae60; font-weight: 700;">${detail.correctAnswer}</span></div>
                                     <div style="font-size: 14px; margin-bottom: 15px; color: #555;">你的答案：<span style="color: #e74c3c; font-weight: 700; text-decoration: line-through;">${detail.userPick}</span></div>
                                     <div style="background: #f8f8f6; padding: 12px; border-radius: 8px; font-size: 13px; color: #666; border-left: 3px solid var(--primary); line-height: 1.6;">
-                                        <strong>老師解析：</strong><br>${currentExp}
+                                        <strong>解析：</strong><br>${currentExp}
                                     </div>
                                 </div>
                             `;
