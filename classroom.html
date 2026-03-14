@@ -356,109 +356,109 @@
         }
         // --- 登入邏輯（保留原始防呆攔截 + 升級防重新整理破解） ---
 
-function login() {
-    const now = Date.now();
-    
-    // 🚀 改從 localStorage 讀取鎖定時間與失敗次數
-    let lockUntil = parseInt(localStorage.getItem('login_lock_until') || '0', 10);
-    let loginFailCount = parseInt(localStorage.getItem('login_fail_count') || '0', 10);
-
-    // 1. 安全性鎖定檢查
-    if (now < lockUntil) {
-        const remainingSec = Math.ceil((lockUntil - now) / 1000);
-        const min = Math.floor(remainingSec / 60);
-        const sec = remainingSec % 60;
-        alert(`【系統暫時鎖定】\n因連續登入失敗多次，請等待 ${min} 分 ${sec} 秒後再嘗試。`);
-        return;
-    }
-
-    // 2. 取得 DOM 元素與原始值 (不使用 trim)
-    const emailEl = document.getElementById('email');
-    const passwordEl = document.getElementById('password');
-    const captchaInputEl = document.getElementById('captcha-input');
-
-    const email = emailEl.value;
-    const password = passwordEl.value;
-    const captchaInput = captchaInputEl.value;
-    
-    // 3. 嚴格定義空白偵測 (包含所有不可見字元)
-    const hasSpace = /\s/g;
-
-    // 4. 【強烈攔截邏輯】 - 帳號部分 (分開判斷確保執行)
-    if (!email || email.length === 0) {
-        alert("請輸入學員帳號");
-        emailEl.focus();
-        return;
-    } 
-    if (hasSpace.test(email)) {
-        alert("帳號格式錯誤。");
-        emailEl.focus();
-        return;
-    }
-
-    // 5. 【強烈攔截邏輯】 - 密碼部分
-    if (!password || password.length === 0) {
-        alert("請輸入密碼");
-        passwordEl.focus();
-        return;
-    } 
-    if (hasSpace.test(password)) {
-        alert("密碼格式錯誤。");
-        passwordEl.focus();
-        return;
-    }
-
-    // 6. 【強烈攔截邏輯】 - 驗證碼部分
-    if (!captchaInput || captchaInput.length === 0) {
-        alert("請輸入驗證碼");
-        captchaInputEl.focus();
-        return;
-    } 
-    if (hasSpace.test(captchaInput)) {
-        alert("驗證碼格式錯誤。");
-        captchaInputEl.focus();
-        return;
-    }
-
-    // 7. 驗證碼比對
-    if (captchaInput !== currentCaptcha) { 
-        alert("驗證碼錯誤（請注意大小寫需完全一致）"); 
-        drawCaptcha();
-        captchaInputEl.value = ""; 
-        captchaInputEl.focus();
-        return; 
-    }
-    
-    // 8. 執行 Firebase 驗證
-    auth.signInWithEmailAndPassword(email, password).then(cred => {
-        // 🚀 登入成功：清除 localStorage 的鎖定與失敗紀錄
-        localStorage.removeItem('login_fail_count');
-        localStorage.removeItem('login_lock_until');
+        function login() {
+            const now = Date.now();
+            
+            // 🚀 改從 localStorage 讀取鎖定時間與失敗次數
+            let lockUntil = parseInt(localStorage.getItem('login_lock_until') || '0', 10);
+            let loginFailCount = parseInt(localStorage.getItem('login_fail_count') || '0', 10);
         
-        const sid = Math.random().toString(36).substring(2);
-        localStorage.setItem('session_id', sid);
-        db.ref('auth_status/' + cred.user.uid).set({ current_sid: sid, kick_all: false });
-    }).catch((error) => { 
-        // 🚀 登入失敗：累加次數並存回 localStorage
-        loginFailCount++;
-        localStorage.setItem('login_fail_count', loginFailCount);
-
-        if (loginFailCount >= 3) {
-            lockUntil = Date.now() + (3 * 60 * 1000); 
-            localStorage.setItem('login_lock_until', lockUntil); // 寫入鎖定時間
-            localStorage.setItem('login_fail_count', 0);         // 次數歸零
-            alert("偵測到多次登入失敗！\n系統已暫時停止您的登入權限 3 分鐘。");
-        } else {
-            switch (error.code) {
-                case 'auth/user-not-found': alert("查無此帳號，請重新確認。"); break;
-                case 'auth/wrong-password': alert("密碼輸入錯誤，請重新確認。"); break;
-                case 'auth/too-many-requests': alert("嘗試次數過多，請稍後再試。"); break;
-                default: alert("帳號或密碼驗證失敗。");
+            // 1. 安全性鎖定檢查
+            if (now < lockUntil) {
+                const remainingSec = Math.ceil((lockUntil - now) / 1000);
+                const min = Math.floor(remainingSec / 60);
+                const sec = remainingSec % 60;
+                alert(`【系統暫時鎖定】\n因連續登入失敗多次，請等待 ${min} 分 ${sec} 秒後再嘗試。`);
+                return;
             }
+        
+            // 2. 取得 DOM 元素與原始值 (不使用 trim)
+            const emailEl = document.getElementById('email');
+            const passwordEl = document.getElementById('password');
+            const captchaInputEl = document.getElementById('captcha-input');
+        
+            const email = emailEl.value;
+            const password = passwordEl.value;
+            const captchaInput = captchaInputEl.value;
+            
+            // 3. 嚴格定義空白偵測 (包含所有不可見字元)
+            const hasSpace = /\s/g;
+        
+            // 4. 【強烈攔截邏輯】 - 帳號部分 (分開判斷確保執行)
+            if (!email || email.length === 0) {
+                alert("請輸入學員帳號");
+                emailEl.focus();
+                return;
+            } 
+            if (hasSpace.test(email)) {
+                alert("帳號格式錯誤。");
+                emailEl.focus();
+                return;
+            }
+        
+            // 5. 【強烈攔截邏輯】 - 密碼部分
+            if (!password || password.length === 0) {
+                alert("請輸入密碼");
+                passwordEl.focus();
+                return;
+            } 
+            if (hasSpace.test(password)) {
+                alert("密碼格式錯誤。");
+                passwordEl.focus();
+                return;
+            }
+        
+            // 6. 【強烈攔截邏輯】 - 驗證碼部分
+            if (!captchaInput || captchaInput.length === 0) {
+                alert("請輸入驗證碼");
+                captchaInputEl.focus();
+                return;
+            } 
+            if (hasSpace.test(captchaInput)) {
+                alert("驗證碼格式錯誤。");
+                captchaInputEl.focus();
+                return;
+            }
+        
+            // 7. 驗證碼比對
+            if (captchaInput !== currentCaptcha) { 
+                alert("驗證碼錯誤（請注意大小寫需完全一致）"); 
+                drawCaptcha();
+                captchaInputEl.value = ""; 
+                captchaInputEl.focus();
+                return; 
+            }
+            
+            // 8. 執行 Firebase 驗證
+            auth.signInWithEmailAndPassword(email, password).then(cred => {
+                // 登入成功清除 localStorage 的鎖定與失敗紀錄
+                localStorage.removeItem('login_fail_count');
+                localStorage.removeItem('login_lock_until');
+                
+                const sid = Math.random().toString(36).substring(2);
+                localStorage.setItem('session_id', sid);
+                db.ref('auth_status/' + cred.user.uid).set({ current_sid: sid, kick_all: false });
+            }).catch((error) => { 
+                // 登入失敗累加次數並存回 localStorage
+                loginFailCount++;
+                localStorage.setItem('login_fail_count', loginFailCount);
+        
+                if (loginFailCount >= 3) {
+                    lockUntil = Date.now() + (3 * 60 * 1000); 
+                    localStorage.setItem('login_lock_until', lockUntil); // 寫入鎖定時間
+                    localStorage.setItem('login_fail_count', 0);         // 次數歸零
+                    alert("偵測到多次登入失敗！\n系統已暫時停止您的登入權限 3 分鐘。");
+                } else {
+                    switch (error.code) {
+                        case 'auth/user-not-found': alert("查無此帳號，請重新確認。"); break;
+                        case 'auth/wrong-password': alert("密碼輸入錯誤，請重新確認。"); break;
+                        case 'auth/too-many-requests': alert("嘗試次數過多，請稍後再試。"); break;
+                        default: alert("帳號或密碼驗證失敗。");
+                    }
+                }
+                drawCaptcha(); 
+            });
         }
-        drawCaptcha(); 
-    });
-}
 
         function logout() { 
             const user = auth.currentUser;
