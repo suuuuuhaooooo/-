@@ -100,7 +100,10 @@
 
     <div id="exam-list-ui" class="container-ui">
         <a href="classroom.html" class="back-btn">← 返回雲端教室</a>
-        <h2>測驗中心：待辦任務</h2>
+        <h2>試務中心：待辦任務</h2>
+        <button class="main-btn" style="background: #e67e22; margin-bottom: 20px;" onclick="showErrorBook()">
+            我的錯題本
+        </button>
         <div style="background: #fdf2f0; border-left: 4px solid #e74c3c; padding: 15px; margin-bottom: 25px; border-radius: 4px;">
             <strong style="color: #c0392b; font-size: 15px;">考前須知：</strong>
             <ul style="color: #c0392b; font-size: 13px; margin: 8px 0 0; padding-left: 20px; line-height: 1.6;">
@@ -132,7 +135,16 @@
         <div id="score-display"></div>
         <h4 style="border-bottom: 2px solid #eee; padding-bottom: 10px; margin-top: 30px;">錯題與未作答檢討</h4>
         <div id="review-container"></div>
-        <button class="main-btn" onclick="showExamList()">✔ 完成並返回測驗列表</button>
+        <button class="main-btn" onclick="showExamList()">✔ 完成並返回試務列表</button>
+    </div>
+    <div id="error-book-ui" class="container-ui">
+        <span class="back-btn" onclick="showExamList()">← 返回試務列表</span>
+        <h2>我的錯題本</h2>
+        <div style="background: #fdf2f0; border-left: 4px solid #e74c3c; padding: 15px; margin-bottom: 25px; border-radius: 4px; color: #c0392b; font-size: 14px; line-height: 1.6;">
+            系統已自動為你整理歷次測驗中答錯的題目。請務必針對解析反覆練習，<strong>弄懂錯在哪裡，才是真正的進步！</strong>
+        </div>
+        <div id="error-book-summary" style="margin-bottom: 15px; font-weight: bold; color: #e74c3c;"></div>
+        <div id="error-book-container"></div>
     </div>
 
     <script>
@@ -235,6 +247,7 @@
             document.getElementById('exam-list-ui').style.display = 'none';
             document.getElementById('test-ui').style.display = 'none';
             document.getElementById('result-ui').style.display = 'none';
+            document.getElementById('error-book-ui').style.display = 'none';
             clearInterval(timerInterval); 
         }
 
@@ -383,7 +396,66 @@
         function abandonExam() {
             if (confirm("警告：現在離開測驗，未作答的題目將以 0 分計算，且無法重新測驗！\n\n確定要強制交卷嗎？")) { finishAndShowResults(); }
         }
+        // 錯題本
+        function showErrorBook() {
+            hideAllUI();
+            document.getElementById('error-book-ui').style.display = 'block';
+            const container = document.getElementById('error-book-container');
+            const summary = document.getElementById('error-book-summary');
+            container.innerHTML = "";
+            summary.innerHTML = "";
+            
+            let hasErrors = false;
+            let errorCount = 0;
 
+            // 遍歷所有已完成的測驗紀錄
+            for (const examId in completedRecords) {
+                const record = completedRecords[examId];
+                const examInfo = studentPersonalExams.find(e => e.id === examId);
+                const examTitle = examInfo ? examInfo.title : "歷史測驗";
+
+                if (record && record.details) {
+                    record.details.forEach((detail) => {
+                        // 只抓出「答錯」的題目
+                        if (!detail.isCorrect) {
+                            hasErrors = true;
+                            errorCount++;
+                            
+                            // 抓取原本的解析
+                            const originalQ = examInfo ? examInfo.questions.find(q => q.question === detail.originalQuestion) : null;
+                            const currentExp = originalQ ? (originalQ.exp || originalQ.explanation) : "無解析資料";
+
+                            // 印出錯題卡片
+                            container.innerHTML += `
+                                <div class="review-card" style="border-left: 4px solid #e74c3c; margin-bottom: 15px; background: #fff;">
+                                    <div style="font-size: 13px; color: #e67e22; margin-bottom: 10px; font-weight: bold;">
+                                        來源：${examTitle}
+                                    </div>
+                                    <div class="review-q" style="margin-bottom: 10px;">${detail.originalQuestion}</div>
+                                    <div class="review-ans" style="margin-bottom: 5px;">正確答案：<span class="review-correct">${detail.correctAnswer}</span></div>
+                                    <div class="review-ans" style="margin-bottom: 15px;">你的答案：<span class="review-wrong">${detail.userPick}</span></div>
+                                    <div class="review-exp" style="background: #f9f9f9; padding: 12px; border-radius: 4px; border: 1px solid #eee;"><strong>老師解析：</strong><br>${currentExp}</div>
+                                </div>
+                            `;
+                        }
+                    });
+                }
+            }
+
+            // 判斷是否全對
+            if (!hasErrors) {
+                container.innerHTML = `<div style="text-align: center; color: #27ae60; padding: 40px; border: 2px dashed #27ae60; border-radius: 8px; font-weight: bold; font-size: 18px;">🎉 太棒了！目前沒有任何錯題紀錄，請繼續保持！</div>`;
+            } else {
+                summary.innerHTML = `總共累積：${errorCount} 題需複習`;
+            }
+
+            // 重新渲染 MathJax 數學算式
+            if (window.MathJax) {
+                setTimeout(() => {
+                    MathJax.typesetPromise([container]).catch(err => console.log('渲染失敗:', err));
+                }, 150); 
+            }
+        }
         // 成績回報與寫入邏輯
         function finishAndShowResults() {
             // 停止計時器
