@@ -270,8 +270,8 @@
                     const snap = await db.ref('exam_records/' + currentUserUid).once('value');
                     completedRecords = snap.val() || {}; 
                     const [studentRes, examRes] = await Promise.all([
-                        fetch(SCRIPT_URL),
-                        fetch(SCRIPT_URL + "?action=getExams")
+                        fetch(SCRIPT_URL + "?token=SuHaoClassroom2026_SecureKey"),
+                        fetch(SCRIPT_URL + "?token=SuHaoClassroom2026_SecureKey&action=getExams")
                     ]);
                     const studentDataArray = await studentRes.json();
                     const allExamsCatalog = await examRes.json();
