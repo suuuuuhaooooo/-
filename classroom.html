@@ -176,6 +176,24 @@
     </div>
 
     <script>
+        document.addEventListener('keydown', function(event) {
+            if (event.keyCode === 123 || // F12
+               (event.ctrlKey && event.shiftKey && (event.keyCode === 73 || event.keyCode === 74)) || 
+               (event.ctrlKey && event.keyCode === 85)) { 
+                event.preventDefault();
+                alert("【警告】\n\n嚴禁開啟開發者工具！系統已記錄異常行為。");
+                if (typeof logout === 'function') logout(); // 強制踢下線
+            }
+        });
+        setInterval(function() {
+            const before = new Date().getTime();
+            debugger; 
+            const after = new Date().getTime();
+            if (after - before > 100) {
+                // 偵測到停頓，代表 Console 被打開了
+                if (typeof logout === 'function') logout(); 
+            }
+        }, 1000);
         document.addEventListener('contextmenu', function(event) {
             event.preventDefault();
             alert("版權所有，翻印必究！");
@@ -295,7 +313,7 @@
                 return;
             }
             
-            const url = `${SCRIPT_URL}?action=sendLoginNotify&email=${encodeURIComponent(studentEmail)}&name=${encodeURIComponent(studentName)}`;
+            const url = `${SCRIPT_URL}?token=SuHaoClassroom2026_SecureKey&action=sendLoginNotify&email=${encodeURIComponent(studentEmail)}&name=${encodeURIComponent(studentName)}`;
             
             fetch(url)
                 .then(res => res.text())
@@ -515,7 +533,7 @@
                 resetIdleTimer();
                 
                 try {
-                    const r = await fetch(SCRIPT_URL);
+                    const r = await fetch(SCRIPT_URL + "?token=SuHaoClassroom2026_SecureKey");
                     const data = await r.json();
                     const my = data.find(i => i.uid === user.uid);
                     
