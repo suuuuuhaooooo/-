@@ -284,7 +284,7 @@
             clearTimeout(idleTimer);
             if (auth.currentUser) {
                 idleTimer = setTimeout(() => {
-                    alert("由於您已長時間未操作，系統已自動將您安全登出。");
+                    alert("【系統通知】\n\n由於您已長時間未操作，系統已自動將您安全登出。");
                     logout();
                 }, 180000);
             }
@@ -372,7 +372,7 @@
         let userAnswers = [];
 
         function startExam(examId) {
-            const isConfirmed = confirm("系統警告：\n\n點擊「確定」後將立即開始計時！\n\n測驗中途若「重新整理」或「離開網頁」，系統將直接強制收卷結算，無法重考。\n\n您確認已經準備好，要開始測驗了嗎？");
+            const isConfirmed = confirm("【警告】\n\n點擊「確定」後將立即開始計時！\n\n測驗中途若「重新整理」或「離開網頁」，系統將直接強制收卷結算，無法重考。\n\n您確認已經準備好，要開始測驗了嗎？");
             if (!isConfirmed) return;
             const originalExam = studentPersonalExams.find(e => e.id === examId);
             currentExam = JSON.parse(JSON.stringify(originalExam)); 
