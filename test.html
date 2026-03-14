@@ -144,7 +144,7 @@
         <h2>試務中心</h2>
         
         <button class="dashboard-btn" onclick="showDashboard()">
-            <span style="font-size: 20px;">📊</span> 進入學習分析與錯題本
+            <span style="font-size: 20px;"></span> 進入學習分析與錯題本
         </button>
 
         <div style="background: #fdf2f0; border-left: 4px solid #e74c3c; padding: 15px; margin-bottom: 25px; border-radius: 4px;">
@@ -360,7 +360,7 @@
                 const card = document.createElement('div');
                 card.className = 'exam-card';
                 let btnHtml = isDone 
-                    ? `<div style="display: flex; align-items: center;"><span class="status-badge">✔ 已完成 (${isDone.score}分)</span><button class="exam-status-btn btn-review" onclick="viewReview('${exam.id}')">單次檢討</button></div>`
+                    ? `<div style="display: flex; align-items: center;"><span class="status-badge">已完成 (${isDone.score}分)</span><button class="exam-status-btn btn-review" onclick="viewReview('${exam.id}')">單次檢討</button></div>`
                     : `<button class="exam-status-btn btn-start" onclick="startExam('${exam.id}')">▶ 開始測驗</button>`;
                 card.innerHTML = `<div class="exam-info"><h3>${exam.title}</h3><p>${exam.desc}</p></div><div>${btnHtml}</div>`;
                 grid.appendChild(card);
