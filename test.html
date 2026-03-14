@@ -299,19 +299,34 @@
             const reviewContainer = document.getElementById('review-container');
             reviewContainer.innerHTML = "";
             
-            exam.questions.forEach((q, index) => {
-                const currentExp = q.exp || q.explanation || "無解析資料";
-                
-                reviewContainer.innerHTML += `
-                    <div class="review-card">
-                        <div class="review-q">Q${index + 1}. ${q.question}</div>
-                        <div class="review-ans">正確答案：<span class="review-correct">${q.options[q.correctAnswer]}</span></div>
-                        <div class="review-exp"><strong>解析：</strong><br>${currentExp}</div>
-                    </div>`;
-            });
+            // 檢查是否有學生的作答明細 (record.details)
+            if (record && record.details) {
+                record.details.forEach((detail, index) => {
+                    // 透過題目文字，對應回原本題庫去抓「解析」
+                    const originalQ = exam.questions.find(q => q.question === detail.originalQuestion) || {};
+                    const currentExp = originalQ.exp || originalQ.explanation || "無解析資料";
+                    
+                    // 判斷答對或答錯，顯示不同顏色的提示與學生的選擇
+                    const statusHtml = detail.isCorrect 
+                        ? `<span class="review-correct">✔ 答對了！</span>` 
+                        : `<span class="review-wrong">✘ 答錯了 (你的答案：${detail.userPick})</span>`;
+
+                    reviewContainer.innerHTML += `
+                        <div class="review-card">
+                            <div class="review-q">Q${index + 1}. ${detail.originalQuestion}</div>
+                            <div class="review-ans">正確答案：${detail.correctAnswer}</div>
+                            <div class="review-ans">${statusHtml}</div>
+                            <div class="review-exp"><strong>解析：</strong><br>${currentExp}</div>
+                        </div>`;
+                });
+            } else {
+                // 防呆機制：如果遇到舊版沒存到 detail 的紀錄
+                reviewContainer.innerHTML = "<div style='text-align:center; color:#888; padding: 20px;'>此為早期測驗紀錄，無詳細作答資料。</div>";
+            }
+
             if (window.MathJax) {
                 setTimeout(() => {
-                    MathJax.typesetPromise().catch(err => console.log('渲染失敗:', err));
+                    MathJax.typesetPromise([reviewContainer]).catch(err => console.log('渲染失敗:', err));
                 }, 150); 
             }
         }
