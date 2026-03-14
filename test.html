@@ -179,6 +179,24 @@
     </div>
 
     <script>
+        document.addEventListener('keydown', function(event) {
+            if (event.keyCode === 123 || // F12
+               (event.ctrlKey && event.shiftKey && (event.keyCode === 73 || event.keyCode === 74)) || // Ctrl+Shift+I 或 J
+               (event.ctrlKey && event.keyCode === 85)) { // Ctrl+U (檢視網頁原始碼)
+                event.preventDefault();
+                alert("【警告】\n\n嚴禁開啟開發者工具！系統已記錄異常行為。");
+                logout(); 
+            }
+        });
+        setInterval(function() {
+            const before = new Date().getTime();
+            debugger; // 正常情況下這行會瞬間閃過，但如果 Console 開著，瀏覽器會暫停在這裡
+            const after = new Date().getTime();
+            if (after - before > 100) {
+                // 偵測到停頓，代表 Console 被打開了
+                logout(); 
+            }
+        }, 1000);
         // -----------------------------------------
         // 切換視窗與 APP 偵測
         // -----------------------------------------
@@ -472,6 +490,7 @@
 
             const studentName = localStorage.getItem('studentName') || "雲端同學";
             const formData = new URLSearchParams();
+            formData.append("token", "SuHaoClassroom2026_SecureKey");
             formData.append("action", "submitExam");
             formData.append("email", auth.currentUser.email);
             formData.append("name", studentName);
