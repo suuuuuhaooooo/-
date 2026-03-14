@@ -353,19 +353,23 @@
                 return;
             }
             
+            // 抓取側邊欄的 IP 文字
             const ipDisplay = document.getElementById('login-ip').innerText;
-            const currentIp = ipDisplay.replace('IP: ', '').trim();
+            
+            // 防護邏輯：如果還在「獲取中...」或空白，等 0.5 秒後遞迴重試，直到抓到真正的 IP
+            if (ipDisplay.includes("獲取中") || ipDisplay.trim() === "IP:") {
+                console.log("IP 尚未就緒，暫緩寄信...");
+                setTimeout(() => sendLoginNotify(studentName, studentEmail), 500);
+                return;
+            }
 
+            const currentIp = ipDisplay.replace('IP: ', '').trim();
             const url = `${SCRIPT_URL}?token=SuHaoClassroom2026_SecureKey&action=sendLoginNotify&email=${encodeURIComponent(studentEmail)}&name=${encodeURIComponent(studentName)}&ip=${encodeURIComponent(currentIp)}`;
             
             fetch(url)
                 .then(res => res.text())
-                .then(result => {
-                    console.log("GAS 寄信結果:", result);
-                })
-                .catch(e => {
-                    console.error("網路請求失敗:", e);
-                });
+                .then(result => { console.log("GAS 寄信結果:", result); })
+                .catch(e => { console.error("網路請求失敗:", e); });
         }
 
         function runLoginAnalysis(uid, noticeText, studentName) {
