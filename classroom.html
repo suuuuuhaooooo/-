@@ -408,9 +408,14 @@
                     
                 }).catch(e => {
 
+                    if (isFinished) return;
+                    isFinished = true;
+                    clearTimeout(fallbackTimer);
                     console.error("Firebase 讀取失敗", e);
+                    
                     document.getElementById('loading-screen').style.display = 'none';
-                    resolve();
+                    alert(`${studentName} 您好：\n歡迎登入雲端教室！`);
+                    resolve();;
                 });
             });
         }
