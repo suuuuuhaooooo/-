@@ -24,7 +24,7 @@
             }
         };
     </script>
-    
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;700&display=swap');
         
@@ -104,6 +104,10 @@
         <button class="main-btn" style="background: #e67e22; margin-bottom: 20px;" onclick="showErrorBook()">
             我的錯題本
         </button>
+        <div id="chart-container" style="background: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); margin-bottom: 25px; border: 1px solid #eee; display: none;">
+            <h3 style="margin-top: 0; color: var(--dark); border-left: 4px solid var(--primary); padding-left: 10px; font-size: 16px;">📈 近期測驗成績趨勢</h3>
+            <canvas id="scoreChart" style="max-height: 250px;"></canvas>
+        </div>
         <div style="background: #fdf2f0; border-left: 4px solid #e74c3c; padding: 15px; margin-bottom: 25px; border-radius: 4px;">
             <strong style="color: #c0392b; font-size: 15px;">考前須知：</strong>
             <ul style="color: #c0392b; font-size: 13px; margin: 8px 0 0; padding-left: 20px; line-height: 1.6;">
@@ -262,6 +266,7 @@
         function showExamList() {
             hideAllUI();
             document.getElementById('exam-list-ui').style.display = 'block';
+            renderScoreChart();// 呼叫畫圖函式
             const grid = document.getElementById('exam-grid');
             grid.innerHTML = "";
             if (studentPersonalExams.length === 0) {
@@ -480,7 +485,7 @@
 
             // 結算與畫面提示
             if (!hasErrors) {
-                container.innerHTML = `<div style="text-align: center; color: #27ae60; padding: 40px; border: 2px dashed #27ae60; border-radius: 8px; font-weight: bold; font-size: 18px;">🎉 太棒了！目前沒有錯題紀錄！</div>`;
+                container.innerHTML = `<div style="text-align: center; color: #27ae60; padding: 40px; border: 2px dashed #27ae60; border-radius: 8px; font-weight: bold; font-size: 18px;">太棒了！目前沒有錯題紀錄！</div>`;
             } else {
                 summary.innerHTML = `篩選結果：共 ${errorCount} 題需複習`;
             }
@@ -491,6 +496,92 @@
                     MathJax.typesetPromise([container]).catch(err => console.log('渲染失敗:', err));
                 }, 150); 
             }
+        }
+        // -----------------------------------------
+        // Chart.js 學習趨勢折線圖
+        // -----------------------------------------
+        let scoreChartInstance = null; // 紀錄圖表狀態，避免重複渲染重疊
+
+        function renderScoreChart() {
+            const chartContainer = document.getElementById('chart-container');
+            
+            // 1. 篩選出「已經考過」的測驗
+            const completedExams = studentPersonalExams.filter(exam => completedRecords[exam.id]);
+            
+            // 如果還沒考過任何試，就不顯示圖表
+            if (completedExams.length === 0) {
+                chartContainer.style.display = 'none';
+                return;
+            }
+            
+            chartContainer.style.display = 'block';
+
+            // 2. 依照考試時間排序 (由舊到新)
+            completedExams.sort((a, b) => {
+                const dateA = new Date(completedRecords[a.id].date || 0);
+                const dateB = new Date(completedRecords[b.id].date || 0);
+                return dateA - dateB;
+            });
+
+            // 3. 準備 X軸(考試名稱) 與 Y軸(分數) 的資料
+            let labels = [];
+            let data = [];
+            completedExams.forEach(exam => {
+                // 如果標題太長，只取前 8 個字，避免圖表太擠
+                let shortTitle = exam.title.length > 8 ? exam.title.substring(0, 8) + "..." : exam.title;
+                labels.push(shortTitle);
+                data.push(completedRecords[exam.id].score);
+            });
+
+            // 4. 開始畫圖
+            const ctx = document.getElementById('scoreChart').getContext('2d');
+            
+            // 如果畫布上已經有舊圖，先銷毀，避免滑鼠移上去閃爍
+            if (scoreChartInstance) {
+                scoreChartInstance.destroy();
+            }
+            
+            scoreChartInstance = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: '測驗分數',
+                        data: data,
+                        borderColor: '#8e9775',
+                        backgroundColor: 'rgba(142, 151, 117, 0.15)',
+                        borderWidth: 2,
+                        pointBackgroundColor: '#e74c3c', 
+                        pointBorderColor: '#fff',
+                        pointBorderWidth: 2,
+                        pointRadius: 5,
+                        pointHoverRadius: 7,
+                        fill: true,
+                        tension: 0.3 // 讓折線變成平滑的曲線
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false, // 控制高度
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 100, // 分數最高 100
+                            ticks: { stepSize: 20 }
+                        }
+                    },
+                    plugins: {
+                        legend: { display: false }, // 隱藏圖例
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return ' 得分：' + context.parsed.y + ' 分';
+                                }
+                            }
+                        }
+                    }
+                }
+            });
         }
         // 成績回報與寫入邏輯
         function finishAndShowResults() {
