@@ -372,13 +372,31 @@
                 .catch(e => { console.error("網路請求失敗:", e); });
         }
 
+        // --- 修正後的次數統計與彈窗 ---
         function runLoginAnalysis(uid, noticeText, studentName) {
             return new Promise((resolve) => {
+                let isFinished = false; // 補上狀態鎖宣告
+
+                // 補上 3 秒保險絲宣告
+                const fallbackTimer = setTimeout(() => {
+                    if (isFinished) return;
+                    isFinished = true;
+                    document.getElementById('loading-screen').style.display = 'none';
+                    alert(`${studentName} 您好：\n歡迎登入蘇昊雲端教室！\n(網路稍有延遲，已略過次數統計)`);
+                    alert("★☆因系統伺服器進行維修與優化作業，目前下午 3~6 點為尖峰時間，請同學多利用離峰時間觀看！☆★");
+                    if (noticeText && noticeText.trim() !== "") alert("【公告】\n" + noticeText.trim());
+                    resolve();
+                }, 3000);
+
                 const now = new Date();
                 const today = now.toLocaleDateString('zh-TW'); 
                 const userStatsRef = db.ref(`login_stats/${uid}`);
                 
                 userStatsRef.once('value').then(snap => {
+                    if (isFinished) return; // 若已超時則擋下
+                    isFinished = true;
+                    clearTimeout(fallbackTimer); // 成功則解除保險絲
+
                     let data = snap.val() || { totalCount: 0, lastLoginDate: "", firstLoginTime: "" };
                     let needsUpdate = false;
 
@@ -407,18 +425,18 @@
                     resolve();
                     
                 }).catch(e => {
-
                     if (isFinished) return;
                     isFinished = true;
                     clearTimeout(fallbackTimer);
                     console.error("Firebase 讀取失敗", e);
-                    
                     document.getElementById('loading-screen').style.display = 'none';
                     alert(`${studentName} 您好：\n歡迎登入雲端教室！`);
-                    resolve();;
+                    resolve();
                 });
             });
         }
+        // --- 修正完畢 ---
+
         function togglePassword() {
             const pwd = document.getElementById('password');
             const icon = document.querySelector('.toggle-password');
