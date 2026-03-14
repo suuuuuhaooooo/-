@@ -179,6 +179,26 @@
     </div>
 
     <script>
+        // -----------------------------------------
+        // 切換視窗與 APP 偵測
+        // -----------------------------------------
+        let cheatWarnings = 0;    // 違規次數
+        let isExamActive = false; // 是否正在考試中
+
+        // 監聽網頁可見度變化
+        document.addEventListener("visibilitychange", () => {
+            // 如果正在考試，且畫面被隱藏（切換分頁、縮小、開其他APP）
+            if (isExamActive && document.hidden) {
+                cheatWarnings++;
+                
+                if (cheatWarnings >= 3) {
+                    alert("【系統強制收卷】\n\n系統偵測到您已切換視窗或離開測驗畫面達 3 次！\n已視同違規作弊，系統將立刻強制交卷。");
+                    finishAndShowResults(); // 直接觸發交卷
+                } else {
+                    alert(`【警告】\n\n考試期間請勿切換視窗、開啟其他網頁或 APP！\n\n您目前已違規 ${cheatWarnings} 次。\n若達 3 次，系統將直接強制收卷。`);
+                }
+            }
+        });
         // 1. Firebase 權限驗證
         const firebaseConfig = {
             apiKey: "AIzaSyALkTnkYY3JZLCTyajahpi4IZKmFX9USdw",
@@ -319,6 +339,8 @@
             document.getElementById('active-exam-title').innerText = currentExam.title;
             timeRemaining = 1800; updateTimerDisplay();
             clearInterval(timerInterval);
+            cheatWarnings = 0;
+            isExamActive = true;
             timerInterval = setInterval(() => {
                 timeRemaining--; updateTimerDisplay();
                 if (timeRemaining <= 0) { clearInterval(timerInterval); alert("測驗時間到！系統即將自動為您交卷結算。"); finishAndShowResults(); }
@@ -412,6 +434,7 @@
         }
 
         function finishAndShowResults() {
+            isExamActive = false;
             if (timerInterval) clearInterval(timerInterval);
             hideAllUI(); 
             document.getElementById('result-ui').style.display = 'block';
