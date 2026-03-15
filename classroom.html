@@ -449,7 +449,7 @@
             const now = Date.now();
             
             // 1. 雲端 IP 鎖定檢查 (防無痕視窗)
-            const safeIP = globalClientIP ? globalClientIP.replace(/\./g, '_') : "unknown_IP";
+            const safeIP = globalClientIP ? globalClientIP.replace(/[.#$\[\]:]/g, '_') : "unknown_IP";
             const ipBanRef = db.ref('ip_bans/' + safeIP);
 
             if (safeIP !== "unknown_IP") {
