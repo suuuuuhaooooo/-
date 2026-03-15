@@ -444,10 +444,31 @@
             icon.innerText = (pwd.type === "password") ? "🔓" : "🔒";
         }
 
-        function login() {
+        // 將 login 改為 async 函式
+        async function login() {
             const now = Date.now();
             
-            // 1. 讀取鎖定狀態
+            // 1. 雲端 IP 鎖定檢查 (防無痕視窗)
+            const safeIP = globalClientIP ? globalClientIP.replace(/\./g, '_') : "unknown_IP";
+            const ipBanRef = db.ref('ip_bans/' + safeIP);
+
+            if (safeIP !== "unknown_IP") {
+                try {
+                    const snap = await ipBanRef.once('value');
+                    const banData = snap.val();
+                    if (banData && banData.lockUntil > now) {
+                        const remainingSec = Math.ceil((banData.lockUntil - now) / 1000);
+                        const min = Math.floor(remainingSec / 60);
+                        const sec = remainingSec % 60;
+                        alert(`【系統通知】\n此 IP 位址因連續登入失敗多次，已被系統暫時封鎖。\n請等待 ${min} 分 ${sec} 秒後再嘗試。`);
+                        return; // 直接擋下
+                    }
+                } catch (e) {
+                    console.log("IP 檢查失敗，略過", e);
+                }
+            }
+
+            // 2. 本地儲存鎖定檢查 (雙重保險)
             let lockUntil = parseInt(localStorage.getItem('login_lock_until') || '0', 10);
             let loginFailCount = parseInt(localStorage.getItem('login_fail_count') || '0', 10);
         
@@ -459,7 +480,7 @@
                 return;
             }
         
-            // 2. 取得 DOM 元素
+            // 取得 DOM 元素與基礎檢查
             const emailEl = document.getElementById('email');
             const passwordEl = document.getElementById('password');
             const captchaInputEl = document.getElementById('captcha-input');
@@ -470,31 +491,12 @@
             
             const hasSpace = /\s/g;
         
-            // 3. 攔截邏輯
-            if (!email || email.length === 0) {
-                alert("請輸入學員帳號");
-                emailEl.focus(); return;
-            } 
-            if (hasSpace.test(email)) {
-                alert("帳號格式錯誤。");
-                emailEl.focus(); return;
-            }
-            if (!password || password.length === 0) {
-                alert("請輸入密碼");
-                passwordEl.focus(); return;
-            } 
-            if (hasSpace.test(password)) {
-                alert("密碼格式錯誤。");
-                passwordEl.focus(); return;
-            }
-            if (!captchaInput || captchaInput.length === 0) {
-                alert("請輸入驗證碼");
-                captchaInputEl.focus(); return;
-            } 
-            if (hasSpace.test(captchaInput)) {
-                alert("驗證碼格式錯誤。");
-                captchaInputEl.focus(); return;
-            }
+            if (!email || email.length === 0) { alert("請輸入學員帳號"); emailEl.focus(); return; } 
+            if (hasSpace.test(email)) { alert("帳號格式錯誤。"); emailEl.focus(); return; }
+            if (!password || password.length === 0) { alert("請輸入密碼"); passwordEl.focus(); return; } 
+            if (hasSpace.test(password)) { alert("密碼格式錯誤。"); passwordEl.focus(); return; }
+            if (!captchaInput || captchaInput.length === 0) { alert("請輸入驗證碼"); captchaInputEl.focus(); return; } 
+            if (hasSpace.test(captchaInput)) { alert("驗證碼格式錯誤。"); captchaInputEl.focus(); return; }
         
             if (captchaInput !== currentCaptcha) { 
                 alert("驗證碼錯誤（請注意大小寫需完全一致）"); 
@@ -507,33 +509,58 @@
             document.getElementById('loading-screen').style.display = 'flex';
             document.querySelector('#loading-screen .loading-text').innerText = "資料驗證中...";
 
+            // 執行驗證
             auth.signInWithEmailAndPassword(email, password).then(cred => {
-                // 登入成功：清除紀錄
+
                 localStorage.removeItem('login_fail_count');
                 localStorage.removeItem('login_lock_until');
+                if (safeIP !== "unknown_IP") ipBanRef.remove(); 
                 
                 const sid = Math.random().toString(36).substring(2);
                 localStorage.setItem('session_id', sid);
                 db.ref('auth_status/' + cred.user.uid).set({ current_sid: sid, kick_all: false });
 
-            }).catch((error) => { 
-
+            }).catch(async (error) => { 
                 document.getElementById('loading-screen').style.display = 'none';
                 
                 loginFailCount++;
                 localStorage.setItem('login_fail_count', loginFailCount);
-        
-                if (loginFailCount >= 3) {
-                    lockUntil = Date.now() + (3 * 60 * 1000); 
-                    localStorage.setItem('login_lock_until', lockUntil);
+
+                let attemptsLeft = 3 - loginFailCount;
+                let isBanned = false;
+
+                // 寫入雲端 IP 失敗次數
+                if (safeIP !== "unknown_IP") {
+                    try {
+                        const snap = await ipBanRef.once('value');
+                        let banData = snap.val() || { fails: 0, lockUntil: 0 };
+                        banData.fails += 1;
+                        attemptsLeft = 3 - banData.fails; // 以雲端次數為主
+                        
+                        if (banData.fails >= 3) {
+                            banData.lockUntil = now + (3 * 60 * 1000); // 鎖定 3 分鐘
+                            banData.fails = 0; // 歸零備用
+                            await ipBanRef.set(banData);
+                            isBanned = true;
+                        } else {
+                            await ipBanRef.set(banData);
+                        }
+                    } catch(e) { console.log("更新 IP 失敗次數錯誤", e); }
+                }
+
+                // 只要任一防線達到 3 次，就執行封鎖
+                if (loginFailCount >= 3 || isBanned) {
+                    let newLockUntil = now + (3 * 60 * 1000); 
+                    localStorage.setItem('login_lock_until', newLockUntil);
                     localStorage.setItem('login_fail_count', 0);
-                    alert("偵測到多次登入失敗！\n系統已暫時停止您的登入權限 3 分鐘。");
+                    alert("偵測到多次登入失敗！\n系統已啟動安全防護，暫停您的登入與 IP 權限 3 分鐘。");
                 } else {
+                    let warnText = attemptsLeft > 0 ? `\n(警告：再失敗 ${attemptsLeft} 次將鎖定您的設備與 IP)` : "";
                     switch (error.code) {
-                        case 'auth/user-not-found': alert("查無此帳號，請重新確認。"); break;
-                        case 'auth/wrong-password': alert("密碼輸入錯誤，請重新確認。"); break;
+                        case 'auth/user-not-found': alert("查無此帳號，請重新確認。" + warnText); break;
+                        case 'auth/wrong-password': alert("密碼輸入錯誤，請重新確認。" + warnText); break;
                         case 'auth/too-many-requests': alert("嘗試次數過多，請稍後再試。"); break;
-                        default: alert("帳號或密碼驗證失敗。");
+                        default: alert("帳號或密碼驗證失敗。" + warnText);
                     }
                 }
                 drawCaptcha(); 
@@ -550,11 +577,17 @@
             });
         }
 
+        let globalClientIP = "";
+
         window.onload = function() {
             drawCaptcha();
-            fetch('https://api.ipify.org?format=json').then(res => res.json()).then(data => { 
-                document.getElementById('login-ip').innerText = "IP: " + data.ip; 
-            });
+            fetch('https://api.ipify.org?format=json')
+                .then(res => res.json())
+                .then(data => { 
+                    globalClientIP = data.ip; 
+                    document.getElementById('login-ip').innerText = "IP: " + data.ip; 
+                })
+                .catch(err => console.log("獲取 IP 失敗", err));
         };
 
         function showView(viewId, navEl) {
