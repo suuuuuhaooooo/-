@@ -87,6 +87,34 @@ footer {
     font-size: 0.9em;
     color: #999;
 }
+
+/* === 手機端響應式優化 (RWD) === */
+@media (max-width: 768px) {
+    body {
+        padding: 10px; /* 縮小最外層留白 */
+    }
+    .container {
+        padding: 25px 15px; /* 縮小白色區塊的內縮，釋放文字空間 */
+        border-radius: 8px;
+    }
+    h1 {
+        font-size: 1.6em;
+        margin-bottom: 20px;
+    }
+    h2 {
+        margin-top: 30px;
+        font-size: 1.3em;
+        padding-left: 10px;
+    }
+    ul {
+        margin-left: 10px; /* 避免條列式項目在手機上退得太靠右 */
+        padding-left: 20px;
+    }
+    .highlight, .honor {
+        padding: 15px;
+        margin: 15px 0;
+    }
+}
 </style>
 </head>
 <body>
@@ -183,7 +211,7 @@ footer {
 
 <p class="q">Q14：教材有電子檔嗎？</p>
 <ul>
-<li>有的，我們會將教材上傳至雲端教室，讓學生的學習不打折。</li>
+<li>有的，我們會建立學生端的雲端硬碟，將上課的內容、教材一併放進資料夾內，讓學生的學習不打折。</li>
 </ul>
 
 <p class="q">Q15：上課使用的教材該如何準備？影印費用如何計算？</p>
@@ -259,7 +287,7 @@ footer {
         alert("版權所有，翻印必究！");
     });
 
-    // 3. 陷阱機制
+    // 3. 陷阱機制 (干擾已開啟開發者工具的人)
     setInterval(function() {
         const before = new Date().getTime();
         debugger; 
