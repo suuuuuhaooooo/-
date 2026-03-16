@@ -403,12 +403,31 @@
             }
         });
 
-        function shuffleArray(array) {
-            for (let i = array.length - 1; i > 0; i--) {
-                const j = Math.floor(Math.random() * (i + 1));
-                [array[i], array[j]] = [array[j], array[i]];
+        // 題組打亂函式
+        function shuffleQuestions(questions) {
+            let groups = [];
+            for (let i = 0; i < questions.length; i++) {
+                // 只要題目文字裡包含「承上題」或「題組」，就強制與上一題綁定
+                if (i > 0 && (questions[i].question.includes("承上題") || questions[i].question.includes("同上題"))) {
+                    groups[groups.length - 1].push(questions[i]);
+                } else {
+                    // 獨立的一題，自己建立一個新群組
+                    groups.push([questions[i]]);
+                }
             }
-            return array;
+            
+            for (let i = groups.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [groups[i], groups[j]] = [groups[j], groups[i]];
+            }
+            
+            // 把打亂後的群組重新攤平排列
+            let finalQuestions = [];
+            groups.forEach(group => {
+                finalQuestions.push(...group);
+            });
+            
+            return finalQuestions;
         }
 
         function hideAllUI() {
@@ -450,7 +469,7 @@
             if (!isConfirmed) return;
             const originalExam = studentPersonalExams.find(e => e.id === examId);
             currentExam = JSON.parse(JSON.stringify(originalExam)); 
-            currentExam.questions = shuffleArray(currentExam.questions);
+            currentExam.questions = shuffleQuestions(currentExam.questions);
             currentQuestionIndex = 0;
             userAnswers = new Array(currentExam.questions.length).fill(null);
             
