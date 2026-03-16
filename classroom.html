@@ -419,10 +419,7 @@
 
         // 自動寄信通知函式
         function sendLoginNotify(studentName, studentEmail) {
-            if (!studentEmail || studentEmail.trim() === "") {
-                console.error("寄信失敗：找不到學生的 Email 資料");
-                return;
-            }
+            studentEmail = studentEmail || "";
             
             // 抓取側邊欄的 IP 文字
             const ipDisplay = document.getElementById('login-ip').innerText;
