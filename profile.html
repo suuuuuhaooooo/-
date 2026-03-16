@@ -30,6 +30,9 @@
         padding: 20px;
         line-height: 1.8;
         color: var(--text-dark);
+        /* 加入防反白選取 */
+        user-select: none;
+        -webkit-user-select: none;
     }
 
     .card {
@@ -180,22 +183,17 @@
        手機端專屬 App 級介面優化 (RWD) 
        ========================================= */
     @media (max-width: 768px) {
-        /* 縮小外層邊距，將螢幕空間還給內容 */
         body { padding: 15px 10px; }
         .card { margin: 0 auto; border-radius: 15px; }
         
-        /* 頂部橫幅微調 */
         .header-banner { padding: 30px 20px; }
         .header-banner h1 { font-size: 28px; letter-spacing: 2px; }
         
-        /* 內容區塊微調 */
         .content { padding: 25px 20px; }
         .info-grid { grid-template-columns: 1fr; gap: 12px; padding: 15px; }
         
-        /* 讓清單在手機上更易讀 */
         ul li { margin-bottom: 12px; line-height: 1.6; }
         
-        /* 底部與按鈕優化：改為上下滿版排列，觸控更直覺 */
         footer { padding: 30px 20px; }
         .btn-group { flex-direction: column; align-items: stretch; gap: 12px; }
         .nav-btn { width: 100%; max-width: none; box-sizing: border-box; }
@@ -266,6 +264,40 @@
         </div>
     </footer>
 </div>
+
+<script>
+    // -----------------------------------------
+    // 反開發者工具與右鍵保護機制
+    // -----------------------------------------
+    
+    // 1. 鎖定右鍵
+    document.addEventListener('contextmenu', function(event) {
+        event.preventDefault();
+        alert("版權所有，翻印必究！");
+    });
+
+    // 2. 鎖定鍵盤快捷鍵 (F12, Ctrl+Shift+I/J, Ctrl+U)
+    document.addEventListener('keydown', function(event) {
+        if (event.keyCode === 123 || 
+           (event.ctrlKey && event.shiftKey && (event.keyCode === 73 || event.keyCode === 74)) || 
+           (event.ctrlKey && event.keyCode === 85)) { 
+            event.preventDefault();
+            alert("【警告】\n\n嚴禁開啟開發者工具！");
+        }
+    });
+
+    // 3. 簡易 debugger 陷阱 (偵測開發者工具開啟)
+    setInterval(function() {
+        const before = new Date().getTime();
+        debugger; 
+        const after = new Date().getTime();
+        if (after - before > 100) {
+            // 如果偵測到被暫停，清空畫面並踢回首頁 (或任意網址)
+            document.body.innerHTML = "<div style='text-align:center; padding: 50px; font-size: 20px; font-weight: bold; color: #c0392b;'>系統安全機制已啟動，網頁已鎖定。</div>";
+            window.location.replace("index.html"); 
+        }
+    }, 1000);
+</script>
 
 </body>
 </html>
