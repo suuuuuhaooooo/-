@@ -13,64 +13,79 @@
 <meta property="og:url" content="https://suuuuuhaooooo.github.io/-/FAQ.html">
 <meta property="og:image" content="https://suuuuuhaooooo.github.io/-/og-image.png">
 <style>
-body{
-    font-family:"Noto Sans TC","Microsoft JhengHei",sans-serif;
-    background:#f4f6f8;
-    color:#333;
-    line-height:1.8;
-    margin:0;
-    padding:20px;
+@import url('https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;700&display=swap');
+
+:root { 
+    --primary: #8e9775; 
+    --dark: #5b6348; 
+    --bg: #f8f8f6; 
+    --white: #ffffff; 
 }
-.container{
-    max-width:900px;
-    margin:auto;
-    background:#fff;
-    padding:40px;
-    border-radius:12px;
-    box-shadow:0 8px 30px rgba(0,0,0,.08);
+
+body {
+    font-family: "Noto Serif TC", serif;
+    background-color: var(--bg);
+    color: #333;
+    line-height: 1.8;
+    margin: 0;
+    padding: 20px;
+    /* 增加反白選取限制，讓防護更徹底 */
+    user-select: none; 
+    -webkit-user-select: none;
 }
-h1{
-    text-align:center;
-    color:#2e7d32;
-    margin-bottom:30px;
+.container {
+    max-width: 900px;
+    margin: auto;
+    background: var(--white);
+    padding: 40px;
+    border-radius: 12px;
+    box-shadow: 0 8px 30px rgba(0,0,0,.05);
 }
-h2{
-    margin-top:40px;
-    padding-left:12px;
-    border-left:6px solid #2e7d32;
-    background:#eef5ef;
+h1 {
+    text-align: center;
+    color: var(--dark);
+    margin-bottom: 30px;
+    letter-spacing: 2px;
 }
-.q{
-    font-weight:bold;
-    color:#1b5e20;
-    margin-top:25px;
+h2 {
+    margin-top: 40px;
+    padding-left: 12px;
+    border-left: 6px solid var(--primary);
+    background: #eef1ec;
+    color: var(--dark);
 }
-ul{
-    margin-left:25px;
+.q {
+    font-weight: bold;
+    color: var(--dark);
+    margin-top: 25px;
+    font-size: 1.05em;
 }
-.highlight{
-    background:#f7faf7;
-    border:2px dashed #a5d6a7;
-    padding:20px;
-    border-radius:10px;
-    margin:25px 0;
+ul {
+    margin-left: 25px;
 }
-.honor{
-    background:#fffdf5;
-    border-left:5px solid #f39c12;
-    padding:15px;
-    border-radius:8px;
-    margin:20px 0;
+.highlight {
+    background: #fafafa;
+    border: 2px dashed var(--primary);
+    padding: 20px;
+    border-radius: 10px;
+    margin: 25px 0;
 }
-.red{
-    color:#c62828;
-    font-weight:bold;
+.honor {
+    background: #f9faf9;
+    border-left: 5px solid var(--primary);
+    padding: 15px;
+    border-radius: 8px;
+    margin: 20px 0;
 }
-footer{
-    text-align:center;
-    margin-top:60px;
-    font-size:0.9em;
-    color:#777;
+.red {
+    color: #b03a2e;
+    font-weight: bold;
+}
+footer {
+    text-align: center;
+    margin-top: 60px;
+    font-size: 0.9em;
+    color: #999;
 }
 </style>
 </head>
@@ -130,31 +145,56 @@ footer{
 <li>若因特殊狀況需請假，請於課程前 24 小時告知，方便老師調整備課進度並將時段釋出給其他同學。如屬可協調之情形，將視雙方時間另行安排補課；反之，當日臨時請假或無故缺席者，因時段已為孩子保留，該堂課將視同正常上課，照常收費，得另行補課。為珍惜彼此寶貴的時間，還請見諒。</li>
 </ul>
 
+<p class="q">Q9：若學生或老師因故請假，課程該如何進行補課？</p>
+<ul>
+<li>為確保學習進度不受影響，無論是學生請假或我因故需調整課程，皆提供以下三種補課方式。若有請假需求，請務必提前告知，以便雙方協調最適合的方案：
+    <ul style="margin-top: 10px; list-style-type: decimal;">
+        <li><strong>實體調課：</strong>若我其他家教時段尚有空檔，可協助安排時段進行實體補課。此方式需視當週課表狀況而定，敬請提早確認。</li>
+        <li><strong>線上視訊同步補課：</strong>若無法配合實體調課，可另行約定時段，透過視訊軟體進行一對一的同步教學與解題。此方式需由雙方事先協調可配合的上線時間。</li>
+        <li><strong>雲端預錄影音補課：</strong>我將針對當週進度，派發專屬的預錄教學影片至「雲端教室」。
+            <br>• <strong>期限與測驗：</strong>學生須於「原定上課日」至「下次上課前」的期間內，登入系統完整觀看。遇到運算環節應暫停並自行演練，觀看後須至「試務中心」完成對應的測驗卷。
+            <br>• <strong>實體驗收：</strong>下次恢復實體上課時，我會親自針對影片內容進行重點抽測，確認學生的吸收狀況，並直接給予個別補強。
+        </li>
+    </ul>
+</li>
+</ul>
+
 <h3>四、教學方式與課後服務</h3>
 
-<p class="q">Q9：老師的教學風格是什麼？孩子基礎弱跟得上嗎？</p>
+<p class="q">Q10：老師的教學風格是什麼？孩子基礎弱跟得上嗎？</p>
 <ul>
 <li>我的教學理念是「理解重於死背」。我會先評估孩子的程度，針對弱點「向上溯源」補強基礎。我會保持親切但有原則的態度，確保孩子在輕鬆的氣氛中建立學習紀律。</li>
 </ul>
 
-<p class="q">Q10：課後會提供學習進度報告嗎？</p>
+<p class="q">Q11：課後會提供學習進度報告嗎？</p>
 <ul>
 <li>會的。每堂課結束後，我會簡短與您回報今日教學重點、孩子的吸收狀況及作業完成度。</li>
 </ul>
 
-<p class="q">Q11：遇到不會寫的題目，可以在非上課時間詢問嗎？</p>
+<p class="q">Q12：遇到不會寫的題目，可以在非上課時間詢問嗎？</p>
 <ul>
 <li>沒問題！孩子寫作業卡關時，歡迎拍下題目傳到我們的 LINE 群組。我會在空檔給予提示或錄製解題音訊，避免孩子的學習熱情被挫折感澆熄。</li>
 </ul>
 
-<p class="q">Q12：預約時為什麼要簡述「學習進度」？</p>
+<p class="q">Q13：預約時為什麼要簡述「學習進度」？</p>
 <ul>
 <li>這是為了極大化課堂效率。預先知道孩子的瓶頸點，我才能提前準備精準的客製化教材，讓教學更有針對性。</li>
 </ul>
 
-<p class="q">Q13：教材有電子檔嗎？</p>
+<p class="q">Q14：教材有電子檔嗎？</p>
 <ul>
-<li>有的，我們會建立學生端的雲端硬碟，將上課的內容、教材一併放進資料夾內，讓學生的學習不打折。</li>
+<li>有的，我們會將教材上傳至雲端教室，讓學生的學習不打折。</li>
+</ul>
+
+<p class="q">Q15：上課使用的教材該如何準備？影印費用如何計算？</p>
+<ul>
+<li>為配合學生的個別學習需求，上課教材提供以下三種準備方式，家長可依實際需求與方便性擇一進行：
+    <ul style="margin-top: 10px; list-style-type: decimal;">
+        <li><strong>老師代為列印與請款：</strong>由我準備並負責列印上課教材與講義。相關的實體影印費用將會據實記錄，並於後續（如月底或段考後）向家長統一請款。</li>
+        <li><strong>提供電子檔由家長自印：</strong>若家長具備列印條件，我會提前將課堂會用到的教材電子檔上傳至雲端教室。請家長務必於上課前為學生列印妥當，以利課堂書寫與運算。</li>
+        <li><strong>搭配市售講義與參考書：</strong>視學生的學習程度與需求，若評估需使用市面上現成的講義或題本，經雙方確認書單後，可由家長自行至書店購買，或由我代為購買後再向家長請款。</li>
+    </ul>
+</li>
 </ul>
 
 <h2>課程特色</h2>
@@ -201,5 +241,34 @@ footer{
 </footer>
 
 </div>
+
+<script>
+    // 1. 禁用鍵盤快捷鍵 (F12, Ctrl+Shift+I, Ctrl+Shift+J, Ctrl+U)
+    document.addEventListener('keydown', function(event) {
+        if (event.keyCode === 123 || 
+           (event.ctrlKey && event.shiftKey && (event.keyCode === 73 || event.keyCode === 74)) || 
+           (event.ctrlKey && event.keyCode === 85)) { 
+            event.preventDefault();
+            alert("【警告】\n\n嚴禁開啟開發者工具！版權所有，請勿任意擷取網頁原始碼。");
+        }
+    });
+
+    // 2. 禁用滑鼠右鍵
+    document.addEventListener('contextmenu', function(event) {
+        event.preventDefault();
+        alert("版權所有，翻印必究！");
+    });
+
+    // 3. 陷阱機制
+    setInterval(function() {
+        const before = new Date().getTime();
+        debugger; 
+        const after = new Date().getTime();
+        if (after - before > 100) {
+            // 開了開發者工具，強制跳轉回首頁
+            window.location.href = 'index.html'; 
+        }
+    }, 1000);
+</script>
 </body>
 </html>
