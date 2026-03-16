@@ -35,6 +35,9 @@
             display: flex;
             justify-content: center;
             align-items: flex-start;
+            /* 加入防反白選取 */
+            user-select: none;
+            -webkit-user-select: none;
         }
 
         .container {
@@ -121,14 +124,14 @@
         }
         
         td.x::after {
-        content: "已預約\00000aReserved"; 
-        white-space: pre; 
-        font-size: 10px;
-        display: block;
-        opacity: 0.5;
-        letter-spacing: 1px;
-        margin-top: 2px;
-        line-height: 1.2;
+            content: "已預約\00000aReserved"; 
+            white-space: pre; 
+            font-size: 10px;
+            display: block;
+            opacity: 0.5;
+            letter-spacing: 1px;
+            margin-top: 2px;
+            line-height: 1.2;
         }
 
         td:not(.x):not(.time-label) {
@@ -165,9 +168,6 @@
             header { margin-bottom: 25px; }
             h1 { font-size: 24px; }
             .badge { margin-bottom: 10px; padding: 5px 15px; font-size: 12px; }
-            
-            /* 提示資訊改為上下置中排列 */
-            .info-bar { flex-direction: column; align-items: center; gap: 8px; text-align: center; }
             
             /* 課表表格維持橫向滑動，但稍微縮小間距與字體以顯示更多內容 */
             table { border-spacing: 5px 8px; min-width: 600px; }
@@ -220,7 +220,7 @@
 </div>
 
 <script>
-    // 💡 這裡填入你部署得到的 Apps Script 網址
+
     const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyV1ygP4g7yNr_xYTN9DkWppOlCD0oKb8pW_UC2AAyFaLHDO0VJKUfv2myJq0QNM5shBQ/exec';
 
     async function syncSchedule() {
@@ -266,6 +266,38 @@
 
     // 啟動同步
     syncSchedule();
+
+    // -----------------------------------------
+    // 反開發者工具與右鍵保護機制
+    // -----------------------------------------
+    
+    // 1. 鎖定右鍵
+    document.addEventListener('contextmenu', function(event) {
+        event.preventDefault();
+        alert("版權所有，翻印必究！");
+    });
+
+    // 2. 鎖定鍵盤快捷鍵 (F12, Ctrl+Shift+I/J, Ctrl+U)
+    document.addEventListener('keydown', function(event) {
+        if (event.keyCode === 123 || 
+           (event.ctrlKey && event.shiftKey && (event.keyCode === 73 || event.keyCode === 74)) || 
+           (event.ctrlKey && event.keyCode === 85)) { 
+            event.preventDefault();
+            alert("【警告】\n\n嚴禁開啟開發者工具！");
+        }
+    });
+
+    // 3. 簡易 debugger 陷阱 (偵測開發者工具開啟)
+    setInterval(function() {
+        const before = new Date().getTime();
+        debugger; 
+        const after = new Date().getTime();
+        if (after - before > 100) {
+            // 如果偵測到被暫停，清空畫面並踢回首頁
+            document.body.innerHTML = "<div style='text-align:center; padding: 50px; font-size: 20px; font-weight: bold; color: #c0392b;'>系統安全機制已啟動，網頁已鎖定。</div>";
+            window.location.replace("index.html"); 
+        }
+    }, 1000);
 </script>
 
 </body>
