@@ -121,6 +121,45 @@
         
         .chart-control-wrap { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 1px solid #eee; padding-bottom: 10px; }
         .modern-select { padding: 6px 12px; border-radius: 20px; border: 1px solid #ddd; outline: none; background: #fafafa; font-size: 13px; color: #555; cursor: pointer; font-family: inherit; }
+
+        /* =========================================
+           手機端專屬 App 級介面優化 (RWD) 
+           ========================================= */
+        @media (max-width: 768px) {
+            body { padding: 10px; }
+            .container-ui { padding: 20px 15px; border-top-width: 4px; }
+            
+            /* 考卷列表卡片改為垂直堆疊 */
+            .exam-card { flex-direction: column; align-items: flex-start; gap: 15px; padding: 15px; }
+            .exam-card > div { width: 100%; }
+            /* 強制按鈕區塊垂直排列與延展 */
+            .exam-card > div:last-child { flex-direction: column !important; align-items: stretch !important; gap: 10px; }
+            .exam-status-btn, .status-badge { width: 100%; text-align: center; margin: 0 !important; box-sizing: border-box; }
+            
+            /* 測驗標頭與計時器改為垂直堆疊置中 */
+            .quiz-header-container { flex-direction: column; align-items: stretch; gap: 12px; padding-bottom: 12px; }
+            .quiz-header { text-align: center; font-size: 14px; }
+            .timer-display { text-align: center; font-size: 16px; padding: 8px; }
+            
+            /* 題目與選項微調以適應螢幕 */
+            .question-text { font-size: 16px; margin-bottom: 20px; }
+            .option-btn { padding: 12px 15px; font-size: 15px; margin-bottom: 10px; }
+            .main-btn { padding: 12px; font-size: 15px; }
+            
+            /* 錯題本與學習分析儀表板按鈕 */
+            .dashboard-btn { font-size: 15px; padding: 12px; flex-direction: column; gap: 5px; }
+            #score-display { font-size: 28px; padding: 15px; }
+            
+            /* 圖表與篩選列改為上下排列，選項滿版 */
+            .chart-control-wrap { flex-direction: column; align-items: stretch; gap: 12px; }
+            /* 針對內聯樣式設定的錯題本篩選列強制重組 */
+            #dashboard-ui > div[style*="justify-content: space-between"] { flex-direction: column !important; align-items: stretch !important; gap: 10px; }
+            .modern-select { width: 100%; text-align: center; text-align-last: center; padding: 8px; }
+            
+            /* 錯題檢討卡片內縮微調 */
+            .clean-card, .review-card { padding: 15px; }
+            .clean-card > div[style*="font-size: 16px"] { font-size: 15px !important; }
+        }
     </style>
 </head>
 <body>
