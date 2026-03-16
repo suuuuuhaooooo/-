@@ -142,7 +142,11 @@
             #student-name { font-size: 14px !important; margin-right: 8px; }
             #student-meta { margin-top: 0 !important; }
             .info-tag { font-size: 10px; padding: 2px 5px; }
-            
+            .login-card { 
+                width: 85%; /* 讓寬度彈性適應手機螢幕比例 */
+                padding: 30px 20px; /* 稍微縮減手機版上的內留白空間 */
+                box-sizing: border-box; /* 確保內留白不會把整個卡片撐破 */
+            }
             /* 系統資訊區塊重新排列 (連線、登出、版本號、IP 全部重組在一小塊區域) */
             .sidebar-footer > div:nth-child(3) { 
                 margin-top: 8px !important; 
