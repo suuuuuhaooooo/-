@@ -443,7 +443,8 @@
         let currentExam = null;
         let currentQuestionIndex = 0;
         let userAnswers = [];
-
+        let examStartTime = 0; // 記錄測驗開始時間
+        
         function startExam(examId) {
             const isConfirmed = confirm("【警告】\n\n點擊「確定」後將立即開始計時！\n\n測驗中途若「重新整理」或「離開網頁」，系統將直接強制收卷結算，無法重考。\n\n您確認已經準備好，要開始測驗了嗎？");
             if (!isConfirmed) return;
@@ -462,6 +463,7 @@
             clearInterval(timerInterval);
             cheatWarnings = 0;
             isExamActive = true;
+            examStartTime = Date.now(); // 記錄當下的毫秒數
             timerInterval = setInterval(() => {
                 timeRemaining--; updateTimerDisplay();
                 if (timeRemaining <= 0) { clearInterval(timerInterval); alert("測驗時間到！系統即將自動為您交卷結算。"); finishAndShowResults(); }
@@ -598,7 +600,12 @@
             formData.append("email", auth.currentUser.email);
             formData.append("name", studentName);
             formData.append("examTitle", currentExam.title);
+            // 計算花費時間 (轉換為 分:秒 格式)
+            const timeSpentSec = Math.floor((Date.now() - examStartTime) / 1000);
+            const timeSpentStr = Math.floor(timeSpentSec / 60) + "分" + (timeSpentSec % 60) + "秒";
+            
             formData.append("score", finalScore);
+            formData.append("timeSpent", timeSpentStr); // 把作答時間送給後端
             formData.append("details", JSON.stringify(detailedResults));
 
             fetch(SCRIPT_URL, { method: "POST", body: formData.toString(), mode: 'no-cors' })
