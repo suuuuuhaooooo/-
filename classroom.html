@@ -89,6 +89,11 @@
         #classroom-ui { display: none; height: 100vh; width: 100%; }
         .sidebar { width: 260px; background: white; border-right: 1px solid #eee; display: flex; flex-direction: column; padding: 30px 0; }
         .sidebar-brand { padding: 0 30px 30px; border-bottom: 1px solid #f5f5f5; margin-bottom: 20px; }
+        
+        /* 漢堡按鈕與選單包裝容器 (PC版隱藏按鈕，顯示容器) */
+        .mobile-toggle { display: none; font-size: 26px; color: var(--primary); cursor: pointer; padding: 0 5px; user-select: none; }
+        .sidebar-menu-wrapper { display: flex; flex-direction: column; flex-grow: 1; }
+
         .nav-group { flex-grow: 1; }
         .nav-link { display: block; padding: 15px 30px; text-decoration: none; color: #777; font-size: 0.95em; cursor: pointer; transition: 0.2s; border-left: 4px solid transparent; }
         .nav-link:hover { background: #f9faf9; color: var(--primary); }
@@ -110,56 +115,59 @@
         .download-btn { color: var(--primary); text-decoration: none; font-weight: 700; border: 1px solid var(--primary); padding: 8px 18px; border-radius: 2px; font-size: 13px; transition: 0.3s; }
         
         .no-data-msg { text-align: center; color: #bbb; padding: 80px 0; font-style: italic; letter-spacing: 1px; font-size: 15px; border: 1px dashed #ddd; border-radius: 4px; }
-        .logout-link { font-size: 12px; color: #999; cursor: pointer; text-decoration: underline; display: block; margin-top: 10px; }
+        .logout-link { margin-top: 0 !important; font-size: 12px; font-weight: bold; text-decoration: none; }
         .info-tag { font-size: 11px; color: #888; background: #f0f0f0; padding: 2px 6px; border-radius: 3px; margin-right: 4px; }
 
         /* =========================================
            手機端專屬 App 級介面優化 (RWD) 
-           (不隱藏任何資訊，僅重組版面結構)
            ========================================= */
         @media (max-width: 768px) {
             body { height: auto; overflow: visible; }
             #classroom-ui { flex-direction: column; display: block; height: auto; }
             
-            /* 將側邊欄變成上方導覽列，並吸附於頂部 */
-            .sidebar { width: 100%; padding: 0; position: sticky; top: 0; z-index: 100; box-shadow: 0 4px 15px rgba(0,0,0,0.04); border-right: none; height: auto; }
+            /* 登入卡片寬度優化 */
+            .login-card { width: 85%; padding: 30px 20px; box-sizing: border-box; }
+
+            /* 導覽列改為頂部固定 */
+            .sidebar { width: 100%; padding: 0; position: sticky; top: 0; z-index: 1000; box-shadow: 0 4px 15px rgba(0,0,0,0.04); border-right: none; height: auto; background: white; }
             
-            /* 品牌 Logo 區塊保留所有資訊，改為左右排列 */
-            .sidebar-brand { padding: 15px 20px 10px; margin-bottom: 0; border-bottom: none; display: flex; justify-content: space-between; align-items: baseline; }
+            /* Logo與漢堡按鈕對齊 */
+            .sidebar-brand { padding: 15px 20px; margin-bottom: 0; border-bottom: none; display: flex; justify-content: space-between; align-items: center; }
+            .mobile-toggle { display: block; }
             
-            /* 導覽列變為橫向滑動 */
-            .nav-group { display: flex; overflow-x: auto; white-space: nowrap; padding: 0 10px; border-bottom: 1px solid #eee; -webkit-overflow-scrolling: touch; }
-            .nav-group::-webkit-scrollbar { display: none; }
-            .nav-link { padding: 12px 15px; font-size: 14px; border-left: none; border-bottom: 3px solid transparent; }
-            .nav-link.active { background: transparent; border-left-color: transparent; border-bottom-color: var(--primary); }
-            .nav-group > div { display: none; } /* 隱藏不必要的分隔線 */
-            
-            /* 底部資訊區塊改為緊湊排列 */
-            .sidebar-footer { padding: 12px 20px; background: #fafafa; border-bottom: 1px solid #e0e0e0; border-top: none; }
-            
-            /* 學生姓名與標籤改為同行緊湊並排 */
+            /* 下拉選單隱藏與顯示邏輯 */
+            .sidebar-menu-wrapper { 
+                display: none; 
+                position: absolute; 
+                top: 100%; left: 0; width: 100%; 
+                background: white; 
+                box-shadow: 0 10px 20px rgba(0,0,0,0.1); 
+                border-top: 1px solid #eee; 
+            }
+            .sidebar.open .sidebar-menu-wrapper { display: flex; }
+
+            /* 選單項目改為直排 */
+            .nav-group { display: block; padding: 0; border-bottom: 1px solid #eee; }
+            .nav-link { display: block; padding: 15px 20px; font-size: 15px; border-left: none; border-bottom: 1px solid #f9f9f9; }
+
+            /* 底部資訊緊湊排版 */
+            .sidebar-footer { padding: 15px 20px; background: #fafafa; border-bottom: 1px solid #e0e0e0; border-top: none; }
             .sidebar-footer > div:nth-child(1), .sidebar-footer > div:nth-child(2) { display: inline-block; vertical-align: middle; }
             #student-name { font-size: 14px !important; margin-right: 8px; }
             #student-meta { margin-top: 0 !important; }
             .info-tag { font-size: 10px; padding: 2px 5px; }
-            .login-card { 
-                width: 85%; /* 讓寬度彈性適應手機螢幕比例 */
-                padding: 30px 20px; /* 稍微縮減手機版上的內留白空間 */
-                box-sizing: border-box; /* 確保內留白不會把整個卡片撐破 */
-            }
-            /* 系統資訊區塊重新排列 (連線、登出、版本號、IP 全部重組在一小塊區域) */
+            
             .sidebar-footer > div:nth-child(3) { 
-                margin-top: 8px !important; 
-                padding-top: 8px !important; 
+                margin-top: 12px !important; 
+                padding-top: 12px !important; 
                 display: flex; 
                 flex-wrap: wrap; 
                 justify-content: space-between; 
                 align-items: center; 
             }
-            .sidebar-footer > div:nth-child(3) > div:nth-child(1) { margin-bottom: 5px !important; } /* 連線狀態 */
-            .sidebar-footer > div:nth-child(3) > div:nth-child(2) { margin-bottom: 5px !important; gap: 10px; } /* 登出與版本 */
-            .logout-link { margin-top: 0 !important; background: #ffeeee; padding: 4px 10px; border-radius: 4px; font-size: 12px; font-weight: bold; text-decoration: none; }
-            #login-ip { width: 100%; margin-top: 2px; }
+            .sidebar-footer > div:nth-child(3) > div:nth-child(1) { margin-bottom: 5px !important; } 
+            .sidebar-footer > div:nth-child(3) > div:nth-child(2) { margin-bottom: 5px !important; gap: 10px; }
+            #login-ip { width: 100%; margin-top: 4px; }
 
             /* 主要內容區塊 */
             .main-content { padding: 20px 15px; }
@@ -211,42 +219,48 @@
     <div id="classroom-ui">
         <nav class="sidebar">
             <div class="sidebar-brand">
-                <div style="font-weight: 700; font-size: 20px;">
-                    <a href="index.html" style="color: var(--primary); text-decoration: none; transition: opacity 0.2s;" onmouseover="this.style.opacity='0.8'" onmouseout="this.style.opacity='1'">蘇昊雲端教室</a>
-                </div>
-                <div style="font-size: 11px; letter-spacing: 1px;">
-                    <a href="index.html" style="color: #aaa; text-decoration: none; transition: opacity 0.2s;" onmouseover="this.style.opacity='0.8'" onmouseout="this.style.opacity='1'">專業數位教學系統</a>
-                </div>
-            </div>
-            <div class="nav-group">
-                <a id="nav-video" class="nav-link active" onclick="showView('video-view', this)">影音課程</a>
-                <a id="nav-pdf" class="nav-link" onclick="showView('pdf-view', this)">線上教材</a>
-                <a href="test.html" class="nav-link">試務中心</a>
-                <div style="margin: 20px 20px 0 20px; border-top: 1px dashed #ddd; padding-top: 10px;"></div>
-                <a href="add_shortcut_method.html" target="_blank" class="nav-link" style="color: #d35400; font-weight: 700;">
-                    手機桌面捷徑教學
-                </a>
-            </div>
-            <div class="sidebar-footer">
-                <div id="student-name" style="font-size: 15px; font-weight: 700; color: var(--dark);">
-                    <div class="loading-dots" style="transform:scale(0.6); justify-content: flex-start; margin-bottom:0;"><div></div><div></div><div></div></div>
-                </div>
-                <div id="student-meta" style="margin-top: 5px;"></div>
-    
-                <div style="margin-top: 20px; border-top: 1px solid #f5f5f5; padding-top: 15px;">
-                    
-                    <div style="font-size: 12px; color: #27ae60; font-weight: 700; margin-bottom: 12px; display: flex; align-items: center; gap: 6px;">
-                        <span class="online-dot" style="width: 6px; height: 6px;"></span>
-                        <span id="classroom-presence">連線中...</span>
+                <div>
+                    <div style="font-weight: 700; font-size: 20px;">
+                        <a href="index.html" style="color: var(--primary); text-decoration: none; transition: opacity 0.2s;" onmouseover="this.style.opacity='0.8'" onmouseout="this.style.opacity='1'">蘇昊雲端教室</a>
                     </div>
-                    
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                        <span class="logout-link" style="color: #b03a2e; text-decoration: none; font-weight: 700; margin-top: 0; transition: 0.2s;" onclick="logout()">登出系統</span>
-                        <div style="font-size: 11px; color: #ccc; font-family: monospace; letter-spacing: 1px;">v3.8.21</div>
+                    <div style="font-size: 11px; letter-spacing: 1px;">
+                        <a href="index.html" style="color: #aaa; text-decoration: none; transition: opacity 0.2s;" onmouseover="this.style.opacity='0.8'" onmouseout="this.style.opacity='1'">專業數位教學系統</a>
                     </div>
-    
-                    <div id="login-ip" style="font-size: 10px; color: #bbb;">IP: 獲取中...</div>
-                    
+                </div>
+                <div class="mobile-toggle" onclick="toggleMobileMenu()">☰</div>
+            </div>
+            
+            <div class="sidebar-menu-wrapper">
+                <div class="nav-group">
+                    <a id="nav-video" class="nav-link active" onclick="showView('video-view', this)">影音課程</a>
+                    <a id="nav-pdf" class="nav-link" onclick="showView('pdf-view', this)">線上教材</a>
+                    <a href="test.html" class="nav-link">試務中心</a>
+                    <div style="margin: 20px 20px 0 20px; border-top: 1px dashed #ddd; padding-top: 10px;"></div>
+                    <a href="add_shortcut_method.html" target="_blank" class="nav-link" style="color: #d35400; font-weight: 700;">
+                        手機桌面捷徑教學
+                    </a>
+                </div>
+                <div class="sidebar-footer">
+                    <div id="student-name" style="font-size: 15px; font-weight: 700; color: var(--dark);">
+                        <div class="loading-dots" style="transform:scale(0.6); justify-content: flex-start; margin-bottom:0;"><div></div><div></div><div></div></div>
+                    </div>
+                    <div id="student-meta" style="margin-top: 5px;"></div>
+        
+                    <div style="margin-top: 20px; border-top: 1px solid #f5f5f5; padding-top: 15px;">
+                        
+                        <div style="font-size: 12px; color: #27ae60; font-weight: 700; margin-bottom: 12px; display: flex; align-items: center; gap: 6px;">
+                            <span class="online-dot" style="width: 6px; height: 6px;"></span>
+                            <span id="classroom-presence">連線中...</span>
+                        </div>
+                        
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                            <span class="logout-link" style="color: #b03a2e; text-decoration: none; font-weight: 700; margin-top: 0; transition: 0.2s;" onclick="logout()">登出系統</span>
+                            <div style="font-size: 11px; color: #ccc; font-family: monospace; letter-spacing: 1px;">v3.8.21</div>
+                        </div>
+        
+                        <div id="login-ip" style="font-size: 10px; color: #bbb;">IP: 獲取中...</div>
+                        
+                    </div>
                 </div>
             </div>
         </nav>
@@ -266,6 +280,11 @@
     </div>
 
     <script>
+        // 控制手機版漢堡選單開關
+        function toggleMobileMenu() {
+            document.querySelector('.sidebar').classList.toggle('open');
+        }
+
         // -----------------------------------------
         // 反開發者工具
         // -----------------------------------------
@@ -647,6 +666,11 @@
             document.querySelectorAll('.nav-link').forEach(n => n.classList.remove('active'));
             document.getElementById(viewId).classList.add('active');
             if(navEl) navEl.classList.add('active');
+            
+            // 手機版點擊選單後自動收起漢堡選單
+            if (window.innerWidth <= 768) {
+                document.querySelector('.sidebar').classList.remove('open');
+            }
         }
 
         auth.onAuthStateChanged(async (user) => {
