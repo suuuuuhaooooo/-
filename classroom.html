@@ -419,7 +419,7 @@
 
         // 自動寄信通知函式
         function sendLoginNotify(studentName, studentEmail) {
-            studentEmail = studentEmail || "";
+            studentEmail = studentEmail || ""; // 避免空信箱報錯
             
             // 抓取側邊欄的 IP 文字
             const ipDisplay = document.getElementById('login-ip').innerText;
@@ -432,12 +432,44 @@
             }
 
             const currentIp = ipDisplay.replace('IP: ', '').trim();
-            const url = `${SCRIPT_URL}?token=SuHaoClassroom2026_SecureKey&action=sendLoginNotify&email=${encodeURIComponent(studentEmail)}&name=${encodeURIComponent(studentName)}&ip=${encodeURIComponent(currentIp)}`;
+            const user = auth.currentUser;
             
-            fetch(url)
-                .then(res => res.text())
-                .then(result => { console.log("GAS 寄信結果:", result); })
-                .catch(e => { console.error("網路請求失敗:", e); });
+            // 如果沒抓到登入者，直接終止
+            if (!user) return;
+
+            // Firebase 查詢該學生的登入統計資料
+            db.ref(`login_stats/${user.uid}`).once('value').then(snap => {
+                let data = snap.val() || {};
+                
+                // 1. 計算「顯示次數 (每日)」
+                const today = new Date().toLocaleDateString('zh-TW');
+                let displayCount = data.totalCount || 0;
+                
+                if (data.lastLoginDate !== today) { 
+                    displayCount += 1; 
+                }
+
+                // 2. 計算「真實次數 (每次)」
+                let realCount = (data.realTotalCount || 0) + 1;
+                
+
+                db.ref(`login_stats/${user.uid}/realTotalCount`).set(realCount);
+
+
+                const url = `${SCRIPT_URL}?token=SuHaoClassroom2026_SecureKey&action=sendLoginNotify&email=${encodeURIComponent(studentEmail)}&name=${encodeURIComponent(studentName)}&ip=${encodeURIComponent(currentIp)}&displayCount=${displayCount}&realCount=${realCount}`;
+                
+                // 執行 fetch 動作
+                fetch(url)
+                    .then(res => res.text())
+                    .then(result => { console.log("GAS 紀錄結果:", result); })
+                    .catch(e => { console.error("網路請求失敗:", e); });
+
+            }).catch(e => {
+                console.error("Firebase 讀取失敗，略過次數傳送", e);
+
+                const fallbackUrl = `${SCRIPT_URL}?token=SuHaoClassroom2026_SecureKey&action=sendLoginNotify&email=${encodeURIComponent(studentEmail)}&name=${encodeURIComponent(studentName)}&ip=${encodeURIComponent(currentIp)}`;
+                fetch(fallbackUrl).catch(err => console.log(err));
+            });
         }
 
         // --- 修正後的次數統計與彈窗 ---
