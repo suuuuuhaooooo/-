@@ -357,9 +357,10 @@
             const ctx = canvas.getContext('2d');
             const chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjklmnpqrstuvwxyz23456789";
             
-            const r = Math.floor(Math.random() * 75 + 180);
-            const g = Math.floor(Math.random() * 75 + 180);
-            const b = Math.floor(Math.random() * 75 + 180);
+            // 隨機背景色
+            const r = Math.floor(Math.random() * 50 + 200);
+            const g = Math.floor(Math.random() * 50 + 200);
+            const b = Math.floor(Math.random() * 50 + 200);
             ctx.fillStyle = `rgb(${r},${g},${b})`;
             ctx.fillRect(0, 0, canvas.width, canvas.height);
 
@@ -369,67 +370,78 @@
             }
             currentCaptcha = code;
 
-            ctx.lineWidth = 0.5;
-            for (let i = 0; i < canvas.width; i += 10) {
-                ctx.strokeStyle = `rgba(0,0,0,${Math.random() * 0.15})`;
-                ctx.beginPath(); ctx.moveTo(i, 0); ctx.lineTo(i, canvas.height); ctx.stroke();
-            }
-            for (let i = 0; i < canvas.height; i += 10) {
-                ctx.strokeStyle = `rgba(0,0,0,${Math.random() * 0.15})`;
-                ctx.beginPath(); ctx.moveTo(0, i); ctx.lineTo(canvas.width, i); ctx.stroke();
-            }
-
-            for (let i = 0; i < 780; i++) {
+            // 1. 畫底層背景雜訊
+            for (let i = 0; i < 500; i++) {
                 ctx.fillStyle = `rgba(${Math.random()*255},${Math.random()*255},${Math.random()*255}, ${Math.random()*0.5})`;
-                ctx.fillRect(Math.random()*canvas.width, Math.random()*canvas.height, 1, 1);
+                ctx.fillRect(Math.random()*canvas.width, Math.random()*canvas.height, 1.5, 1.5);
             }
 
-            for (let i = 0; i < 20; i++) {
-                ctx.strokeStyle = `rgba(${Math.random()*255},${Math.random()*255},${Math.random()*255}, 0.6)`;
-                ctx.lineWidth = Math.random() * 1.5;
-                ctx.beginPath();
-                ctx.moveTo(0, Math.random() * canvas.height);
-                ctx.bezierCurveTo(
-                    canvas.width / 3, Math.random() * canvas.height,
-                    (canvas.width / 3) * 2, Math.random() * canvas.height,
-                    canvas.width, Math.random() * canvas.height
-                );
-                ctx.stroke();
-            }
+            // 多種字體隨機抽換
+            const fontFamilies = ['Courier New', 'Georgia', 'Arial', 'Impact', 'Times New Roman', 'Verdana'];
 
+            // 字元沾黏
+            let currentX = 15 + Math.random() * 10; 
 
             for (let i = 0; i < code.length; i++) {
-
-                const fontSize = Math.floor(Math.random() * 12) + 26; 
-                ctx.font = `italic bold ${fontSize}px 'Courier New', Courier, monospace`;
+                const fontFamily = fontFamilies[Math.floor(Math.random() * fontFamilies.length)];
+                const fontSize = Math.floor(Math.random() * 15) + 30; // 字體忽大忽小 (30~45px)
+                ctx.font = `italic bold ${fontSize}px ${fontFamily}`;
                 
                 ctx.save();
                 
-                // 1. 定位
-                const x = 20 + i * 24 + (Math.random() - 0.5) * 6; 
-                const y = 32 + (Math.random() - 0.5) * 8;
-                ctx.translate(x, y);
+                // Y 軸上下劇烈跳動
+                const y = 35 + (Math.random() - 0.5) * 15;
+                ctx.translate(currentX, y);
                 
-                // 2. 旋轉
-                ctx.rotate((Math.random() - 0.5) * 0.8); 
+                // 旋轉角度
+                ctx.rotate((Math.random() - 0.5) * 1.4); 
                 
-                // 3. 縮放
-                const scaleX = 0.7 + Math.random() * 0.6;
-                const scaleY = 0.7 + Math.random() * 0.6;
+                // 變形與扭曲
+                const scaleX = 0.6 + Math.random() * 0.6;
+                const scaleY = 0.6 + Math.random() * 0.6;
                 ctx.scale(scaleX, scaleY);
-
-                // 4. transform 矩陣
-                const skewX = (Math.random() - 0.5) * 0.5;
-                const skewY = (Math.random() - 0.5) * 0.5;
+                const skewX = (Math.random() - 0.5) * 0.8;
+                const skewY = (Math.random() - 0.5) * 0.8;
                 ctx.transform(1, skewY, skewX, 1, 0, 0);
                 
-                ctx.fillStyle = `rgba(${Math.random()*120},${Math.random()*120},${Math.random()*120}, 1)`;
-                ctx.shadowBlur = Math.random() * 6;
-                ctx.shadowColor = "rgba(0,0,0,0.4)";
+                // 產生隨機深色
+                const colorR = Math.floor(Math.random() * 120);
+                const colorG = Math.floor(Math.random() * 120);
+                const colorB = Math.floor(Math.random() * 120);
                 
-                // 畫出文字
-                ctx.fillText(code[i], 0, 0);
+                // 實心字與空心框線字隨機交錯
+                if (Math.random() > 0.4) {
+                    // 60% 機率畫實心字
+                    ctx.fillStyle = `rgba(${colorR},${colorG},${colorB}, 0.9)`;
+                    ctx.fillText(code[i], 0, 0);
+                } else {
+                    // 40% 機率畫空心框線字
+                    ctx.lineWidth = Math.random() * 2 + 1;
+                    ctx.strokeStyle = `rgba(${colorR},${colorG},${colorB}, 0.9)`;
+                    ctx.strokeText(code[i], 0, 0);
+                    // 內部填一點淡淡的顏色干擾
+                    ctx.fillStyle = `rgba(${Math.random()*255},${Math.random()*255},${Math.random()*255}, 0.4)`;
+                    ctx.fillText(code[i], 0, 0);
+                }
+                
                 ctx.restore();
+                
+                // 強制字母互相重疊擠壓
+                currentX += fontSize * (0.4 + Math.random() * 0.25);
+            }
+
+            // 前景破壞線
+            for (let i = 0; i < 6; i++) {
+                ctx.strokeStyle = `rgba(${Math.random()*150},${Math.random()*150},${Math.random()*150}, 0.8)`;
+                ctx.lineWidth = Math.random() * 2.5 + 0.5;
+                ctx.beginPath();
+                ctx.moveTo(Math.random() * canvas.width * 0.2, Math.random() * canvas.height); // 從左側出發
+                ctx.bezierCurveTo(
+                    canvas.width / 2, Math.random() * canvas.height * 2 - canvas.height / 2, // 控制點瘋狂亂甩
+                    canvas.width / 2, Math.random() * canvas.height * 2 - canvas.height / 2,
+                    canvas.width * 0.8 + Math.random() * canvas.width * 0.2, Math.random() * canvas.height // 到右側結束
+                );
+                ctx.stroke();
             }
         }
 
