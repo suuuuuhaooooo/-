@@ -384,24 +384,28 @@
 
             for (let i = 0; i < code.length; i++) {
                 const fontFamily = fontFamilies[Math.floor(Math.random() * fontFamilies.length)];
-                const fontSize = Math.floor(Math.random() * 15) + 30; // 字體忽大忽小 (30~45px)
+                
+                // 字體稍微縮小一點點 (26~35px)，確保變形後不會被切掉
+                const fontSize = Math.floor(Math.random() * 10) + 26; 
                 ctx.font = `italic bold ${fontSize}px ${fontFamily}`;
                 
                 ctx.save();
                 
-                // Y 軸上下劇烈跳動
-                const y = 35 + (Math.random() - 0.5) * 15;
-                ctx.translate(currentX, y);
+                // 改用固定區間分配 X 座標，確保最後一個字不會跑出去 (120px 畫布，每個字大約分 24px)
+                const x = 12 + i * 24 + (Math.random() - 0.5) * 6;
+                // 限制 Y 軸跳動範圍，避免撞到天花板或地板
+                const y = 32 + (Math.random() - 0.5) * 8; 
+                ctx.translate(x, y);
                 
-                // 旋轉角度
-                ctx.rotate((Math.random() - 0.5) * 1.4); 
+                // 旋轉角度稍微收斂，防止字尾被切掉
+                ctx.rotate((Math.random() - 0.5) * 1.0); 
                 
-                // 變形與扭曲
-                const scaleX = 0.6 + Math.random() * 0.6;
-                const scaleY = 0.6 + Math.random() * 0.6;
+                // 變形與扭曲 (Scale & Skew)
+                const scaleX = 0.7 + Math.random() * 0.4;
+                const scaleY = 0.7 + Math.random() * 0.4;
                 ctx.scale(scaleX, scaleY);
-                const skewX = (Math.random() - 0.5) * 0.8;
-                const skewY = (Math.random() - 0.5) * 0.8;
+                const skewX = (Math.random() - 0.5) * 0.6;
+                const skewY = (Math.random() - 0.5) * 0.6;
                 ctx.transform(1, skewY, skewX, 1, 0, 0);
                 
                 // 產生隨機深色
@@ -411,23 +415,18 @@
                 
                 // 實心字與空心框線字隨機交錯
                 if (Math.random() > 0.4) {
-                    // 60% 機率畫實心字
                     ctx.fillStyle = `rgba(${colorR},${colorG},${colorB}, 0.9)`;
                     ctx.fillText(code[i], 0, 0);
                 } else {
-                    // 40% 機率畫空心框線字
-                    ctx.lineWidth = Math.random() * 2 + 1;
+                    // 線條調細一點免得糊在一起
+                    ctx.lineWidth = Math.random() * 1.5 + 0.5; 
                     ctx.strokeStyle = `rgba(${colorR},${colorG},${colorB}, 0.9)`;
                     ctx.strokeText(code[i], 0, 0);
-                    // 內部填一點淡淡的顏色干擾
                     ctx.fillStyle = `rgba(${Math.random()*255},${Math.random()*255},${Math.random()*255}, 0.4)`;
                     ctx.fillText(code[i], 0, 0);
                 }
                 
                 ctx.restore();
-                
-                // 強制字母互相重疊擠壓
-                currentX += fontSize * (0.4 + Math.random() * 0.25);
             }
 
             // 前景破壞線
