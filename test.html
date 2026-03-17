@@ -37,6 +37,29 @@
             margin: 0; padding: 20px; color: #333; 
             user-select: none; -webkit-user-select: none;
             overscroll-behavior-y: none;
+            
+            mjx-container {
+            max-width: 100% !important;
+            overflow-x: auto !important;
+            overflow-y: hidden !important;
+            padding: 4px 0;
+            box-sizing: border-box;
+        }
+        
+        mjx-container::-webkit-scrollbar {
+            height: 4px;
+        }
+        
+        mjx-container::-webkit-scrollbar-thumb {
+            background-color: #ccc;
+            border-radius: 4px;
+        }
+
+        .question-text, .option-btn, .review-exp, .clean-card {
+            word-break: break-word;
+            overflow-wrap: break-word;
+            max-width: 100%;
+        }
         }
         
         /* 載入動畫 UI */
@@ -123,7 +146,7 @@
         .modern-select { padding: 6px 12px; border-radius: 20px; border: 1px solid #ddd; outline: none; background: #fafafa; font-size: 13px; color: #555; cursor: pointer; font-family: inherit; }
 
         /* =========================================
-           手機端專屬 App 級介面優化 (RWD) 
+           手機端介面優化 (RWD) 
            ========================================= */
         @media (max-width: 768px) {
             body { padding: 10px; }
