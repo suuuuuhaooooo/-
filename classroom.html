@@ -58,7 +58,7 @@
         @keyframes pulse-text { 0% { opacity: 0.4; } 50% { opacity: 1; } 100% { opacity: 0.4; } }
 
         /* 登入介面 */
-        #login-ui { display: flex; justify-content: center; align-items: center; height: 100vh; background: var(--bg); position: fixed; width: 100%; z-index: 1000; }
+        #login-ui { display: flex; justify-content: center; align-items: center; height: 100vh; height: 100dvh; background: var(--bg); position: fixed; top: 0; left: 0; width: 100%; z-index: 1000; }
         .login-card { background: white; padding: 40px; border-radius: 4px; box-shadow: 0 15px 35px rgba(0,0,0,0.05); width: 340px; text-align: center; border-top: 6px solid var(--primary); }
         .input-group { position: relative; margin: 10px 0; }
         input { 
@@ -126,7 +126,7 @@
             #classroom-ui { flex-direction: column; height: auto; }
             
             /* 登入卡片寬度優化 */
-            .login-card { width: 85%; padding: 30px 20px; box-sizing: border-box; }
+            .login-card { width: 85%; padding: 30px 20px; box-sizing: border-box; transform: translateY(-6vh); }
 
             /* 導覽列改為頂部固定 */
             .sidebar { width: 100%; padding: 0; position: sticky; top: 0; z-index: 1000; box-shadow: 0 4px 15px rgba(0,0,0,0.04); border-right: none; height: auto; background: white; }
@@ -397,21 +397,37 @@
                 ctx.stroke();
             }
 
+
             for (let i = 0; i < code.length; i++) {
-                const fontSize = Math.floor(Math.random() * 15) + 22; 
+
+                const fontSize = Math.floor(Math.random() * 12) + 26; 
                 ctx.font = `italic bold ${fontSize}px 'Courier New', Courier, monospace`;
                 
                 ctx.save();
-                const x = 20 + i * 25 + (Math.random() - 0.5) * 8;
-                const y = 35 + (Math.random() - 0.5) * 10;
                 
+                // 1. 定位
+                const x = 20 + i * 24 + (Math.random() - 0.5) * 6; 
+                const y = 32 + (Math.random() - 0.5) * 8;
                 ctx.translate(x, y);
+                
+                // 2. 旋轉
                 ctx.rotate((Math.random() - 0.5) * 0.8); 
+                
+                // 3. 縮放
+                const scaleX = 0.7 + Math.random() * 0.6;
+                const scaleY = 0.7 + Math.random() * 0.6;
+                ctx.scale(scaleX, scaleY);
+
+                // 4. transform 矩陣
+                const skewX = (Math.random() - 0.5) * 0.5;
+                const skewY = (Math.random() - 0.5) * 0.5;
+                ctx.transform(1, skewY, skewX, 1, 0, 0);
                 
                 ctx.fillStyle = `rgba(${Math.random()*120},${Math.random()*120},${Math.random()*120}, 1)`;
                 ctx.shadowBlur = Math.random() * 6;
                 ctx.shadowColor = "rgba(0,0,0,0.4)";
                 
+                // 畫出文字
                 ctx.fillText(code[i], 0, 0);
                 ctx.restore();
             }
