@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <link rel="icon" href="https://suuuuuhaooooo.github.io/-/favicon.png" type="image/png">
+    <link rel="apple-touch-icon" href="https://suuuuuhaooooo.github.io/-/favicon.png">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>蘇昊數理｜系統開通與註冊</title>
+
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;700&display=swap');
+        :root { --primary: #8e9775; --dark: #5b6348; --bg: #f8f8f6; --white: #ffffff; }
+        
+        body { 
+            font-family: "Noto Serif TC", serif; 
+            background-color: var(--bg); 
+            margin: 0; 
+            color: #333; 
+            height: 100vh; 
+            height: 100dvh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            user-select: none; 
+            -webkit-user-select: none;
+        }
+
+        .activate-card { 
+            background: white; 
+            padding: 40px; 
+            border-radius: 8px; 
+            box-shadow: 0 15px 35px rgba(0,0,0,0.05); 
+            width: 90%; 
+            max-width: 360px; 
+            text-align: center; 
+            border-top: 6px solid var(--primary); 
+            box-sizing: border-box;
+        }
+
+        .activate-card h1 { font-size: 22px; letter-spacing: 4px; margin: 0 0 10px 0; color: var(--dark); }
+        .activate-card p { font-size: 13px; color: #888; margin-bottom: 25px; line-height: 1.5; }
+
+        .input-group { position: relative; margin: 12px 0; text-align: left; }
+        .input-group label { display: block; font-size: 12px; color: #666; margin-bottom: 5px; font-weight: bold; }
+        
+        input { 
+            width: 100%; 
+            padding: 14px; 
+            border: 1px solid #ddd; 
+            background: #fafafa; 
+            border-radius: 4px;
+            box-sizing: border-box; 
+            outline: none; 
+            transition: 0.3s; 
+            font-size: 14px;
+        }
+        input:focus { border-color: var(--primary); background: #fff; box-shadow: 0 0 5px rgba(142,151,117,0.2); }
+        
+        .domain-suffix {
+            position: absolute;
+            right: 15px;
+            top: 36px;
+            color: #aaa;
+            font-size: 14px;
+            pointer-events: none;
+        }
+
+        .main-btn { 
+            background: var(--primary); color: white; border: none; padding: 15px; 
+            width: 100%; cursor: pointer; letter-spacing: 2px; font-weight: 700; 
+            transition: 0.3s; margin-top: 20px; border-radius: 4px; font-size: 16px;
+        }
+        .main-btn:hover { background: var(--dark); transform: translateY(-2px); box-shadow: 0 5px 15px rgba(142,151,117,0.3); }
+        .main-btn:disabled { background: #ccc; cursor: not-allowed; transform: none; box-shadow: none; }
+
+        .back-link { display: inline-block; margin-top: 20px; font-size: 12px; color: #888; text-decoration: none; transition: 0.2s; }
+        .back-link:hover { color: var(--primary); }
+
+        /* 載入動畫 */
+        #loading-overlay { 
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+            background: rgba(255,255,255,0.9); z-index: 9999; 
+            flex-direction: column; justify-content: center; align-items: center; 
+        }
+        .spinner { border: 4px solid #f3f3f3; border-top: 4px solid var(--primary); border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin-bottom: 15px; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        @media (max-width: 768px) {
+            .activate-card { transform: translateY(-5vh); padding: 30px 20px; }
+            input { padding: 12px; }
+            .domain-suffix { top: 34px; font-size: 13px; }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="loading-overlay">
+        <div class="spinner"></div>
+        <div id="loading-text" style="color: var(--dark); font-weight: bold; letter-spacing: 1px;">系統開通中，請稍候...</div>
+    </div>
+
+    <div class="activate-card">
+        <h1>開通專屬帳號</h1>
+        <p>請輸入老師發放的開通碼，<br>並自行設定您未來的登入帳號與密碼。</p>
+
+        <div class="input-group">
+            <label>1. 系統開通碼 (必填)</label>
+            <input type="text" id="activate-code" placeholder="例如：VIP-XXXX" autocomplete="off">
+        </div>
+
+        <div class="input-group">
+            <label>2. 自訂帳號 (建議 6 碼英數混合)</label>
+            <input type="text" id="custom-username" placeholder="請輸入自訂帳號" autocomplete="off" style="padding-right: 110px;">
+            <span class="domain-suffix">@suhao.com</span>
+        </div>
+
+        <div class="input-group">
+            <label>3. 設定密碼 (至少 6 碼)</label>
+            <input type="password" id="custom-password" placeholder="請輸入密碼">
+        </div>
+
+        <div class="input-group">
+            <label>4. 確認密碼</label>
+            <input type="password" id="confirm-password" placeholder="請再次輸入密碼">
+        </div>
+
+        <button class="main-btn" id="submit-btn" onclick="processActivation()">確認並開通帳號</button>
+        
+        <a href="classroom.html" class="back-link">已有帳號？返回登入頁面</a>
+    </div>
+
+    <script>
+        // -----------------------------------------
+        // 反開發者工具與右鍵保護
+        // -----------------------------------------
+        document.addEventListener('contextmenu', event => event.preventDefault());
+        document.addEventListener('keydown', event => {
+            if (event.keyCode === 123 || (event.ctrlKey && event.shiftKey && (event.keyCode === 73 || event.keyCode === 74)) || (event.ctrlKey && event.keyCode === 85)) { 
+                event.preventDefault();
+            }
+        });
+
+        // -----------------------------------------
+        // Firebase 與 GAS 設定
+        // -----------------------------------------
+        const firebaseConfig = {
+            apiKey: "AIzaSyALkTnkYY3JZLCTyajahpi4IZKmFX9USdw",
+            authDomain: "su-hao-classroom.firebaseapp.com",
+            projectId: "su-hao-classroom",
+            storageBucket: "su-hao-classroom.firebasestorage.app",
+            messagingSenderId: "764168135846",
+            appId: "1:764168135846:web:f2923a5f4952fa1ca64067"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        
+        // 您的 GAS API 網址
+        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwxFfufe0b7eJpDxSmLgnbVvlq1itLvoD6ZCpvDJKtJg7ChcWn7lpf9LgZqQ4ZsThJiXQ/exec";
+
+        function showLoading(text) {
+            document.getElementById('loading-text').innerText = text;
+            document.getElementById('loading-overlay').style.display = 'flex';
+        }
+
+        function hideLoading() {
+            document.getElementById('loading-overlay').style.display = 'none';
+        }
+
+        async function processActivation() {
+            const code = document.getElementById('activate-code').value.trim();
+            const username = document.getElementById('custom-username').value.trim();
+            const pwd = document.getElementById('custom-password').value;
+            const pwdConfirm = document.getElementById('confirm-password').value;
+
+            // 1. 基礎防呆檢查
+            if (!code) { alert("請輸入開通碼！"); return; }
+            if (!username || username.length < 3) { alert("自訂帳號請至少輸入 3 個字元！"); return; }
+            if (/[^a-zA-Z0-9_]/.test(username)) { alert("帳號只能包含英文、數字與底線，不可有空格或特殊符號！"); return; }
+            if (!pwd || pwd.length < 6) { alert("密碼安全度不足，請至少設定 6 碼！"); return; }
+            if (pwd !== pwdConfirm) { alert("兩次輸入的密碼不一致，請重新檢查！"); return; }
+
+            const fullEmail = username.toLowerCase() + "@suhao.com";
+
+            try {
+                showLoading("正在驗證開通碼...");
+                
+                // 2. 呼叫 GAS 驗證開通碼是否有效
+                const verifyUrl = `${SCRIPT_URL}?token=SuHaoClassroom2026_SecureKey&action=verifyActivationCode&code=${encodeURIComponent(code)}`;
+                const verifyRes = await fetch(verifyUrl);
+                const verifyResult = await verifyRes.json();
+
+                if (!verifyResult.success) {
+                    hideLoading();
+                    alert("開通失敗：" + verifyResult.message);
+                    return;
+                }
+
+                // 3. 開通碼有效，開始在 Firebase 建立帳號
+                showLoading("開通碼有效！正在為您建立專屬帳號...");
+                await auth.createUserWithEmailAndPassword(fullEmail, pwd);
+
+                // 4. Firebase 建立成功後，通知 GAS 綁定信箱並把開通碼作廢
+                showLoading("帳號建立成功！正在綁定雲端資料...");
+                const bindUrl = `${SCRIPT_URL}?token=SuHaoClassroom2026_SecureKey&action=bindNewAccount&code=${encodeURIComponent(code)}&email=${encodeURIComponent(fullEmail)}`;
+                const bindRes = await fetch(bindUrl);
+                const bindResult = await bindRes.json();
+
+                if (bindResult.success) {
+                    // 全部大功告成，強制登出 (因為 createUser 會自動登入)，讓學生去首頁自己登入一次
+                    await auth.signOut();
+                    hideLoading();
+                    alert(`恭喜 ${verifyResult.studentName} 同學！\n\n您的專屬帳號已成功開通：\n【 ${fullEmail} 】\n\n請妥善保管您的密碼，點擊確定後將跳轉至登入頁面。`);
+                    window.location.replace("classroom.html");
+                } else {
+                    // 極端異常狀況：Firebase 創了，但 GAS 寫入失敗
+                    hideLoading();
+                    alert("帳號已建立，但資料庫綁定發生延遲。請直接嘗試登入，或聯繫老師協助處理。");
+                    window.location.replace("classroom.html");
+                }
+
+            } catch (error) {
+                hideLoading();
+                console.error(error);
+                if (error.code === 'auth/email-already-in-use') {
+                    alert(`開通失敗：您自訂的帳號「${username}」已經被別人註冊走囉！請換一個帳號試試看。`);
+                } else {
+                    alert("系統連線發生異常，請檢查網路狀態或稍後再試。");
+                }
+            }
+        }
+    </script>
+</body>
+</html>
