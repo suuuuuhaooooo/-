@@ -48,6 +48,13 @@
 
         .back-link { display: inline-block; margin-top: 20px; font-size: 12px; color: #aaa; text-decoration: none; transition: 0.2s; }
         .back-link:hover { color: #555; }
+
+
+        .loading-dots { display: inline-flex; gap: 6px; align-items: center; margin-right: 8px; }
+        .loading-dots div { width: 6px; height: 6px; background-color: var(--primary); border-radius: 50%; animation: bounce 0.5s infinite alternate; }
+        .loading-dots div:nth-child(2) { animation-delay: 0.15s; }
+        .loading-dots div:nth-child(3) { animation-delay: 0.3s; }
+        @keyframes bounce { from { transform: translateY(0); opacity: 0.5; } to { transform: translateY(-5px); opacity: 1; } }
     </style>
 </head>
 <body oncontextmenu="return false;">
@@ -66,7 +73,7 @@
         
         <button id="submit-btn" class="main-btn" onclick="requestPassword()">提交</button>
         
-        <div id="msg" style="margin-top: 15px; font-size: 13px; font-weight: 700; height: 18px;"></div>
+        <div id="msg" style="margin-top: 15px; font-size: 13px; font-weight: 700; min-height: 24px; display: flex; justify-content: center; align-items: center;"></div>
         
         <a href="classroom.html" class="back-link">返回登入頁面</a>
     </div>
@@ -169,7 +176,7 @@
             }
         }
 
-        // 4. 核心查詢與防護邏輯
+        // 4. 查詢與防護邏輯
         async function requestPassword() {
             const now = Date.now();
             const safeIP = globalClientIP !== "unknown_IP" ? globalClientIP.replace(/[.#$\[\]:]/g, '_') : "unknown_IP";
@@ -188,7 +195,7 @@
                 } catch (e) { console.log(e); }
             }
 
-            // 檢查本地端封鎖
+
             let lockUntil = parseInt(localStorage.getItem('login_lock_until') || '0', 10);
             let loginFailCount = parseInt(localStorage.getItem('login_fail_count') || '0', 10);
             
@@ -219,7 +226,14 @@
             const msg = document.getElementById('msg');
             btn.disabled = true;
             msg.style.color = "#8e9775";
-            msg.innerText = "系統資料核對中...";
+            
+
+            msg.innerHTML = `
+                <div class="loading-dots">
+                    <div></div><div></div><div></div>
+                </div>
+                <span>系統資料核對中...</span>
+            `;
 
             try {
                 const url = `${SCRIPT_URL}?token=SuHaoClassroom2026_SecureKey&action=forgotPassword&account=${encodeURIComponent(account)}&email=${encodeURIComponent(email)}`;
@@ -228,15 +242,15 @@
 
                 if (result === "SUCCESS") {
                     msg.style.color = "#27ae60";
-                    msg.innerText = "密碼已成功寄出，請前往信箱收件。";
+                    msg.innerHTML = "密碼已成功寄出，請前往信箱收件。";
 
                     localStorage.removeItem('login_fail_count');
                     localStorage.removeItem('login_lock_until');
                     if (safeIP !== "unknown_IP") ipBanRef.remove();
                 } else {
-                    // 處理錯誤與累加懲罰機制
+
                     msg.style.color = "#b03a2e";
-                    msg.innerText = result === "NOT_FOUND" ? "查無匹配資料，請確認帳號或信箱。" : "系統繁忙，請稍後再試。";
+                    msg.innerHTML = result === "NOT_FOUND" ? "查無匹配資料，請確認帳號或信箱。" : "系統繁忙，請稍後再試。";
                     
                     loginFailCount++;
                     localStorage.setItem('login_fail_count', loginFailCount);
@@ -278,13 +292,13 @@
                         if(attemptsLeft > 0) alert(`資料錯誤！\n(警告：再失敗 ${attemptsLeft} 次將觸發系統鎖定)`);
                     }
                     
-                    // 每次失敗強制更換驗證碼
+
                     drawCaptcha();
                     document.getElementById('captcha-input').value = "";
                 }
             } catch (e) {
                 msg.style.color = "#b03a2e";
-                msg.innerText = "連線失敗，請檢查網路狀態。";
+                msg.innerHTML = "連線失敗，請檢查網路狀態。";
             } finally {
                 btn.disabled = false;
             }
