@@ -4,7 +4,7 @@
     <link rel="icon" href="https://suuuuuhaooooo.github.io/-/favicon.png" type="image/png">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>蘇昊數理｜管理後臺</title>
+    <title>蘇昊數理｜教務管理系統</title>
 
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
@@ -14,73 +14,83 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;600;700&display=swap');
 
-        /* 企業級 SaaS 專業色票 */
         :root { 
-            --sidebar-bg: #1e293b; /* Slate 800 */
-            --sidebar-hover: #0f172a; /* Slate 900 */
-            --primary-blue: #3b82f6; /* Blue 500 */
-            --text-main: #1e293b;
+            --sidebar-bg: #0f172a; 
+            --sidebar-hover: #1e293b; 
+            --primary: #2563eb; 
+            --primary-hover: #1d4ed8;
+            --text-main: #334155;
             --text-muted: #64748b;
-            --bg-light: #f8fafc; /* Slate 50 */
-            --border-color: #e2e8f0;
+            --bg-body: #f8fafc; 
+            --bg-card: #ffffff;
+            --border: #e2e8f0;
+            --danger: #dc2626;
+            --success: #059669;
+            --warning: #d97706;
         }
 
         body { 
             font-family: "Noto Serif TC", serif; 
-            background-color: var(--bg-light); 
-            margin: 0; 
-            color: var(--text-main); 
-            height: 100vh; 
-            overflow: hidden; 
-            display: flex;
+            background-color: var(--bg-body); 
+            margin: 0; color: var(--text-main); 
+            height: 100vh; overflow: hidden; display: flex;
         }
 
-        /* --- 登入介面 --- */
-        #login-ui { display: flex; justify-content: center; align-items: center; width: 100%; height: 100vh; position: fixed; top: 0; left: 0; background: var(--bg-light); z-index: 10000; }
-        .login-card { background: white; padding: 40px; border-radius: 8px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06); width: 320px; text-align: center; border: 1px solid var(--border-color); }
-        .login-card h1 { font-size: 20px; font-weight: 700; color: var(--text-main); margin: 0 0 10px 0; letter-spacing: 1px; }
-        .badge { display: inline-block; background: #f1f5f9; color: var(--text-muted); font-size: 12px; padding: 4px 12px; border-radius: 4px; margin-bottom: 25px; border: 1px solid var(--border-color); }
-        input { width: 100%; padding: 12px; margin: 8px 0 16px 0; border: 1px solid var(--border-color); border-radius: 6px; outline: none; box-sizing: border-box; font-size: 14px; transition: 0.2s;}
-        input:focus { border-color: var(--primary-blue); box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1); }
-        .login-btn { background: var(--primary-blue); color: white; border: none; padding: 12px; width: 100%; cursor: pointer; font-weight: 600; border-radius: 6px; transition: 0.2s; font-size: 14px; letter-spacing: 1px;}
-        .login-btn:hover { background: #2563eb; }
+        /* 系統登入介面 */
+        #login-ui { display: flex; justify-content: center; align-items: center; width: 100%; height: 100vh; position: fixed; top: 0; left: 0; background: var(--bg-body); z-index: 10000; }
+        .login-card { background: var(--bg-card); padding: 40px; border-radius: 6px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); width: 320px; text-align: center; border: 1px solid var(--border); }
+        .login-card h1 { font-size: 20px; font-weight: 700; color: #0f172a; margin: 0 0 10px 0; letter-spacing: 1px; }
+        .badge { display: inline-block; background: #e2e8f0; color: #475569; font-size: 12px; padding: 4px 12px; border-radius: 4px; margin-bottom: 25px; font-weight: 600; }
+        input { width: 100%; padding: 12px; margin: 8px 0 16px 0; border: 1px solid var(--border); border-radius: 4px; outline: none; box-sizing: border-box; font-size: 14px; transition: 0.2s;}
+        input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1); }
+        .btn-primary { background: var(--primary); color: white; border: none; padding: 12px; width: 100%; cursor: pointer; font-weight: 600; border-radius: 4px; transition: 0.2s; font-size: 14px; letter-spacing: 1px;}
+        .btn-primary:hover { background: var(--primary-hover); }
 
-        /* --- 後臺主體佈局 --- */
+        /* 管理系統主佈局 */
         #admin-ui { display: none; width: 100%; height: 100vh; }
         
-        /* 側邊欄 */
-        .sidebar { width: 250px; background: var(--sidebar-bg); color: white; display: flex; flex-direction: column; flex-shrink: 0; }
+        .sidebar { width: 240px; background: var(--sidebar-bg); color: white; display: flex; flex-direction: column; flex-shrink: 0; }
         .sidebar-brand { padding: 25px 20px; border-bottom: 1px solid #334155; margin-bottom: 15px; }
         .sidebar-brand h2 { margin: 0; font-size: 18px; font-weight: 700; color: #f8fafc; letter-spacing: 1px; }
         .sidebar-brand p { margin: 5px 0 0 0; font-size: 12px; color: #94a3b8; }
         
         .nav-link { padding: 14px 20px; color: #cbd5e1; text-decoration: none; cursor: pointer; transition: 0.2s; font-size: 14px; display: block; border-left: 3px solid transparent; }
-        .nav-link:hover { background: var(--sidebar-hover); color: white; }
-        .nav-link.active { background: var(--sidebar-hover); color: white; border-left-color: var(--primary-blue); font-weight: 600; }
+        .nav-link:hover, .nav-link.active { background: var(--sidebar-hover); color: white; border-left-color: var(--primary); font-weight: 600; }
         
-        /* 內容區 */
-        .main-content { flex-grow: 1; padding: 30px 40px; background: var(--bg-light); overflow-y: auto; }
-        .dashboard-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 20px; margin-bottom: 25px; }
-        .dashboard-header h1 { margin: 0; font-size: 22px; color: var(--text-main); font-weight: 600; }
-        .logout-btn { background: white; color: var(--text-main); border: 1px solid var(--border-color); padding: 8px 16px; border-radius: 4px; cursor: pointer; font-size: 13px; font-weight: 600; transition: 0.2s; box-shadow: 0 1px 2px rgba(0,0,0,0.05);}
-        .logout-btn:hover { background: #f1f5f9; border-color: #cbd5e1; }
+        .main-content { flex-grow: 1; padding: 30px 40px; overflow-y: auto; }
+        .dashboard-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 20px; margin-bottom: 25px; }
+        .dashboard-header h1 { margin: 0; font-size: 20px; color: #0f172a; font-weight: 600; }
+        .btn-outline { background: white; color: var(--text-main); border: 1px solid var(--border); padding: 8px 16px; border-radius: 4px; cursor: pointer; font-size: 13px; font-weight: 600; transition: 0.2s; }
+        .btn-outline:hover { background: #f1f5f9; border-color: #cbd5e1; }
 
-        /* --- 數據卡片 (KPI) --- */
+        /* 數據指標卡片 */
         .kpi-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin-bottom: 25px; }
-        .kpi-card { background: white; padding: 20px; border-radius: 8px; border: 1px solid var(--border-color); box-shadow: 0 1px 3px rgba(0,0,0,0.05); display: flex; flex-direction: column; position: relative; }
+        .kpi-card { background: var(--bg-card); padding: 20px; border-radius: 6px; border: 1px solid var(--border); box-shadow: 0 1px 2px rgba(0,0,0,0.02); display: flex; flex-direction: column; }
         .kpi-title { font-size: 13px; color: var(--text-muted); font-weight: 600; margin-bottom: 8px; }
-        .kpi-value { font-size: 28px; font-weight: 700; color: var(--text-main); }
-        .status-dot { width: 8px; height: 8px; background: #10b981; border-radius: 50%; position: absolute; top: 22px; right: 20px; box-shadow: 0 0 0 3px #d1fae5; }
-
-        /* --- 圖表卡片 --- */
-        .chart-card { background: white; padding: 25px; border-radius: 8px; border: 1px solid var(--border-color); box-shadow: 0 1px 3px rgba(0,0,0,0.05); margin-bottom: 25px; }
-        .chart-title { font-size: 15px; font-weight: 600; color: var(--text-main); margin-bottom: 20px; border-bottom: 1px solid #f1f5f9; padding-bottom: 10px;}
+        .kpi-value { font-size: 26px; font-weight: 700; color: #0f172a; }
+        .kpi-sub { font-size: 12px; color: var(--text-muted); margin-top: 5px; }
         
-        .bottom-row { display: grid; grid-template-columns: 1fr 2fr; gap: 25px; }
+        /* 區塊容器 */
+        .section-title { font-size: 16px; font-weight: 600; color: #0f172a; margin: 30px 0 15px 0; border-left: 4px solid var(--primary); padding-left: 10px; }
+        .grid-row { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 25px; }
+        .panel-card { background: var(--bg-card); padding: 25px; border-radius: 6px; border: 1px solid var(--border); box-shadow: 0 1px 2px rgba(0,0,0,0.02); }
+        .panel-header { font-size: 15px; font-weight: 600; color: #0f172a; margin: 0 0 20px 0; border-bottom: 1px solid var(--border); padding-bottom: 10px;}
+        
+        /* 表格樣式 */
+        table { width: 100%; border-collapse: collapse; font-size: 13px; text-align: left; }
+        th { padding: 10px; border-bottom: 2px solid var(--border); color: var(--text-muted); font-weight: 600; }
+        td { padding: 10px; border-bottom: 1px solid var(--border); color: var(--text-main); }
+        tr:hover td { background-color: #f8fafc; }
+        
+        .status-dot { display: inline-block; width: 8px; height: 8px; background: var(--success); border-radius: 50%; margin-right: 6px; }
+        .btn-danger-sm { background: white; color: var(--danger); border: 1px solid #fca5a5; padding: 4px 10px; border-radius: 4px; font-size: 12px; cursor: pointer; transition: 0.2s; font-weight: 600;}
+        .btn-danger-sm:hover { background: #fef2f2; border-color: #ef4444; }
 
-        /* Loading 遮罩 */
-        #dashboard-loading { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.8); z-index: 1000; flex-direction: column; justify-content: center; align-items: center; }
-        .spinner { border: 3px solid #f1f5f9; border-top: 3px solid var(--primary-blue); border-radius: 50%; width: 30px; height: 30px; animation: spin 1s linear infinite; margin-bottom: 15px; }
+        .empty-state { text-align: center; padding: 25px; color: var(--text-muted); font-size: 13px; font-style: normal; }
+
+        /* 系統載入狀態 */
+        #loading-screen { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.9); z-index: 1000; flex-direction: column; justify-content: center; align-items: center; }
+        .spinner { border: 3px solid #e2e8f0; border-top: 3px solid var(--primary); border-radius: 50%; width: 24px; height: 24px; animation: spin 1s linear infinite; margin-bottom: 15px; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
 </head>
@@ -88,77 +98,108 @@
 
     <div id="login-ui">
         <div class="login-card">
-            <h1>蘇昊數理管理後臺</h1>
-            <div class="badge">系統管理員登入</div>
+            <h1>教務管理系統</h1>
+            <div class="badge">管理權限驗證</div>
             <input type="email" id="admin-email" placeholder="管理員帳號" autocomplete="off">
-            <input type="password" id="admin-password" placeholder="密碼">
-            <button class="login-btn" onclick="adminLogin()">登入</button>
+            <input type="password" id="admin-password" placeholder="登入密碼">
+            <button class="btn-primary" onclick="adminLogin()">系統登入</button>
         </div>
     </div>
 
-    <div id="dashboard-loading">
+    <div id="loading-screen">
         <div class="spinner"></div>
-        <div style="color: var(--text-muted); font-size: 13px;">數據同步中...</div>
+        <div style="color: var(--text-muted); font-size: 13px; font-weight: 600;">資料庫同步中，請稍候。</div>
     </div>
 
     <div id="admin-ui">
         <nav class="sidebar">
             <div class="sidebar-brand">
                 <h2>蘇昊數理</h2>
-                <p>管理員後臺系統</p>
+                <p>管理後臺系統</p>
             </div>
-            <a class="nav-link active">數據總覽</a>
-            <a class="nav-link" onclick="alert('功能建設中...')">學員教務管理</a>
-            <a class="nav-link" onclick="alert('功能建設中...')">系統安全與日誌</a>
+            <a class="nav-link active">系統與考情總覽</a>
             <div style="flex-grow: 1;"></div>
-            <div style="padding: 20px; font-size: 12px; color: #475569;">版本號 2.0.1</div>
+            <div style="padding: 20px; font-size: 11px; color: #475569; border-top: 1px solid #334155;">系統版本 2.2.0<br>Firebase Realtime Data</div>
         </nav>
 
         <main class="main-content">
             <header class="dashboard-header">
-                <h1>系統即時狀態</h1>
-                <button class="logout-btn" onclick="logout()">安全登出</button>
+                <h1>系統與考情總覽</h1>
+                <button class="btn-outline" onclick="logout()">安全登出</button>
             </header>
 
             <section class="kpi-row">
                 <div class="kpi-card">
-                    <div class="kpi-title">當前在線人數</div>
-                    <div class="kpi-value" id="online-count">--</div>
-                    <div class="status-dot"></div>
+                    <div class="kpi-title">目前在線學員</div>
+                    <div class="kpi-value" id="kpi-online">0</div>
+                    <div class="kpi-sub">即時連線狀態</div>
                 </div>
                 <div class="kpi-card">
-                    <div class="kpi-title">註冊學員總數</div>
-                    <div class="kpi-value" id="total-students">--</div>
+                    <div class="kpi-title">測驗紀錄總數</div>
+                    <div class="kpi-value" id="kpi-total-exams">0</div>
+                    <div class="kpi-sub">全系統測驗人次</div>
                 </div>
                 <div class="kpi-card">
-                    <div class="kpi-title">異常阻擋次數 (IP)</div>
-                    <div class="kpi-value" id="total-banned">--</div>
+                    <div class="kpi-title">全體平均測驗分數</div>
+                    <div class="kpi-value" id="kpi-avg-score">0</div>
+                    <div class="kpi-sub">歷史紀錄加總平均</div>
                 </div>
                 <div class="kpi-card">
-                    <div class="kpi-title">本日新增學員</div>
-                    <div class="kpi-value" id="today-activated">--</div>
+                    <div class="kpi-title">系統異常封鎖數</div>
+                    <div class="kpi-value" id="kpi-banned">0</div>
+                    <div class="kpi-sub">當前遭封鎖之 IP</div>
                 </div>
             </section>
 
-            <section class="chart-card">
-                <div class="chart-title">近七日系統活躍度趨勢</div>
-                <div style="height: 280px;">
-                    <canvas id="trafficChart"></canvas>
-                </div>
-            </section>
-
-            <section class="bottom-row">
-                <div class="chart-card">
-                    <div class="chart-title">學員年級分佈</div>
+            <div class="section-title">測驗數據與考情分析</div>
+            <section class="grid-row">
+                <div class="panel-card">
+                    <h3 class="panel-header">成績區間分佈比例</h3>
                     <div style="height: 220px; display: flex; justify-content: center;">
-                        <canvas id="gradeChart"></canvas>
+                        <canvas id="scoreChart"></canvas>
                     </div>
                 </div>
-                <div class="chart-card">
-                    <div class="chart-title">熱門課程教材點擊排行</div>
+                
+                <div class="panel-card">
+                    <h3 class="panel-header">高錯誤率題型與單元分析</h3>
                     <div style="height: 220px;">
-                        <canvas id="videoChart"></canvas>
+                        <canvas id="errorRateChart"></canvas>
                     </div>
+                </div>
+            </section>
+
+            <div class="section-title">系統即時監控</div>
+            <section class="grid-row">
+                <div class="panel-card" style="overflow-y: auto; max-height: 300px;">
+                    <h3 class="panel-header">即時在線學員清單</h3>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>學員姓名</th>
+                                <th>所屬年級</th>
+                                <th>狀態</th>
+                            </tr>
+                        </thead>
+                        <tbody id="online-users-tbody">
+                            <tr><td colspan="3" class="empty-state">資料讀取中...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="panel-card" style="overflow-y: auto; max-height: 300px;">
+                    <h3 class="panel-header">系統安全攔截紀錄</h3>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>來源 IP 位址</th>
+                                <th>違規次數</th>
+                                <th>操作管理</th>
+                            </tr>
+                        </thead>
+                        <tbody id="banned-ips-tbody">
+                            <tr><td colspan="3" class="empty-state">目前無異常封鎖紀錄。</td></tr>
+                        </tbody>
+                    </table>
                 </div>
             </section>
         </main>
@@ -178,67 +219,111 @@
         firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth();
         const db = firebase.database();
-
-        // GAS API 網址
         const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwxFfufe0b7eJpDxSmLgnbVvlq1itLvoD6ZCpvDJKtJg7ChcWn7lpf9LgZqQ4ZsThJiXQ/exec";
 
-        let trafficChartInstance, gradeChartInstance, videoChartInstance;
+        let studentsData = []; 
+        let scoreChartInstance = null;
+        let errorRateChartInstance = null;
+
+        // 全域 Chart.js 設定
+        Chart.defaults.font.family = "'Noto Serif TC', serif";
+        Chart.defaults.color = '#64748b';
 
         // 登入與登出邏輯
         function adminLogin() {
             const email = document.getElementById('admin-email').value;
             const pwd = document.getElementById('admin-password').value;
-            if(!email || !pwd) { alert("請輸入管理員帳號與密碼。"); return; }
-            auth.signInWithEmailAndPassword(email, pwd).catch(err => alert("身分驗證失敗：" + err.message));
+            if(!email || !pwd) { alert("請輸入完整的管理員驗證資訊。"); return; }
+            auth.signInWithEmailAndPassword(email, pwd).catch(err => alert("身分驗證失敗，請確認帳號或密碼。"));
         }
-
         function logout() { auth.signOut().then(() => location.reload()); }
 
-        // 權限驗證與資料載入
+        // UI 狀態控制
+        function showLoading() { document.getElementById('loading-screen').style.display = 'flex'; }
+        function hideLoading() { document.getElementById('loading-screen').style.display = 'none'; }
+
+        // 核心權限驗證與資料載入
         auth.onAuthStateChanged(async (user) => {
             if (user) {
-                // 驗證管理員 UID
                 if (user.uid === '5F6F4HEDhpZbYMp7liT4czX0syI3') {
                     document.getElementById('login-ui').style.display = 'none';
                     document.getElementById('admin-ui').style.display = 'flex';
                     showLoading();
-                    
-                    // 1. Firebase 實時數據訂閱
-                    db.ref('presence').on('value', snap => {
-                        const count = snap.numChildren() || 0;
-                        document.getElementById('online-count').innerText = count;
-                    });
-                    
-                    db.ref('ip_bans').on('value', snap => {
-                        const count = snap.numChildren() || 0;
-                        document.getElementById('total-banned').innerText = count;
-                    });
 
-                    // 2. 獲取 GAS 歷史資料
                     try {
-                        const r = await fetch(SCRIPT_URL + "?token=SuHaoClassroom2026_SecureKey");
-                        const fullData = await r.json();
-                        
-                        document.getElementById('total-students').innerText = fullData.length;
-                        
-                        const today = new Date().toLocaleDateString('zh-TW');
-                        const todayActivated = fullData.filter(student => {
-                            return student.activateTime && new Date(student.activateTime).toLocaleDateString('zh-TW') === today;
-                        }).length;
-                        document.getElementById('today-activated').innerText = todayActivated;
+                        // 1. 獲取 GAS 學生基本資料
+                        const res = await fetch(SCRIPT_URL + "?token=SuHaoClassroom2026_SecureKey");
+                        studentsData = await res.json();
 
-                        // 初始化圖表
-                        initCharts(fullData);
-                        
+                        // 2. 訂閱 Firebase 測驗紀錄 (exam_records)
+                        db.ref('exam_records').on('value', snap => {
+                            const allRecords = snap.val() || {};
+                            processExamAnalytics(allRecords);
+                        });
+
+                        // 3. 訂閱 Firebase 在線狀態 (presence)
+                        db.ref('presence').on('value', snap => {
+                            const presenceData = snap.val() || {};
+                            const onlineUids = Object.keys(presenceData);
+                            document.getElementById('kpi-online').innerText = onlineUids.length;
+                            
+                            const tbody = document.getElementById('online-users-tbody');
+                            if(onlineUids.length === 0) {
+                                tbody.innerHTML = `<tr><td colspan="3" class="empty-state">目前系統無在線學員</td></tr>`;
+                            } else {
+                                tbody.innerHTML = "";
+                                onlineUids.forEach(uid => {
+                                    const stu = studentsData.find(s => s.uid === uid);
+                                    const name = stu ? stu.name : '未列冊學員';
+                                    const lvl = stu ? `${stu.level} 年級` : '未登錄';
+                                    
+                                    tbody.innerHTML += `
+                                        <tr>
+                                            <td style="font-weight: 600;">${name}</td>
+                                            <td>${lvl}</td>
+                                            <td><span class="status-dot"></span>連線中</td>
+                                        </tr>`;
+                                });
+                            }
+                        });
+
+                        // 4. 訂閱 Firebase IP 黑名單 (ip_bans)
+                        db.ref('ip_bans').on('value', snap => {
+                            const bansData = snap.val() || {};
+                            const now = Date.now();
+                            let activeBansCount = 0;
+                            const tbody = document.getElementById('banned-ips-tbody');
+                            tbody.innerHTML = "";
+
+                            Object.keys(bansData).forEach(ipKey => {
+                                const data = bansData[ipKey];
+                                if(data.lockUntil > now) {
+                                    activeBansCount++;
+                                    const ipAddress = ipKey.replace(/_/g, '.');
+                                    
+                                    tbody.innerHTML += `
+                                        <tr>
+                                            <td style="font-family: monospace; font-weight: 600;">${ipAddress}</td>
+                                            <td style="color: var(--danger);">${data.fails} 次</td>
+                                            <td><button class="btn-danger-sm" onclick="unbanIP('${ipKey}')">解除封鎖</button></td>
+                                        </tr>`;
+                                }
+                            });
+
+                            document.getElementById('kpi-banned').innerText = activeBansCount;
+                            if(activeBansCount === 0) {
+                                tbody.innerHTML = `<tr><td colspan="3" class="empty-state">目前無系統安全異常紀錄。</td></tr>`;
+                            }
+                        });
+
                     } catch (e) {
-                        console.error("資料獲取失敗", e);
-                        alert("部分數據無法同步，請檢查網路連線或 API 狀態。");
+                        console.error("系統資料初始化失敗", e);
+                        alert("與資料庫連線發生異常，請確認網路狀態。");
                     }
-                    
                     hideLoading();
 
                 } else {
-                    alert('權限不足：您不具備存取管理後臺的權限。');
+                    alert('系統拒絕存取：您不具備存取此控制臺之權限。');
                     auth.signOut();
                 }
             } else {
@@ -247,84 +332,112 @@
             }
         });
 
-        // 圖表渲染函式 (專業配色)
-        function initCharts(data) {
-            Chart.defaults.font.family = "'Noto Serif TC', serif";
-            Chart.defaults.color = '#64748b'; // 標籤字體顏色
-
-            // 折線圖
-            const ctxTraffic = document.getElementById('trafficChart').getContext('2d');
-            const dates = Array.from({length: 7}, (_, i) => {
-                const d = new Date(); d.setDate(d.getDate() - (6-i)); 
-                return (d.getMonth()+1)+'/'+d.getDate();
-            });
-            trafficChartInstance = new Chart(ctxTraffic, {
-                type: 'line',
-                data: {
-                    labels: dates,
-                    datasets: [
-                        { label: '學員登入次數', data: [5, 12, 9, 15, 11, 18, 5], borderColor: '#3b82f6', backgroundColor: '#3b82f6', tension: 0.3, fill: false, borderWidth: 2 },
-                        { label: '新帳號啟用數', data: [10, 8, 9, 5, 8, 4, 12], borderColor: '#94a3b8', backgroundColor: '#94a3b8', tension: 0.3, fill: false, borderWidth: 2, borderDash: [5, 5] }
-                    ]
-                },
-                options: { 
-                    responsive: true, maintainAspectRatio: false, 
-                    plugins: { legend: { position: 'top', labels: { boxWidth: 12 } } },
-                    scales: { y: { beginAtZero: true, border: {display: false}, grid: { color: '#f1f5f9' } }, x: { grid: { display: false } } } 
-                }
-            });
-
-            // 圓餅圖
-            const ctxGrade = document.getElementById('gradeChart').getContext('2d');
-            const levels = data.map(s => parseInt(s.level) || 0);
-            const highSchoolCount = levels.filter(l => l >= 10 && l <= 12).length;
-            const juniorHighCount = levels.filter(l => l >= 7 && l <= 9).length;
+        // 處理測驗數據與繪製圖表
+        function processExamAnalytics(allRecords) {
+            let totalExams = 0;
+            let totalScore = 0;
             
-            gradeChartInstance = new Chart(ctxGrade, {
+            // 成績區間統計
+            let scoreDist = { excellent: 0, good: 0, pass: 0, fail: 0 }; // >=90, 80-89, 60-79, <60
+            
+            // 錯題統計字典 (以題目名稱或編號為 Key)
+            let errorCounts = {};
+
+            // 解析 Firebase 資料結構
+            Object.keys(allRecords).forEach(uid => {
+                const userExams = allRecords[uid];
+                Object.keys(userExams).forEach(examId => {
+                    const examDetail = userExams[examId];
+                    if (examDetail && typeof examDetail.score === 'number') {
+                        totalExams++;
+                        totalScore += examDetail.score;
+
+                        // 分類成績
+                        if (examDetail.score >= 90) scoreDist.excellent++;
+                        else if (examDetail.score >= 80) scoreDist.good++;
+                        else if (examDetail.score >= 60) scoreDist.pass++;
+                        else scoreDist.fail++;
+
+                        // 解析錯題 (依據 test.html 中 userPick 與 correctAnswer 的比對邏輯)
+                        if (examDetail.details && Array.isArray(examDetail.details)) {
+                            examDetail.details.forEach(q => {
+                                if (q.userPick !== q.correctAnswer) {
+                                    // 若題目無明確 ID，取原始題目的前 15 字作為識別
+                                    const qTitle = (q.originalQuestion || '未知題目').substring(0, 15) + '...';
+                                    errorCounts[qTitle] = (errorCounts[qTitle] || 0) + 1;
+                                }
+                            });
+                        }
+                    }
+                });
+            });
+
+            // 更新 KPI 數值
+            document.getElementById('kpi-total-exams').innerText = totalExams;
+            const avgScore = totalExams > 0 ? (totalScore / totalExams).toFixed(1) : 0;
+            document.getElementById('kpi-avg-score').innerText = avgScore;
+
+            // 繪製成績分佈圓餅圖
+            const ctxScore = document.getElementById('scoreChart').getContext('2d');
+            if (scoreChartInstance) scoreChartInstance.destroy();
+            scoreChartInstance = new Chart(ctxScore, {
                 type: 'doughnut',
                 data: {
-                    labels: ['國中學員', '高中學員'],
+                    labels: ['90分以上', '80-89分', '60-79分', '不及格 (<60)'],
                     datasets: [{
-                        data: [juniorHighCount, highSchoolCount],
-                        backgroundColor: ['#64748b', '#3b82f6'], 
-                        borderWidth: 0,
-                        hoverOffset: 4
+                        data: [scoreDist.excellent, scoreDist.good, scoreDist.pass, scoreDist.fail],
+                        backgroundColor: ['#2563eb', '#60a5fa', '#94a3b8', '#cbd5e1'], 
+                        borderWidth: 0, hoverOffset: 4
                     }]
                 },
                 options: { 
                     responsive: true, maintainAspectRatio: false, cutout: '65%',
-                    plugins: { legend: { position: 'bottom', labels: { padding: 20, boxWidth: 12 } } } 
+                    plugins: { legend: { position: 'right', labels: { padding: 15, boxWidth: 12, font: {size: 13} } } } 
                 }
             });
 
-            // 橫條圖
-            const ctxVideo = document.getElementById('videoChart').getContext('2d');
-            const videoLabels = ['平面幾何解題', '電學綜合練習', '多項式定理', '運動學公式應用', '指數與對數函式'];
-            const videoViews = [1350, 1100, 980, 820, 650];
+            // 篩選出錯誤率前 5 名的題目
+            const sortedErrors = Object.entries(errorCounts)
+                .sort((a, b) => b[1] - a[1])
+                .slice(0, 5);
+            
+            const errorLabels = sortedErrors.length > 0 ? sortedErrors.map(e => e[0]) : ['目前無錯題紀錄'];
+            const errorData = sortedErrors.length > 0 ? sortedErrors.map(e => e[1]) : [0];
 
-            videoChartInstance = new Chart(ctxVideo, {
+            // 繪製錯題率橫條圖
+            const ctxError = document.getElementById('errorRateChart').getContext('2d');
+            if (errorRateChartInstance) errorRateChartInstance.destroy();
+            errorRateChartInstance = new Chart(ctxError, {
                 type: 'bar',
                 data: {
-                    labels: videoLabels,
+                    labels: errorLabels,
                     datasets: [{
-                        label: '累計觀看/點擊',
-                        data: videoViews,
-                        backgroundColor: '#e2e8f0', 
-                        hoverBackgroundColor: '#3b82f6',
+                        label: '全體錯誤次數',
+                        data: errorData,
+                        backgroundColor: '#cbd5e1', 
+                        hoverBackgroundColor: '#2563eb',
                         borderRadius: 4
                     }]
                 },
                 options: { 
                     responsive: true, maintainAspectRatio: false, indexAxis: 'y',
-                    scales: { x: { beginAtZero: true, grid: { color: '#f1f5f9' } }, y: { grid: { display: false } } }, 
-                    plugins: { legend: { display: false } } 
+                    scales: { 
+                        x: { beginAtZero: true, grid: { color: '#f1f5f9' }, ticks: { stepSize: 1 } }, 
+                        y: { grid: { display: false }, ticks: { font: {size: 11} } } 
+                    }, 
+                    plugins: { legend: { display: false }, tooltip: { titleFont: {size: 13} } } 
                 }
             });
         }
 
-        // UI 輔助
-        function showLoading() { document.getElementById('dashboard-loading').style.display = 'flex'; }
-        function hideLoading() { document.getElementById('dashboard-loading').style.display = 'none'; }
+        // IP 解除封鎖管理
+        function unbanIP(ipKey) {
+            if(confirm(`系統確認：\n即將解除 IP (${ipKey.replace(/_/g, '.')}) 的安全封鎖限制，是否執行？`)) {
+                db.ref('ip_bans/' + ipKey).remove()
+                .then(() => alert("執行成功：該 IP 已解除封鎖。"))
+                .catch(err => alert("執行失敗：" + err.message));
+            }
+        }
     </script>
 </body>
 </html>
