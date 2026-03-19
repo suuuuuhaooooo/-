@@ -591,7 +591,7 @@
                         const remainingSec = Math.ceil((banData.lockUntil - now) / 1000);
                         const min = Math.floor(remainingSec / 60);
                         const sec = remainingSec % 60;
-                        alert(`【系統通知】\n此 IP 位址因連續登入失敗多次，已被系統暫時封鎖。\n請等待 ${min} 分 ${sec} 秒後再嘗試。`);
+                        alert(`【系統通知】\n因連續登入失敗多次，已被系統暫時封鎖。\n請等待 ${min} 分 ${sec} 秒後再嘗試。`);
                         return; // 直接擋下
                     }
                 } catch (e) {
@@ -696,7 +696,7 @@
                 // 顯示封鎖結果或剩餘次數警告
                 if (penaltyMinutes > 0) {
                     localStorage.setItem('login_lock_until', now + (penaltyMinutes * 60 * 1000));
-                    alert(`偵測到多次登入失敗！\n系統已啟動安全防護，暫停您的登入與 IP 權限 ${penaltyMinutes} 分鐘。`);
+                    alert(`偵測到多次登入失敗！\n系統已啟動安全防護，暫停您的登入權限 ${penaltyMinutes} 分鐘。`);
                 } else {
                     let attemptsLeft = 3 - loginFailCount;
                     let warnText = attemptsLeft > 0 ? `\n\n(警告：再失敗 ${attemptsLeft} 次將觸發系統鎖定)` : "";
