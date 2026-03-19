@@ -193,7 +193,7 @@
             const now = Date.now();
             
             const safeIP = globalClientIP ? globalClientIP.replace(/[.#$\[\]:]/g, '_') : "unknown_IP";
-            const ipBanRef = db.ref('activate_ip_bans/' + safeIP);
+            const ipBanRef = db.ref('ip_bans/' + safeIP);
 
             if (safeIP !== "unknown_IP") {
                 try {
@@ -227,7 +227,7 @@
             const pwd = document.getElementById('custom-password').value;
             const pwdConfirm = document.getElementById('confirm-password').value;
 
-            if (!code || code.length !== 19) { alert("請輸入完整的 16 碼授權序號！"); return; }
+            if (!code || code.length !== 19) { alert("請輸入正確的授權序號！"); return; }
             if (!/^(?=.*[a-zA-Z])(?=.*\d)[a-zA-Z0-9]{8,}$/.test(username)) { alert("帳號格式錯誤！\n\n請設定至少 8 碼，且必須包含「英文字母」與「數字」。"); return; }
             if (!/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{6,}$/.test(pwd)) { alert("密碼格式錯誤！\n\n請設定至少 6 碼，且必須包含「大寫英文」、「小寫英文」與「數字」。"); return; }
             if (pwd !== pwdConfirm) { alert("兩次輸入的密碼不一致！"); return; }
