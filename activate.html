@@ -62,7 +62,6 @@
         input:focus { border-color: var(--primary); background: #fff; box-shadow: 0 0 5px rgba(142,151,117,0.2); }
         input::placeholder { color: #bbb; font-size: 13px; letter-spacing: 0; }
         
-        /* 🚀 關鍵修改：拿掉 uppercase 濾鏡，保留字體等寬 */
         #activate-code { font-family: monospace; font-size: 15px; letter-spacing: 2px; }
         
         .domain-suffix {
@@ -107,18 +106,18 @@
 
         <div class="input-group">
             <label>授權序號</label>
-            <input type="text" id="activate-code" placeholder="請注意英文字母大小寫" maxlength="19" autocomplete="off">
+            <input type="text" id="activate-code" placeholder="格式：xxxx-xxxx-xxxx-xxxx" maxlength="19" autocomplete="off">
         </div>
 
         <div class="input-group">
             <label>設定登入帳號 (至少 8 碼)</label>
-            <input type="text" id="custom-username" placeholder="格式：需包含英文與數字" autocomplete="off" style="padding-right: 110px;">
+            <input type="text" id="custom-username" placeholder="需包含英文與數字" autocomplete="off" style="padding-right: 110px;">
             <span class="domain-suffix">@suhao.com</span>
         </div>
 
         <div class="input-group">
             <label>設定登入密碼 (至少 6 碼)</label>
-            <input type="password" id="custom-password" placeholder="格式：需包含英文與數字">
+            <input type="password" id="custom-password" placeholder="需含大小寫英文與數字">
         </div>
 
         <div class="input-group">
@@ -146,7 +145,6 @@
 
         document.getElementById('activate-code').addEventListener('input', function(e) {
             let target = e.target;
-            // 🚀 關鍵修改：允許大小寫英文與數字，不再強制轉大寫！
             let val = target.value.replace(/[^a-zA-Z0-9]/g, '');
             val = val.substring(0, 16);
             let formatted = val.match(/.{1,4}/g)?.join('-') || val;
@@ -183,30 +181,26 @@
 
             if (!code || code.length !== 19) { alert("請輸入完整的 16 碼授權序號！"); return; }
             
-            const usernameRegex = /^(?=.*[a-zA-Z])(?=.*\d)[a-zA-Z0-9]{8,}$/;
-            if (!usernameRegex.test(username)) { 
-                alert("登入帳號格式錯誤！\n\n請設定「至少 8 碼」，且必須是「英文與數字混合」(不可含符號)。"); 
+
+            const userRegex = /^(?=.*[a-zA-Z])(?=.*\d)[a-zA-Z0-9]{8,}$/;
+            if (!userRegex.test(username)) { 
+                alert("帳號格式錯誤！\n\n請設定至少 8 碼，且必須包含「英文字母」與「數字」。"); 
                 return; 
             }
             
-            const pwdRegex = /^(?=.*[a-zA-Z])(?=.*\d).{6,}$/;
+            const pwdRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{6,}$/;
             if (!pwdRegex.test(pwd)) { 
-                alert("密碼格式錯誤！\n\n請設定「至少 6 碼」，且必須是「英文與數字混合」。"); 
+                alert("密碼格式錯誤！\n\n請設定至少 6 碼，且必須包含「大寫英文」、「小寫英文」與「數字」。"); 
                 return; 
             }
             
             if (pwd !== pwdConfirm) { alert("兩次輸入的密碼不一致！"); return; }
-            
-            if (!googleEmail || !googleEmail.toLowerCase().endsWith('@gmail.com')) { 
-                alert("備用信箱格式錯誤！\n\n請輸入 @gmail.com 結尾的信箱。"); 
-                return; 
-            }
+            if (!googleEmail.toLowerCase().endsWith('@gmail.com')) { alert("備用信箱請輸入 Gmail！"); return; }
 
             const fullEmail = username.toLowerCase() + "@suhao.com";
 
             try {
                 showLoading("正在驗證序號...");
-                
                 const verifyUrl = `${SCRIPT_URL}?token=SuHaoClassroom2026_SecureKey&action=verifyActivationCode&code=${encodeURIComponent(code)}`;
                 const verifyRes = await fetch(verifyUrl);
                 const verifyResult = await verifyRes.json();
@@ -217,32 +211,33 @@
                     return;
                 }
 
-                showLoading("序號驗證成功！正在寫入授權...");
-                await auth.createUserWithEmailAndPassword(fullEmail, pwd);
+                showLoading("正在建立系統帳號...");
+                const userCredential = await auth.createUserWithEmailAndPassword(fullEmail, pwd);
+                const userUid = userCredential.user.uid; 
 
-                showLoading("正在綁定雲端資料庫...");
-                const bindUrl = `${SCRIPT_URL}?token=SuHaoClassroom2026_SecureKey&action=bindNewAccount&code=${encodeURIComponent(code)}&email=${encodeURIComponent(fullEmail)}&googleEmail=${encodeURIComponent(googleEmail)}`;
+                showLoading("正在同步雲端資料庫...");
+                // 這裡會把真實密碼 (pwd) 和 UUID (userUid) 回填
+                const bindUrl = `${SCRIPT_URL}?token=SuHaoClassroom2026_SecureKey&action=bindNewAccount&code=${encodeURIComponent(code)}&email=${encodeURIComponent(fullEmail)}&googleEmail=${encodeURIComponent(googleEmail)}&pwd=${encodeURIComponent(pwd)}&uid=${encodeURIComponent(userUid)}`;
+                
                 const bindRes = await fetch(bindUrl);
                 const bindResult = await bindRes.json();
 
                 if (bindResult.success) {
                     await auth.signOut();
                     hideLoading();
-                    alert(`恭喜 ${verifyResult.studentName} 同學！\n\n系統授權已正式啟用：\n【 ${fullEmail} 】\n\n請妥善保管您的登入資訊，點擊確定後將前往登入頁面。`);
+                    alert(`您好 ${verifyResult.studentName} 同學！\n\n啟用成功！您的帳號為：\n${fullEmail}\n\n請點擊確定返回登入。`);
                     window.location.replace("classroom.html");
                 } else {
                     hideLoading();
-                    alert("授權已建立，但資料庫同步發生延遲。請嘗試登入，或聯繫管理員。");
-                    window.location.replace("classroom.html");
+                    alert("帳號已建立，但資料同步異常，請洽管理員處理。");
                 }
 
             } catch (error) {
                 hideLoading();
-                console.error(error);
                 if (error.code === 'auth/email-already-in-use') {
-                    alert(`啟用失敗：帳號「${username}」已被使用，請更換其他名稱。`);
+                    alert("此帳號名稱已被佔用，請嘗試其他名稱。");
                 } else {
-                    alert("系統連線發生異常，請檢查網路狀態。");
+                    alert("錯誤：" + error.message);
                 }
             }
         }
