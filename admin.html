@@ -4,12 +4,11 @@
     <link rel="icon" href="https://suuuuuhaooooo.github.io/-/favicon.png" type="image/png">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>蘇昊數理｜教務管理系統 Pro</title>
+    <title>蘇昊數理｜教務管理系統</title>
 
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-database-compat.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;600;700&display=swap');
@@ -20,12 +19,7 @@
             --bg-body: #f1f5f9; 
             --text-main: #1e293b;
             --border: #cbd5e1;
-        }
-
-        /* 嚴格禁用交互與複製 */
-        html { 
-            -webkit-user-select: none; -moz-user-select: none; -ms-user-select: none; user-select: none;
-            -webkit-touch-callout: none;
+            --danger: #be123c;
         }
 
         body { 
@@ -33,98 +27,110 @@
             margin: 0; color: var(--text-main); display: flex; height: 100vh; overflow: hidden;
         }
 
-        /* 手機版適應性佈局 (Mobile First) */
-        #admin-ui { display: none; width: 100%; flex-direction: column; }
+        /* 側邊欄佈局 */
+        .sidebar { width: 220px; background: var(--sidebar-bg); color: white; display: flex; flex-direction: column; flex-shrink: 0; }
+        .sidebar-brand { padding: 25px 20px; border-bottom: 1px solid #334155; }
+        .sidebar-brand h2 { margin: 0; font-size: 18px; letter-spacing: 2px; }
         
-        @media (min-width: 768px) {
-            #admin-ui { flex-direction: row; }
-            .sidebar { width: 220px; height: 100vh; }
-            .main-content { padding: 30px; }
-        }
-
-        .sidebar { background: var(--sidebar-bg); color: white; display: flex; flex-direction: column; }
-        .sidebar-brand { padding: 20px; border-bottom: 1px solid #334155; text-align: center; }
-        .sidebar-brand h2 { font-size: 16px; margin: 0; letter-spacing: 2px; }
-
-        .nav-link { padding: 15px 20px; color: #94a3b8; text-decoration: none; font-size: 14px; border-bottom: 1px solid #1e293b; }
+        .nav-link { padding: 15px 20px; color: #94a3b8; text-decoration: none; font-size: 14px; cursor: pointer; transition: 0.2s; border-bottom: 1px solid #1e293b; }
+        .nav-link:hover { background: #1e293b; color: white; }
         .nav-link.active { background: #1e293b; color: white; border-left: 4px solid var(--primary); }
 
-        .main-content { flex-grow: 1; overflow-y: auto; padding: 15px; -webkit-overflow-scrolling: touch; }
-        
-        /* 數據卡片設計 */
-        .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; margin-bottom: 20px; }
-        .kpi-card { background: white; padding: 15px; border-radius: 4px; border: 1px solid var(--border); }
-        .kpi-label { font-size: 12px; color: #64748b; margin-bottom: 5px; }
-        .kpi-value { font-size: 20px; font-weight: 700; }
+        /* 主內容區 */
+        .main-content { flex-grow: 1; overflow-y: auto; padding: 20px; -webkit-overflow-scrolling: touch; }
+        .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 10px; border-bottom: 2px solid var(--border); }
+        .section-header h1 { font-size: 20px; margin: 0; }
 
-        /* 圖表區塊 */
-        .chart-container { background: white; padding: 20px; border-radius: 4px; border: 1px solid var(--border); margin-bottom: 20px; }
-        .chart-title { font-size: 14px; font-weight: 600; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 1px solid #f1f5f9; }
-
-        /* 表格響應式優化 */
-        .table-wrapper { width: 100%; overflow-x: auto; background: white; border: 1px solid var(--border); }
-        table { width: 100%; border-collapse: collapse; font-size: 13px; min-width: 500px; }
+        /* 數據卡片與表格 */
+        .card { background: white; border: 1px solid var(--border); border-radius: 4px; margin-bottom: 20px; padding: 20px; }
+        .table-wrapper { width: 100%; overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; font-size: 13px; }
         th { background: #f8fafc; padding: 12px; text-align: left; border-bottom: 2px solid var(--border); color: #475569; }
         td { padding: 12px; border-bottom: 1px solid #f1f5f9; }
+        
+        /* 狀態標籤 */
+        .badge-warn { background: #fff1f2; color: var(--danger); padding: 2px 6px; border-radius: 3px; font-weight: 600; font-size: 11px; }
+        .badge-success { background: #f0fdf4; color: #166534; padding: 2px 6px; border-radius: 3px; font-weight: 600; font-size: 11px; }
 
         /* 登入介面 */
         #login-ui { position: fixed; inset: 0; background: var(--bg-body); display: flex; justify-content: center; align-items: center; z-index: 9999; }
-        .login-box { background: white; padding: 30px; width: 90%; max-width: 350px; border-radius: 4px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
-        .login-box input { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid var(--border); border-radius: 4px; box-sizing: border-box; }
-        .btn-login { width: 100%; padding: 12px; background: var(--primary); color: white; border: none; cursor: pointer; font-weight: 600; }
+        .login-box { background: white; padding: 35px; width: 90%; max-width: 340px; border: 1px solid var(--border); box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); }
+        .login-box h2 { margin: 0 0 20px 0; font-size: 18px; text-align: center; }
+        .login-box input { width: 100%; padding: 12px; margin-bottom: 15px; border: 1px solid var(--border); border-radius: 2px; box-sizing: border-box; }
+        .btn-login { width: 100%; padding: 12px; background: var(--sidebar-bg); color: white; border: none; font-weight: 600; cursor: pointer; }
 
+        /* 手機版優化 */
+        @media (max-width: 768px) {
+            body { flex-direction: column; }
+            .sidebar { width: 100%; height: auto; flex-direction: row; }
+            .sidebar-brand { display: none; }
+            .nav-link { flex: 1; text-align: center; padding: 12px 5px; font-size: 12px; }
+            .main-content { padding: 10px; }
+        }
     </style>
 </head>
-<body oncontextmenu="return false;" onselectstart="return false;" ondragstart="return false;">
+<body oncontextmenu="return false;">
 
     <div id="login-ui">
         <div class="login-box">
-            <h2 style="text-align:center; margin-top:0;">管理員驗證</h2>
-            <input type="email" id="adm-email" placeholder="電子郵件">
+            <h2>教務管理系統驗證</h2>
+            <input type="email" id="adm-email" placeholder="管理員信箱">
             <input type="password" id="adm-pass" placeholder="密碼">
-            <button class="btn-login" onclick="handleLogin()">進入系統</button>
+            <button class="btn-login" onclick="handleLogin()">登入</button>
         </div>
     </div>
 
-    <div id="admin-ui">
+    <div id="admin-ui" style="display:none; width:100%; height:100vh;">
         <aside class="sidebar">
-            <div class="sidebar-brand"><h2>蘇昊數理控制台</h2></div>
+            <div class="sidebar-brand"><h2>蘇昊數理</h2></div>
             <nav style="display: flex; flex-direction: column; flex-grow: 1;">
-                <a class="nav-link active">核心考情分析</a>
-                <a class="nav-link">學生資安監控</a>
-                <div style="flex-grow:1"></div>
-                <a onclick="auth.signOut()" class="nav-link" style="color:#f87171">登出系統</a>
+                <div class="nav-link active">測驗數據分析</div>
+                <div class="nav-link" onclick="window.location.reload()">重新整理</div>
+                <div style="flex-grow: 1;"></div>
+                <div class="nav-link" onclick="logout()" style="color: #f87171; border-top: 1px solid #1e293b;">系統登出安全</div>
             </nav>
         </aside>
 
         <main class="main-content">
-            <div class="kpi-grid">
-                <div class="kpi-card"><div class="kpi-label">今日測驗人次</div><div class="kpi-value" id="count-today">0</div></div>
-                <div class="kpi-card"><div class="kpi-label">全體平均正確率</div><div class="kpi-value" id="avg-accuracy">0%</div></div>
-                <div class="kpi-card" style="border-left: 4px solid #ef4444;"><div class="kpi-label">資安封鎖中 IP</div><div class="kpi-value" id="count-banned">0</div></div>
-            </div>
+            <header class="section-header">
+                <h1>測驗數據最大化分析</h1>
+            </header>
 
-            <div class="chart-container">
-                <div class="chart-title">跨試卷：知識點弱點分析（正確率由低至高）</div>
-                <canvas id="topicChart" style="max-height: 250px;"></canvas>
-            </div>
-
-            <div class="chart-container">
-                <div class="chart-title">近期測驗紀錄彙整</div>
+            <div class="card">
+                <div style="font-weight: 600; margin-bottom: 15px;">試卷題目熱點分析 (依 Exam_ID)</div>
                 <div class="table-wrapper">
                     <table>
                         <thead>
                             <tr>
-                                <th>學生</th>
+                                <th>試卷 ID</th>
                                 <th>測驗名稱</th>
-                                <th>分數</th>
-                                <th>完成時間</th>
-                                <th>狀態</th>
+                                <th>應試人數</th>
+                                <th>平均分數</th>
+                                <th>高錯誤率題號</th>
                             </tr>
                         </thead>
-                        <tbody id="exam-list">
-                            <tr><td colspan="5" style="text-align:center; padding:40px;">讀取即時數據中...</td></tr>
-                        </tbody>
+                        <tbody id="exam-summary-body">
+                            </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="card">
+                <div style="font-weight: 600; margin-bottom: 15px;">最新繳卷紀錄與誠實度日誌</div>
+                <div class="table-wrapper">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>時間</th>
+                                <th>學生</th>
+                                <th>試卷 ID</th>
+                                <th>分數</th>
+                                <th>視窗切換</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="log-body">
+                            </tbody>
                     </table>
                 </div>
             </div>
@@ -132,13 +138,6 @@
     </div>
 
     <script>
-        // 禁止 F12 與 開發者工具常用快速鍵
-        document.onkeydown = function(e) {
-            if (e.keyCode == 123 || (e.ctrlKey && e.shiftKey && (e.keyCode == 73 || e.keyCode == 74)) || (e.ctrlKey && e.keyCode == 85)) {
-                return false;
-            }
-        };
-
         const firebaseConfig = {
             apiKey: "AIzaSyALkTnkYY3JZLCTyajahpi4IZKmFX9USdw",
             authDomain: "su-hao-classroom.firebaseapp.com",
@@ -153,99 +152,111 @@
         const db = firebase.database();
 
         function handleLogin() {
-            const e = document.getElementById('adm-email').value;
-            const p = document.getElementById('adm-pass').value;
-            auth.signInWithEmailAndPassword(e, p).catch(err => alert("身分證驗證失敗"));
+            const email = document.getElementById('adm-email').value;
+            const pass = document.getElementById('adm-pass').value;
+            auth.signInWithEmailAndPassword(email, pass).catch(err => alert("驗證失敗"));
+        }
+
+        function logout() {
+            if(confirm("確定要登出系統？")) {
+                auth.signOut().then(() => location.reload());
+            }
         }
 
         auth.onAuthStateChanged(user => {
-            if(user && user.uid === '5F6F4HEDhpZbYMp7liT4czX0syI3') {
+            if (user && user.uid === '5F6F4HEDhpZbYMp7liT4czX0syI3') {
                 document.getElementById('login-ui').style.display = 'none';
                 document.getElementById('admin-ui').style.display = 'flex';
-                initDashboard();
+                loadData();
             }
         });
 
-        async function initDashboard() {
-            // 1. 監控在線與封鎖
-            db.ref('ip_bans').on('value', s => {
-                const b = s.val() || {};
-                document.getElementById('count-banned').innerText = Object.keys(b).filter(k => b[k].lockUntil > Date.now()).length;
-            });
-
-            // 2. 核心考情邏輯：分析跨試卷的知識點 (Topics)
+        function loadData() {
             db.ref('exam_records').on('value', snap => {
-                const records = snap.val() || {};
-                const list = document.getElementById('exam-list');
-                list.innerHTML = "";
-
-                let totalScore = 0;
-                let count = 0;
-                let topicStats = {}; // 格式: { "因數與倍數": { correct: 10, total: 15 } }
-
-                Object.keys(records).forEach(uid => {
-                    const userExams = records[uid];
-                    Object.keys(userExams).forEach(eid => {
-                        const data = userExams[eid];
-                        count++;
-                        totalScore += data.score;
-
-                        // 更新表格
-                        const row = `<tr>
-                            <td>${data.userName || '未知'}</td>
-                            <td>${data.examName || '未命名試卷'}</td>
-                            <td style="font-weight:700; color:${data.score < 60 ? '#ef4444':'#1e293b'}">${data.score}</td>
-                            <td>${new Date(data.finishTime).toLocaleDateString()}</td>
-                            <td>已繳卷</td>
-                        </tr>`;
-                        list.insertAdjacentHTML('afterbegin', row);
-
-                        // 知識點統計：從測驗細節中抓取 topic 欄位
-                        if(data.details) {
-                            data.details.forEach(q => {
-                                const t = q.topic || "一般運算";
-                                if(!topicStats[t]) topicStats[t] = { c: 0, t: 0 };
-                                topicStats[t].t++;
-                                if(q.userPick === q.correctAnswer) topicStats[t].c++;
-                            });
-                        }
-                    });
-                });
-
-                document.getElementById('count-today').innerText = count;
-                document.getElementById('avg-accuracy').innerText = count > 0 ? Math.round(totalScore/count) + "%" : "0%";
-
-                renderTopicChart(topicStats);
+                const allRecords = snap.val() || {};
+                processStats(allRecords);
             });
         }
 
-        let chart;
-        function renderTopicChart(stats) {
-            const ctx = document.getElementById('topicChart').getContext('2d');
-            const labels = Object.keys(stats);
-            const data = labels.map(l => Math.round((stats[l].c / stats[l].t) * 100));
+        function processStats(records) {
+            const examMap = {}; // 用於統計單一 Exam_ID 的表現
+            const logRows = []; // 用於顯示流水帳
 
-            if(chart) chart.destroy();
-            chart = new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: labels,
-                    datasets: [{
-                        label: '單元正確率 (%)',
-                        data: data,
-                        backgroundColor: data.map(v => v < 60 ? '#fecaca' : '#bfdbfe'),
-                        borderColor: data.map(v => v < 60 ? '#ef4444' : '#3b82f6'),
-                        borderWidth: 1
-                    }]
-                },
-                options: {
-                    indexAxis: 'y',
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    scales: { x: { min: 0, max: 100 } },
-                    plugins: { legend: { display: false } }
-                }
+            Object.keys(records).forEach(uid => {
+                const userExams = records[uid];
+                Object.keys(userExams).forEach(eid => {
+                    const data = userExams[eid];
+                    
+                    // 1. 建立流水帳數據
+                    logRows.push({
+                        time: data.finishTime || data.交卷時間,
+                        name: data.userName || data.姓名,
+                        eid: eid,
+                        score: data.score,
+                        blur: data.blurCount || 0, // 您在 test.html 設置的偵測
+                        details: data.details
+                    });
+
+                    // 2. 建立 Exam_ID 彙整數據
+                    if(!examMap[eid]) {
+                        examMap[eid] = { name: data.examName || '未命名', count: 0, totalScore: 0, questions: {} };
+                    }
+                    examMap[eid].count++;
+                    examMap[eid].totalScore += data.score;
+
+                    // 題目正確率累加 (如果您有 details)
+                    if(data.details) {
+                        data.details.forEach((d, idx) => {
+                            if(!examMap[eid].questions[idx+1]) examMap[eid].questions[idx+1] = { error: 0 };
+                            if(!d.isCorrect) examMap[eid].questions[idx+1].error++;
+                        });
+                    }
+                });
             });
+
+            // 渲染 Exam_ID 彙整
+            const summaryBody = document.getElementById('exam-summary-body');
+            summaryBody.innerHTML = "";
+            Object.keys(examMap).forEach(eid => {
+                const m = examMap[eid];
+                // 找出該卷錯誤次數最多的題號
+                const worstQs = Object.entries(m.questions)
+                    .sort((a,b) => b[1].error - a[1].error)
+                    .slice(0, 3)
+                    .map(item => `第${item[0]}題(${item[1].error}人錯)`)
+                    .join('、');
+
+                summaryBody.innerHTML += `
+                    <tr>
+                        <td style="font-weight:700;">${eid}</td>
+                        <td>${m.name}</td>
+                        <td>${m.count} 人</td>
+                        <td style="font-weight:600;">${Math.round(m.totalScore/m.count)} 分</td>
+                        <td style="color:var(--danger); font-size:12px;">${worstQs || '無'}</td>
+                    </tr>
+                `;
+            });
+
+            // 渲染流水帳紀錄
+            const logBody = document.getElementById('log-body');
+            logBody.innerHTML = "";
+            logRows.sort((a,b) => b.time - a.time).forEach(row => {
+                logBody.innerHTML += `
+                    <tr>
+                        <td style="color:#64748b; font-size:11px;">${new Date(row.time).toLocaleString()}</td>
+                        <td style="font-weight:600;">${row.name}</td>
+                        <td>${row.eid}</td>
+                        <td style="font-weight:700; color:${row.score < 60 ? 'var(--danger)':'#1e293b'}">${row.score}</td>
+                        <td><span class="${row.blur > 1 ? 'badge-warn' : 'badge-success'}">${row.blur} 次異常</span></td>
+                        <td><button style="cursor:pointer; font-size:11px; padding:2px 8px;" onclick="viewDetail('${row.name}', '${row.eid}')">查看題目</button></td>
+                    </tr>
+                `;
+            });
+        }
+
+        function viewDetail(name, eid) {
+            // 此處可擴充彈窗顯示該生該卷的原始對照
+            alert(`即將調閱 ${name} 在 ${eid} 的原始題目作答情況。`);
         }
     </script>
 </body>
