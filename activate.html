@@ -5,7 +5,7 @@
     <link rel="apple-touch-icon" href="https://suuuuuhaooooo.github.io/-/favicon.png">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>蘇昊數理｜系統開通與註冊</title>
+    <title>蘇昊數理｜系統授權啟用</title>
 
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
@@ -38,17 +38,18 @@
             text-align: center; 
             border-top: 6px solid var(--primary); 
             box-sizing: border-box;
+            max-height: 95vh;
+            overflow-y: auto;
         }
 
-        .activate-card h1 { font-size: 22px; letter-spacing: 4px; margin: 0 0 10px 0; color: var(--dark); }
-        .activate-card p { font-size: 13px; color: #888; margin-bottom: 25px; line-height: 1.5; }
+        .activate-card h1 { font-size: 22px; letter-spacing: 4px; margin: 0 0 25px 0; color: var(--dark); }
 
-        .input-group { position: relative; margin: 12px 0; text-align: left; }
-        .input-group label { display: block; font-size: 12px; color: #666; margin-bottom: 5px; font-weight: bold; }
+        .input-group { position: relative; margin: 15px 0; text-align: left; }
+        .input-group label { display: block; font-size: 13px; color: #444; margin-bottom: 6px; font-weight: bold; letter-spacing: 1px; }
         
         input { 
             width: 100%; 
-            padding: 14px; 
+            padding: 12px 14px; 
             border: 1px solid #ddd; 
             background: #fafafa; 
             border-radius: 4px;
@@ -56,13 +57,15 @@
             outline: none; 
             transition: 0.3s; 
             font-size: 14px;
+            letter-spacing: 1px;
         }
         input:focus { border-color: var(--primary); background: #fff; box-shadow: 0 0 5px rgba(142,151,117,0.2); }
+        input::placeholder { color: #bbb; font-size: 13px; letter-spacing: 0; }
         
         .domain-suffix {
             position: absolute;
             right: 15px;
-            top: 36px;
+            top: 33px;
             color: #aaa;
             font-size: 14px;
             pointer-events: none;
@@ -74,9 +77,8 @@
             transition: 0.3s; margin-top: 20px; border-radius: 4px; font-size: 16px;
         }
         .main-btn:hover { background: var(--dark); transform: translateY(-2px); box-shadow: 0 5px 15px rgba(142,151,117,0.3); }
-        .main-btn:disabled { background: #ccc; cursor: not-allowed; transform: none; box-shadow: none; }
 
-        .back-link { display: inline-block; margin-top: 20px; font-size: 12px; color: #888; text-decoration: none; transition: 0.2s; }
+        .back-link { display: inline-block; margin-top: 20px; font-size: 13px; color: #888; text-decoration: none; transition: 0.2s; }
         .back-link:hover { color: var(--primary); }
 
         /* 載入動畫 */
@@ -88,54 +90,54 @@
         .spinner { border: 4px solid #f3f3f3; border-top: 4px solid var(--primary); border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin-bottom: 15px; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
-        @media (max-width: 768px) {
-            .activate-card { transform: translateY(-5vh); padding: 30px 20px; }
-            input { padding: 12px; }
-            .domain-suffix { top: 34px; font-size: 13px; }
-        }
+        /* 捲軸美化 */
+        .activate-card::-webkit-scrollbar { width: 4px; }
+        .activate-card::-webkit-scrollbar-thumb { background-color: #ccc; border-radius: 4px; }
     </style>
 </head>
 <body>
 
     <div id="loading-overlay">
         <div class="spinner"></div>
-        <div id="loading-text" style="color: var(--dark); font-weight: bold; letter-spacing: 1px;">系統開通中，請稍候...</div>
+        <div id="loading-text" style="color: var(--dark); font-weight: bold; letter-spacing: 1px;">系統啟用中...</div>
     </div>
 
     <div class="activate-card">
-        <h1>開通專屬帳號</h1>
-        <p>請輸入老師發放的開通碼，<br>並自行設定您未來的登入帳號與密碼。</p>
+        <h1>系統授權啟用</h1>
 
         <div class="input-group">
-            <label>1. 系統開通碼 (必填)</label>
-            <input type="text" id="activate-code" placeholder="例如：VIP-XXXX" autocomplete="off">
+            <label>授權序號</label>
+            <input type="text" id="activate-code" placeholder="格式：xxx-xxx-xxx" autocomplete="off">
         </div>
 
         <div class="input-group">
-            <label>2. 自訂帳號 (建議 6 碼英數混合)</label>
-            <input type="text" id="custom-username" placeholder="請輸入自訂帳號" autocomplete="off" style="padding-right: 110px;">
+            <label>自訂登入帳號</label>
+            <input type="text" id="custom-username" placeholder="格式：至少3碼英數" autocomplete="off" style="padding-right: 110px;">
             <span class="domain-suffix">@suhao.com</span>
         </div>
 
         <div class="input-group">
-            <label>3. 設定密碼 (至少 6 碼)</label>
-            <input type="password" id="custom-password" placeholder="請輸入密碼">
+            <label>設定登入密碼</label>
+            <input type="password" id="custom-password" placeholder="格式：至少6碼">
         </div>
 
         <div class="input-group">
-            <label>4. 確認密碼</label>
-            <input type="password" id="confirm-password" placeholder="請再次輸入密碼">
+            <label>確認登入密碼</label>
+            <input type="password" id="confirm-password" placeholder="請再次輸入相同密碼">
         </div>
 
-        <button class="main-btn" id="submit-btn" onclick="processActivation()">確認並開通帳號</button>
+        <div class="input-group">
+            <label>個人備用信箱 (忘記密碼救援使用)</label>
+            <input type="email" id="google-email" placeholder="格式：yourname@email.com" autocomplete="off">
+        </div>
+
+        <button class="main-btn" id="submit-btn" onclick="processActivation()">確認並啟用</button>
         
-        <a href="classroom.html" class="back-link">已有帳號？返回登入頁面</a>
+        <a href="classroom.html" class="back-link">返回登入頁面</a>
     </div>
 
     <script>
-        // -----------------------------------------
-        // 反開發者工具與右鍵保護
-        // -----------------------------------------
+        // 防止右鍵與 F12 檢查碼
         document.addEventListener('contextmenu', event => event.preventDefault());
         document.addEventListener('keydown', event => {
             if (event.keyCode === 123 || (event.ctrlKey && event.shiftKey && (event.keyCode === 73 || event.keyCode === 74)) || (event.ctrlKey && event.keyCode === 85)) { 
@@ -143,9 +145,7 @@
             }
         });
 
-        // -----------------------------------------
-        // Firebase 與 GAS 設定
-        // -----------------------------------------
+        // Firebase 基礎設定
         const firebaseConfig = {
             apiKey: "AIzaSyALkTnkYY3JZLCTyajahpi4IZKmFX9USdw",
             authDomain: "su-hao-classroom.firebaseapp.com",
@@ -157,14 +157,13 @@
         firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth();
         
-        // 您的 GAS API 網址
+        // GAS API 連線網址
         const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwxFfufe0b7eJpDxSmLgnbVvlq1itLvoD6ZCpvDJKtJg7ChcWn7lpf9LgZqQ4ZsThJiXQ/exec";
 
         function showLoading(text) {
             document.getElementById('loading-text').innerText = text;
             document.getElementById('loading-overlay').style.display = 'flex';
         }
-
         function hideLoading() {
             document.getElementById('loading-overlay').style.display = 'none';
         }
@@ -172,52 +171,55 @@
         async function processActivation() {
             const code = document.getElementById('activate-code').value.trim();
             const username = document.getElementById('custom-username').value.trim();
+            const googleEmail = document.getElementById('google-email').value.trim();
             const pwd = document.getElementById('custom-password').value;
             const pwdConfirm = document.getElementById('confirm-password').value;
 
-            // 1. 基礎防呆檢查
-            if (!code) { alert("請輸入開通碼！"); return; }
-            if (!username || username.length < 3) { alert("自訂帳號請至少輸入 3 個字元！"); return; }
-            if (/[^a-zA-Z0-9_]/.test(username)) { alert("帳號只能包含英文、數字與底線，不可有空格或特殊符號！"); return; }
-            if (!pwd || pwd.length < 6) { alert("密碼安全度不足，請至少設定 6 碼！"); return; }
-            if (pwd !== pwdConfirm) { alert("兩次輸入的密碼不一致，請重新檢查！"); return; }
+            // 表單防呆檢查
+            if (!code) { alert("請輸入授權序號！"); return; }
+            if (!username || username.length < 3) { alert("登入帳號格式錯誤，請至少輸入 3 個英數字元！"); return; }
+            if (/[^a-zA-Z0-9_]/.test(username)) { alert("登入帳號僅限英文、數字與底線！"); return; }
+            
+            if (!pwd || pwd.length < 6) { alert("密碼格式錯誤，請至少設定 6 碼！"); return; }
+            if (pwd !== pwdConfirm) { alert("兩次輸入的密碼不一致！"); return; }
+            
+            const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!googleEmail || !emailPattern.test(googleEmail)) { alert("備用信箱格式錯誤，請輸入正確的 Email！"); return; }
 
             const fullEmail = username.toLowerCase() + "@suhao.com";
 
             try {
-                showLoading("正在驗證開通碼...");
+                showLoading("正在驗證序號...");
                 
-                // 2. 呼叫 GAS 驗證開通碼是否有效
+                // 1. 去 GAS 驗證開通碼
                 const verifyUrl = `${SCRIPT_URL}?token=SuHaoClassroom2026_SecureKey&action=verifyActivationCode&code=${encodeURIComponent(code)}`;
                 const verifyRes = await fetch(verifyUrl);
                 const verifyResult = await verifyRes.json();
 
                 if (!verifyResult.success) {
                     hideLoading();
-                    alert("開通失敗：" + verifyResult.message);
+                    alert("啟用失敗：" + verifyResult.message);
                     return;
                 }
 
-                // 3. 開通碼有效，開始在 Firebase 建立帳號
-                showLoading("開通碼有效！正在為您建立專屬帳號...");
+                showLoading("序號驗證成功！正在寫入授權...");
+                // 2. 在 Firebase 建立帳號
                 await auth.createUserWithEmailAndPassword(fullEmail, pwd);
 
-                // 4. Firebase 建立成功後，通知 GAS 綁定信箱並把開通碼作廢
-                showLoading("帳號建立成功！正在綁定雲端資料...");
-                const bindUrl = `${SCRIPT_URL}?token=SuHaoClassroom2026_SecureKey&action=bindNewAccount&code=${encodeURIComponent(code)}&email=${encodeURIComponent(fullEmail)}`;
+                showLoading("正在綁定雲端資料庫...");
+                // 3. 回填資料到 GAS 試算表
+                const bindUrl = `${SCRIPT_URL}?token=SuHaoClassroom2026_SecureKey&action=bindNewAccount&code=${encodeURIComponent(code)}&email=${encodeURIComponent(fullEmail)}&googleEmail=${encodeURIComponent(googleEmail)}`;
                 const bindRes = await fetch(bindUrl);
                 const bindResult = await bindRes.json();
 
                 if (bindResult.success) {
-                    // 全部大功告成，強制登出 (因為 createUser 會自動登入)，讓學生去首頁自己登入一次
-                    await auth.signOut();
+                    await auth.signOut(); // 註冊完先登出，讓學生自己重新登入
                     hideLoading();
-                    alert(`恭喜 ${verifyResult.studentName} 同學！\n\n您的專屬帳號已成功開通：\n【 ${fullEmail} 】\n\n請妥善保管您的密碼，點擊確定後將跳轉至登入頁面。`);
+                    alert(`🎉 恭喜 ${verifyResult.studentName} 同學！\n\n系統授權已正式啟用：\n【 ${fullEmail} 】\n\n請妥善保管您的登入資訊，點擊確定後將前往登入頁面。`);
                     window.location.replace("classroom.html");
                 } else {
-                    // 極端異常狀況：Firebase 創了，但 GAS 寫入失敗
                     hideLoading();
-                    alert("帳號已建立，但資料庫綁定發生延遲。請直接嘗試登入，或聯繫老師協助處理。");
+                    alert("授權已建立，但資料庫同步發生延遲。請嘗試登入，或聯繫管理員。");
                     window.location.replace("classroom.html");
                 }
 
@@ -225,9 +227,9 @@
                 hideLoading();
                 console.error(error);
                 if (error.code === 'auth/email-already-in-use') {
-                    alert(`開通失敗：您自訂的帳號「${username}」已經被別人註冊走囉！請換一個帳號試試看。`);
+                    alert(`啟用失敗：帳號「${username}」已被使用，請更換其他名稱。`);
                 } else {
-                    alert("系統連線發生異常，請檢查網路狀態或稍後再試。");
+                    alert("系統連線發生異常，請檢查網路狀態。");
                 }
             }
         }
