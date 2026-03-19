@@ -18,6 +18,19 @@
             margin: 0; display: flex; justify-content: center; align-items: center; 
             height: 100vh; user-select: none;
         }
+        body {
+            -webkit-user-select: none; 
+            -moz-user-select: none; 
+            -ms-user-select: none; 
+            user-select: none;
+        }
+
+        input {
+            -webkit-user-select: text;
+            -moz-user-select: text;
+            -ms-user-select: text;
+            user-select: text;
+        }
 
         .forgot-card { 
             background: white; padding: 40px; border-radius: 4px; 
@@ -115,6 +128,20 @@
     </div>
 
     <script>
+        // 禁用複製 (Ctrl+C) 與剪下 (Ctrl+X)
+        document.addEventListener('copy', (e) => e.preventDefault());
+        document.addEventListener('cut', (e) => e.preventDefault());
+        
+        // 禁用開發者工具快捷鍵
+        document.onkeydown = function(e) {
+            // 禁用 F12
+            if (e.keyCode == 123) return false;
+            // 禁用 Ctrl+Shift+I (檢視元素)
+            if (e.ctrlKey && e.shiftKey && e.keyCode == 'I'.charCodeAt(0)) return false;
+            // 禁用 Ctrl+U (檢視原始碼)
+            if (e.ctrlKey && e.keyCode == 'U'.charCodeAt(0)) return false;
+        };
+        
         // 1. Firebase 系統初始化
         const firebaseConfig = {
             apiKey: "AIzaSyALkTnkYY3JZLCTyajahpi4IZKmFX9USdw",
