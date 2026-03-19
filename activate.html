@@ -203,7 +203,7 @@
                         const remainingSec = Math.ceil((banData.lockUntil - now) / 1000);
                         const min = Math.floor(remainingSec / 60);
                         const sec = remainingSec % 60;
-                        alert(`【系統通知】\n此 IP 位址因異常嘗試過多次，已被系統暫時封鎖。\n請等待 ${min} 分 ${sec} 秒後再嘗試。`);
+                        alert(`【系統通知】\n因異常嘗試過多次，已被系統暫時封鎖。\n請等待 ${min} 分 ${sec} 秒後再嘗試。`);
                         return; // 封鎖期間直接擋下
                     }
                 } catch (e) { console.log("IP 檢查失敗，略過", e); }
@@ -279,7 +279,7 @@
 
                     if (penaltyMinutes > 0) {
                         localStorage.setItem('activate_lock_until', now + (penaltyMinutes * 60 * 1000));
-                        alert(`【警告】\n偵測到多次無效序號！\n為保護系統安全，已暫停您的設備與 IP 啟用權限 ${penaltyMinutes} 分鐘。`);
+                        alert(`【警告】\n偵測到多次無效序號！\n為保護系統安全，已暫停您的啟用權限 ${penaltyMinutes} 分鐘。`);
                     } else {
                         let attemptsLeft = 3 - failCount;
                         alert("啟用失敗：" + verifyResult.message + `\n\n(警告：再失敗 ${attemptsLeft} 次將觸發安全鎖定)`);
