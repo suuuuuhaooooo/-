@@ -62,7 +62,8 @@
         input:focus { border-color: var(--primary); background: #fff; box-shadow: 0 0 5px rgba(142,151,117,0.2); }
         input::placeholder { color: #bbb; font-size: 13px; letter-spacing: 0; }
         
-        #activate-code { text-transform: uppercase; font-family: monospace; font-size: 15px; letter-spacing: 2px; }
+        /* 🚀 關鍵修改：拿掉 uppercase 濾鏡，保留字體等寬 */
+        #activate-code { font-family: monospace; font-size: 15px; letter-spacing: 2px; }
         
         .domain-suffix {
             position: absolute;
@@ -106,7 +107,7 @@
 
         <div class="input-group">
             <label>授權序號</label>
-            <input type="text" id="activate-code" placeholder="格式：XXXX-XXXX-XXXX-XXXX" maxlength="19" autocomplete="off">
+            <input type="text" id="activate-code" placeholder="請注意英文字母大小寫" maxlength="19" autocomplete="off">
         </div>
 
         <div class="input-group">
@@ -132,7 +133,7 @@
 
         <button class="main-btn" id="submit-btn" onclick="processActivation()">確認並啟用</button>
         
-        <a href="classroom.html" class="back-link">返回登入頁面</a>
+        <a href="classroom.html" class="back-link">已有帳號？返回登入頁面</a>
     </div>
 
     <script>
@@ -145,6 +146,7 @@
 
         document.getElementById('activate-code').addEventListener('input', function(e) {
             let target = e.target;
+            // 🚀 關鍵修改：允許大小寫英文與數字，不再強制轉大寫！
             let val = target.value.replace(/[^a-zA-Z0-9]/g, '');
             val = val.substring(0, 16);
             let formatted = val.match(/.{1,4}/g)?.join('-') || val;
@@ -195,11 +197,8 @@
             
             if (pwd !== pwdConfirm) { alert("兩次輸入的密碼不一致！"); return; }
             
-            // ==========================================
-            // 🛡️ 升級版防禦 3：強制限定 Gmail
-            // ==========================================
             if (!googleEmail || !googleEmail.toLowerCase().endsWith('@gmail.com')) { 
-                alert("備用信箱格式錯誤！\n\n為確保您未來能順利觀看加密教學影片，此欄位「限定綁定 Gmail」，請輸入 @gmail.com 結尾的信箱。"); 
+                alert("備用信箱格式錯誤！\n\n請輸入 @gmail.com 結尾的信箱。"); 
                 return; 
             }
 
@@ -229,7 +228,7 @@
                 if (bindResult.success) {
                     await auth.signOut();
                     hideLoading();
-                    alert(`🎉 恭喜 ${verifyResult.studentName} 同學！\n\n系統授權已正式啟用：\n【 ${fullEmail} 】\n\n請妥善保管您的登入資訊，點擊確定後將前往登入頁面。`);
+                    alert(`恭喜 ${verifyResult.studentName} 同學！\n\n系統授權已正式啟用：\n【 ${fullEmail} 】\n\n請妥善保管您的登入資訊，點擊確定後將前往登入頁面。`);
                     window.location.replace("classroom.html");
                 } else {
                     hideLoading();
