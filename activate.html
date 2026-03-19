@@ -9,7 +9,10 @@
 
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
-
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-database-compat.js"></script>
+    
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;700&display=swap');
         :root { --primary: #8e9775; --dark: #5b6348; --bg: #f8f8f6; --white: #ffffff; }
@@ -138,7 +141,7 @@
     <script>
         document.getElementById('custom-username').addEventListener('input', function(e) {
             let target = e.target;
-            // 濾除中文字與特殊符號，並自動轉小寫
+
             target.value = target.value.replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
         });
         document.addEventListener('contextmenu', event => event.preventDefault());
@@ -166,6 +169,15 @@
         };
         firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth();
+        const db = firebase.database(); 
+        let globalClientIP = "";
+
+        window.onload = function() {
+            fetch('https://api.ipify.org?format=json')
+                .then(res => res.json())
+                .then(data => { globalClientIP = data.ip; })
+                .catch(err => console.log("獲取 IP 失敗", err));
+        };
         
         const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwxFfufe0b7eJpDxSmLgnbVvlq1itLvoD6ZCpvDJKtJg7ChcWn7lpf9LgZqQ4ZsThJiXQ/exec";
 
@@ -178,6 +190,37 @@
         }
 
         async function processActivation() {
+            const now = Date.now();
+            
+            const safeIP = globalClientIP ? globalClientIP.replace(/[.#$\[\]:]/g, '_') : "unknown_IP";
+            const ipBanRef = db.ref('activate_ip_bans/' + safeIP);
+
+            if (safeIP !== "unknown_IP") {
+                try {
+                    const snap = await ipBanRef.once('value');
+                    const banData = snap.val();
+                    if (banData && banData.lockUntil > now) {
+                        const remainingSec = Math.ceil((banData.lockUntil - now) / 1000);
+                        const min = Math.floor(remainingSec / 60);
+                        const sec = remainingSec % 60;
+                        alert(`【雲端安全防護】\n此 IP 位址因異常嘗試過多次，已被系統暫時封鎖。\n請等待 ${min} 分 ${sec} 秒後再嘗試。`);
+                        return; // 封鎖期間直接擋下
+                    }
+                } catch (e) { console.log("IP 檢查失敗，略過", e); }
+            }
+
+            let lockUntil = parseInt(localStorage.getItem('activate_lock_until') || '0', 10);
+            let failCount = parseInt(localStorage.getItem('activate_fail_count') || '0', 10);
+
+            if (now < lockUntil) {
+                const remainingSec = Math.ceil((lockUntil - now) / 1000);
+                const min = Math.floor(remainingSec / 60);
+                const sec = remainingSec % 60;
+                alert(`【系統防護】\n請等待 ${min} 分 ${sec} 秒後再嘗試。`);
+                return;
+            }
+
+            // 取值與格式檢查
             const code = document.getElementById('activate-code').value.trim();
             const username = document.getElementById('custom-username').value.trim();
             const googleEmail = document.getElementById('google-email').value.trim();
@@ -185,20 +228,8 @@
             const pwdConfirm = document.getElementById('confirm-password').value;
 
             if (!code || code.length !== 19) { alert("請輸入完整的 16 碼授權序號！"); return; }
-            
-
-            const userRegex = /^(?=.*[a-zA-Z])(?=.*\d)[a-zA-Z0-9]{8,}$/;
-            if (!userRegex.test(username)) { 
-                alert("帳號格式錯誤！\n\n請設定至少 8 碼，且必須包含「英文字母」與「數字」。"); 
-                return; 
-            }
-            
-            const pwdRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{6,}$/;
-            if (!pwdRegex.test(pwd)) { 
-                alert("密碼格式錯誤！\n\n請設定至少 6 碼，且必須包含「大寫英文」、「小寫英文」與「數字」。"); 
-                return; 
-            }
-            
+            if (!/^(?=.*[a-zA-Z])(?=.*\d)[a-zA-Z0-9]{8,}$/.test(username)) { alert("帳號格式錯誤！\n\n請設定至少 8 碼，且必須包含「英文字母」與「數字」。"); return; }
+            if (!/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{6,}$/.test(pwd)) { alert("密碼格式錯誤！\n\n請設定至少 6 碼，且必須包含「大寫英文」、「小寫英文」與「數字」。"); return; }
             if (pwd !== pwdConfirm) { alert("兩次輸入的密碼不一致！"); return; }
             if (!googleEmail.toLowerCase().endsWith('@gmail.com')) { alert("備用信箱請輸入 Gmail！"); return; }
 
@@ -212,16 +243,59 @@
 
                 if (!verifyResult.success) {
                     hideLoading();
-                    alert("啟用失敗：" + verifyResult.message);
+                    failCount++; // 錯誤次數 +1
+                    localStorage.setItem('activate_fail_count', failCount);
+                    
+                    let penaltyMinutes = 0;
+                    let cloudFails = failCount;
+
+                    if (safeIP !== "unknown_IP") {
+                        try {
+                            const snap = await ipBanRef.once('value');
+                            let banData = snap.val() || { fails: 0, lockUntil: 0 };
+                            banData.fails += 1;
+                            cloudFails = banData.fails;
+                            
+                            if (banData.fails === 3) penaltyMinutes = 10;
+                            else if (banData.fails === 4) penaltyMinutes = 30;
+                            else if (banData.fails >= 5) penaltyMinutes = 60; 
+
+                            if (penaltyMinutes > 0) {
+                                banData.lockUntil = now + (penaltyMinutes * 60 * 1000);
+                            }
+                            await ipBanRef.set(banData);
+                        } catch(e) { console.log("更新 IP 失敗次數錯誤", e); }
+                    }
+
+                    if (cloudFails > failCount) {
+                        failCount = cloudFails;
+                        localStorage.setItem('activate_fail_count', failCount);
+                    }
+                    if (penaltyMinutes === 0) {
+                        if (failCount === 3) penaltyMinutes = 10;
+                        else if (failCount === 4) penaltyMinutes = 30;
+                        else if (failCount >= 5) penaltyMinutes = 60;
+                    }
+
+                    if (penaltyMinutes > 0) {
+                        localStorage.setItem('activate_lock_until', now + (penaltyMinutes * 60 * 1000));
+                        alert(`【警告】偵測到多次無效序號！\n為保護系統安全，已暫停您的設備與 IP 啟用權限 ${penaltyMinutes} 分鐘。`);
+                    } else {
+                        let attemptsLeft = 3 - failCount;
+                        alert("啟用失敗：" + verifyResult.message + `\n\n(警告：再失敗 ${attemptsLeft} 次將觸發安全鎖定)`);
+                    }
                     return;
                 }
+
+                localStorage.removeItem('activate_fail_count');
+                localStorage.removeItem('activate_lock_until');
+                if (safeIP !== "unknown_IP") ipBanRef.remove(); 
 
                 showLoading("正在建立系統帳號...");
                 const userCredential = await auth.createUserWithEmailAndPassword(fullEmail, pwd);
                 const userUid = userCredential.user.uid; 
 
                 showLoading("正在同步雲端資料庫...");
-                // 這裡會把真實密碼 (pwd) 和 UUID (userUid) 回填
                 const bindUrl = `${SCRIPT_URL}?token=SuHaoClassroom2026_SecureKey&action=bindNewAccount&code=${encodeURIComponent(code)}&email=${encodeURIComponent(fullEmail)}&googleEmail=${encodeURIComponent(googleEmail)}&pwd=${encodeURIComponent(pwd)}&uid=${encodeURIComponent(userUid)}`;
                 
                 const bindRes = await fetch(bindUrl);
