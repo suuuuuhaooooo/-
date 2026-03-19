@@ -575,11 +575,9 @@
             icon.innerText = (pwd.type === "password") ? "🔓" : "🔒";
         }
 
-        // 將 login 改為 async 函式
         async function login() {
             const now = Date.now();
             
-            // 1. 雲端 IP 鎖定檢查 (防無痕視窗)
             const safeIP = globalClientIP ? globalClientIP.replace(/[.#$\[\]:]/g, '_') : "unknown_IP";
             const ipBanRef = db.ref('ip_bans/' + safeIP);
 
@@ -657,36 +655,49 @@
                 loginFailCount++;
                 localStorage.setItem('login_fail_count', loginFailCount);
 
-                let attemptsLeft = 3 - loginFailCount;
-                let isBanned = false;
+                let penaltyMinutes = 0;
+                let cloudFails = loginFailCount;
 
-                // 寫入雲端 IP 失敗次數
                 if (safeIP !== "unknown_IP") {
                     try {
                         const snap = await ipBanRef.once('value');
                         let banData = snap.val() || { fails: 0, lockUntil: 0 };
                         banData.fails += 1;
-                        attemptsLeft = 3 - banData.fails; // 以雲端次數為主
+                        cloudFails = banData.fails;
                         
-                        if (banData.fails >= 3) {
-                            banData.lockUntil = now + (3 * 60 * 1000); // 鎖定 3 分鐘
-                            banData.fails = 0; // 歸零備用
-                            await ipBanRef.set(banData);
-                            isBanned = true;
-                        } else {
-                            await ipBanRef.set(banData);
+
+                        if (banData.fails === 3) penaltyMinutes = 10;
+                        else if (banData.fails === 4) penaltyMinutes = 30;
+                        else if (banData.fails >= 5) penaltyMinutes = 60;
+                        
+                        if (penaltyMinutes > 0) {
+                            banData.lockUntil = now + (penaltyMinutes * 60 * 1000); 
+
                         }
+                        await ipBanRef.set(banData);
                     } catch(e) { console.log("更新 IP 失敗次數錯誤", e); }
                 }
 
-                // 只要任一防線達到 3 次，就執行封鎖
-                if (loginFailCount >= 3 || isBanned) {
-                    let newLockUntil = now + (3 * 60 * 1000); 
-                    localStorage.setItem('login_lock_until', newLockUntil);
-                    localStorage.setItem('login_fail_count', 0);
-                    alert("偵測到多次登入失敗！\n系統已啟動安全防護，暫停您的登入與 IP 權限 3 分鐘。");
+                // 同步本地與雲端防護次數
+                if (cloudFails > loginFailCount) {
+                    loginFailCount = cloudFails;
+                    localStorage.setItem('login_fail_count', loginFailCount);
+                }
+                
+                // 本地計算懲罰時間（雙重確保）
+                if (penaltyMinutes === 0) {
+                    if (loginFailCount === 3) penaltyMinutes = 10;
+                    else if (loginFailCount === 4) penaltyMinutes = 30;
+                    else if (loginFailCount >= 5) penaltyMinutes = 60;
+                }
+
+                // 顯示封鎖結果或剩餘次數警告
+                if (penaltyMinutes > 0) {
+                    localStorage.setItem('login_lock_until', now + (penaltyMinutes * 60 * 1000));
+                    alert(`偵測到多次登入失敗！\n系統已啟動安全防護，暫停您的登入與 IP 權限 ${penaltyMinutes} 分鐘。`);
                 } else {
-                    let warnText = attemptsLeft > 0 ? `\n(警告：再失敗 ${attemptsLeft} 次將鎖定您的設備與 IP)` : "";
+                    let attemptsLeft = 3 - loginFailCount;
+                    let warnText = attemptsLeft > 0 ? `\n\n(警告：再失敗 ${attemptsLeft} 次將觸發系統鎖定)` : "";
                     switch (error.code) {
                         case 'auth/user-not-found': alert("查無此帳號，請重新確認。" + warnText); break;
                         case 'auth/wrong-password': alert("密碼輸入錯誤，請重新確認。" + warnText); break;
