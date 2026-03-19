@@ -62,6 +62,9 @@
         input:focus { border-color: var(--primary); background: #fff; box-shadow: 0 0 5px rgba(142,151,117,0.2); }
         input::placeholder { color: #bbb; font-size: 13px; letter-spacing: 0; }
         
+        /* 針對序號輸入框的特別樣式，讓它看起來更像金鑰 */
+        #activate-code { text-transform: uppercase; font-family: monospace; font-size: 15px; letter-spacing: 2px; }
+        
         .domain-suffix {
             position: absolute;
             right: 15px;
@@ -81,7 +84,6 @@
         .back-link { display: inline-block; margin-top: 20px; font-size: 13px; color: #888; text-decoration: none; transition: 0.2s; }
         .back-link:hover { color: var(--primary); }
 
-        /* 載入動畫 */
         #loading-overlay { 
             display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
             background: rgba(255,255,255,0.9); z-index: 9999; 
@@ -89,8 +91,6 @@
         }
         .spinner { border: 4px solid #f3f3f3; border-top: 4px solid var(--primary); border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin-bottom: 15px; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-
-        /* 捲軸美化 */
         .activate-card::-webkit-scrollbar { width: 4px; }
         .activate-card::-webkit-scrollbar-thumb { background-color: #ccc; border-radius: 4px; }
     </style>
@@ -107,7 +107,7 @@
 
         <div class="input-group">
             <label>授權序號</label>
-            <input type="text" id="activate-code" placeholder="格式：xxx-xxx-xxx" autocomplete="off">
+            <input type="text" id="activate-code" placeholder="格式：XXXX-XXXX-XXXX-XXXX" maxlength="19" autocomplete="off">
         </div>
 
         <div class="input-group">
@@ -137,7 +137,6 @@
     </div>
 
     <script>
-        // 防止右鍵與 F12 檢查碼
         document.addEventListener('contextmenu', event => event.preventDefault());
         document.addEventListener('keydown', event => {
             if (event.keyCode === 123 || (event.ctrlKey && event.shiftKey && (event.keyCode === 73 || event.keyCode === 74)) || (event.ctrlKey && event.keyCode === 85)) { 
@@ -145,7 +144,20 @@
             }
         });
 
-        // Firebase 基礎設定
+        // =========================================
+        // ✨ 新增：自動格式化序號 (每4碼加一個 - )
+        // =========================================
+        document.getElementById('activate-code').addEventListener('input', function(e) {
+            let target = e.target;
+            // 移除非英數字元
+            let val = target.value.replace(/[^a-zA-Z0-9]/g, '');
+            // 限制最多 16 碼純文字
+            val = val.substring(0, 16);
+            // 每 4 碼自動加上連字號
+            let formatted = val.match(/.{1,4}/g)?.join('-') || val;
+            target.value = formatted;
+        });
+
         const firebaseConfig = {
             apiKey: "AIzaSyALkTnkYY3JZLCTyajahpi4IZKmFX9USdw",
             authDomain: "su-hao-classroom.firebaseapp.com",
@@ -157,7 +169,6 @@
         firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth();
         
-        // GAS API 連線網址
         const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwxFfufe0b7eJpDxSmLgnbVvlq1itLvoD6ZCpvDJKtJg7ChcWn7lpf9LgZqQ4ZsThJiXQ/exec";
 
         function showLoading(text) {
@@ -169,14 +180,14 @@
         }
 
         async function processActivation() {
+            // 注意這裡不轉全大寫去後端驗證，因為後端產生的包含小寫，我們讓它保持原樣傳送
             const code = document.getElementById('activate-code').value.trim();
             const username = document.getElementById('custom-username').value.trim();
             const googleEmail = document.getElementById('google-email').value.trim();
             const pwd = document.getElementById('custom-password').value;
             const pwdConfirm = document.getElementById('confirm-password').value;
 
-            // 表單防呆檢查
-            if (!code) { alert("請輸入授權序號！"); return; }
+            if (!code || code.length !== 19) { alert("請輸入完整的 16 碼授權序號！"); return; }
             if (!username || username.length < 3) { alert("登入帳號格式錯誤，請至少輸入 3 個英數字元！"); return; }
             if (/[^a-zA-Z0-9_]/.test(username)) { alert("登入帳號僅限英文、數字與底線！"); return; }
             
@@ -191,7 +202,6 @@
             try {
                 showLoading("正在驗證序號...");
                 
-                // 1. 去 GAS 驗證開通碼
                 const verifyUrl = `${SCRIPT_URL}?token=SuHaoClassroom2026_SecureKey&action=verifyActivationCode&code=${encodeURIComponent(code)}`;
                 const verifyRes = await fetch(verifyUrl);
                 const verifyResult = await verifyRes.json();
@@ -203,17 +213,15 @@
                 }
 
                 showLoading("序號驗證成功！正在寫入授權...");
-                // 2. 在 Firebase 建立帳號
                 await auth.createUserWithEmailAndPassword(fullEmail, pwd);
 
                 showLoading("正在綁定雲端資料庫...");
-                // 3. 回填資料到 GAS 試算表
                 const bindUrl = `${SCRIPT_URL}?token=SuHaoClassroom2026_SecureKey&action=bindNewAccount&code=${encodeURIComponent(code)}&email=${encodeURIComponent(fullEmail)}&googleEmail=${encodeURIComponent(googleEmail)}`;
                 const bindRes = await fetch(bindUrl);
                 const bindResult = await bindRes.json();
 
                 if (bindResult.success) {
-                    await auth.signOut(); // 註冊完先登出，讓學生自己重新登入
+                    await auth.signOut();
                     hideLoading();
                     alert(`🎉 恭喜 ${verifyResult.studentName} 同學！\n\n系統授權已正式啟用：\n【 ${fullEmail} 】\n\n請妥善保管您的登入資訊，點擊確定後將前往登入頁面。`);
                     window.location.replace("classroom.html");
