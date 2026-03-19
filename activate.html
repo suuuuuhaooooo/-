@@ -126,8 +126,8 @@
         </div>
 
         <div class="input-group">
-            <label>個人備用信箱 (忘記密碼救援使用)</label>
-            <input type="email" id="google-email" placeholder="格式：yourname@email.com" autocomplete="off">
+            <label>個人備用信箱 (限定綁定 Gmail)</label>
+            <input type="email" id="google-email" placeholder="未來觀看影片及密碼救援使用" autocomplete="off">
         </div>
 
         <button class="main-btn" id="submit-btn" onclick="processActivation()">確認並啟用</button>
@@ -181,18 +181,12 @@
 
             if (!code || code.length !== 19) { alert("請輸入完整的 16 碼授權序號！"); return; }
             
-            // ==========================================
-            // 🛡️ 升級版防禦 1：驗證帳號 (8碼以上，英數混合)
-            // ==========================================
             const usernameRegex = /^(?=.*[a-zA-Z])(?=.*\d)[a-zA-Z0-9]{8,}$/;
             if (!usernameRegex.test(username)) { 
                 alert("登入帳號格式錯誤！\n\n請設定「至少 8 碼」，且必須是「英文與數字混合」(不可含符號)。"); 
                 return; 
             }
             
-            // ==========================================
-            // 🛡️ 升級版防禦 2：驗證密碼 (6碼以上，英數混合)
-            // ==========================================
             const pwdRegex = /^(?=.*[a-zA-Z])(?=.*\d).{6,}$/;
             if (!pwdRegex.test(pwd)) { 
                 alert("密碼格式錯誤！\n\n請設定「至少 6 碼」，且必須是「英文與數字混合」。"); 
@@ -201,8 +195,13 @@
             
             if (pwd !== pwdConfirm) { alert("兩次輸入的密碼不一致！"); return; }
             
-            const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-            if (!googleEmail || !emailPattern.test(googleEmail)) { alert("備用信箱格式錯誤，請輸入正確的 Email！"); return; }
+            // ==========================================
+            // 🛡️ 升級版防禦 3：強制限定 Gmail
+            // ==========================================
+            if (!googleEmail || !googleEmail.toLowerCase().endsWith('@gmail.com')) { 
+                alert("備用信箱格式錯誤！\n\n為確保您未來能順利觀看加密教學影片，此欄位「限定綁定 Gmail」，請輸入 @gmail.com 結尾的信箱。"); 
+                return; 
+            }
 
             const fullEmail = username.toLowerCase() + "@suhao.com";
 
