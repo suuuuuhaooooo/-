@@ -50,15 +50,51 @@
         .back-link:hover { color: #555; }
 
 
-        .loading-dots { display: inline-flex; gap: 6px; align-items: center; margin-right: 8px; }
-        .loading-dots div { width: 6px; height: 6px; background-color: var(--primary); border-radius: 50%; animation: bounce 0.5s infinite alternate; }
-        .loading-dots div:nth-child(2) { animation-delay: 0.15s; }
-        .loading-dots div:nth-child(3) { animation-delay: 0.3s; }
+        /* 全螢幕載入遮罩 */
+        #loading-mask {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(255, 255, 255, 0.85); /* 半透明白色背景 */
+            backdrop-filter: blur(5px); /* 背景模糊效果，更具質感 */
+            display: none; /* 預設隱藏 */
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            transition: 0.3s;
+        }
+        
+        /* 轉圈動畫 */
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid #eee;
+            border-top: 4px solid var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 15px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .loading-text {
+            font-size: 14px;
+            color: var(--dark);
+            letter-spacing: 1px;
+            font-weight: 700;
+        }
         @keyframes bounce { from { transform: translateY(0); opacity: 0.5; } to { transform: translateY(-5px); opacity: 1; } }
     </style>
 </head>
 <body oncontextmenu="return false;">
-
+    <div id="loading-mask">
+    <div class="spinner"></div>
+    <div class="loading-text">系統核對中，請稍候...</div>
+    </div>
     <div class="forgot-card">
         <h1>忘記密碼</h1>
         <p>系統核對無誤後，將寄發密碼至您的信箱。</p>
@@ -228,17 +264,19 @@
             msg.style.color = "#8e9775";
             
 
-            msg.innerHTML = `
-                <div class="loading-dots">
-                    <div></div><div></div><div></div>
-                </div>
-                <span>系統資料核對中...</span>
-            `;
+            // 1. 取得遮罩元素
+            const mask = document.getElementById('loading-mask');
+            
+            // 2. 顯示全螢幕遮罩
+            mask.style.display = 'flex'; 
+            btn.disabled = true;
+            msg.innerHTML = ""; // 清空原本下方的訊息提示區
 
             try {
                 const url = `${SCRIPT_URL}?token=SuHaoClassroom2026_SecureKey&action=forgotPassword&account=${encodeURIComponent(account)}&email=${encodeURIComponent(email)}`;
                 const response = await fetch(url);
                 const result = await response.text();
+                mask.style.display = 'none';
 
                 if (result === "SUCCESS") {
                     msg.style.color = "#27ae60";
@@ -297,6 +335,7 @@
                     document.getElementById('captcha-input').value = "";
                 }
             } catch (e) {
+                mask.style.display = 'none'; 
                 msg.style.color = "#b03a2e";
                 msg.innerHTML = "連線失敗，請檢查網路狀態。";
             } finally {
