@@ -130,6 +130,17 @@
     </div>
 
     <script>
+        // 針對手機端：禁用長按選單
+        window.oncontextmenu = function(event) {
+            event.preventDefault();
+            event.stopPropagation();
+            return false;
+        };
+
+        // 禁止選取開始事件
+        document.onselectstart = function() {
+            return false;
+        };
         // 禁用複製 (Ctrl+C) 與剪下 (Ctrl+X)
         document.addEventListener('copy', (e) => e.preventDefault());
         document.addEventListener('cut', (e) => e.preventDefault());
