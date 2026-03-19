@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <link rel="icon" href="https://suuuuuhaooooo.github.io/-/favicon.png" type="image/png">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>蘇昊數理｜找回密碼</title>
+    
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;700&display=swap');
+        :root { --primary: #8e9775; --dark: #5b6348; --bg: #f8f8f6; --white: #ffffff; }
+        
+        body { 
+            font-family: "Noto Serif TC", serif; background-color: var(--bg); 
+            margin: 0; display: flex; justify-content: center; align-items: center; 
+            height: 100vh; user-select: none;
+        }
+
+        .forgot-card { 
+            background: white; padding: 40px; border-radius: 4px; 
+            box-shadow: 0 15px 35px rgba(0,0,0,0.05); width: 340px; 
+            text-align: center; border-top: 6px solid var(--primary); 
+        }
+
+        h1 { font-size: 20px; letter-spacing: 2px; color: var(--dark); margin-bottom: 30px; }
+        p { font-size: 13px; color: #888; margin-bottom: 20px; line-height: 1.6; }
+
+        input { 
+            width: 100%; padding: 14px; margin: 10px 0; border: 1px solid #eee; 
+            background: #fafafa; box-sizing: border-box; outline: none; transition: 0.3s;
+        }
+        input:focus { border-color: var(--primary); background: #fff; }
+
+        .main-btn { 
+            background: var(--primary); color: white; border: none; padding: 14px; 
+            width: 100%; cursor: pointer; font-weight: 700; border-radius: 2px; margin-top: 10px;
+        }
+        .main-btn:disabled { background: #ccc; cursor: not-allowed; }
+
+        .back-link { display: inline-block; margin-top: 20px; font-size: 12px; color: #aaa; text-decoration: none; }
+    </style>
+</head>
+<body oncontextmenu="return false;">
+
+    <div class="forgot-card">
+        <h1>找回認證密碼</h1>
+        <p>請輸入您的系統帳號與當初登記的電子信箱，系統核對無誤後將自動寄發密碼通知信。</p>
+        
+        <input type="email" id="forgot-account" placeholder="系統帳號 (xxxxxx@suhao.com)">
+        <input type="email" id="forgot-email" placeholder="登記的電子信箱">
+        
+        <button id="submit-btn" class="main-btn" onclick="requestPassword()">提交申請</button>
+        
+        <div id="msg" style="margin-top: 15px; font-size: 13px; font-weight: 700;"></div>
+        
+        <a href="classroom.html" class="back-link">返回登入頁面</a>
+    </div>
+
+    <script>
+        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwxFfufe0b7eJpDxSmLgnbVvlq1itLvoD6ZCpvDJKtJg7ChcWn7lpf9LgZqQ4ZsThJiXQ/exec";
+
+        async function requestPassword() {
+            const account = document.getElementById('forgot-account').value.trim();
+            const email = document.getElementById('forgot-email').value.trim();
+            const btn = document.getElementById('submit-btn');
+            const msg = document.getElementById('msg');
+
+            if (!account || !email) { alert("請填寫完整資訊"); return; }
+
+            btn.disabled = true;
+            msg.style.color = "#8e9775";
+            msg.innerText = "系統核對中...";
+
+            try {
+                const url = `${SCRIPT_URL}?token=SuHaoClassroom2026_SecureKey&action=forgotPassword&account=${encodeURIComponent(account)}&email=${encodeURIComponent(email)}`;
+                const response = await fetch(url);
+                const result = await response.text();
+
+                if (result === "SUCCESS") {
+                    msg.style.color = "#27ae60";
+                    msg.innerText = "密碼已成功寄出，請檢查您的信箱。";
+                } else if (result === "NOT_FOUND") {
+                    msg.style.color = "#b03a2e";
+                    msg.innerText = "查無匹配資料，請確認帳號或信箱是否正確。";
+                } else {
+                    msg.style.color = "#b03a2e";
+                    msg.innerText = "系統繁忙，請稍後再試。";
+                }
+            } catch (e) {
+                msg.innerText = "連線失敗，請檢查網路。";
+            } finally {
+                btn.disabled = false;
+            }
+        }
+    </script>
+</body>
+</html>
