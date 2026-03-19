@@ -6,6 +6,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>蘇昊數理｜忘記密碼</title>
     
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-database-compat.js"></script>
+
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;700&display=swap');
         :root { --primary: #8e9775; --dark: #5b6348; --bg: #f8f8f6; --white: #ffffff; }
@@ -22,54 +25,201 @@
             text-align: center; border-top: 6px solid var(--primary); 
         }
 
-        h1 { font-size: 20px; letter-spacing: 2px; color: var(--dark); margin-bottom: 30px; }
-        p { font-size: 13px; color: #888; margin-bottom: 20px; line-height: 1.6; }
+        h1 { font-size: 20px; letter-spacing: 2px; color: var(--dark); margin-bottom: 10px; }
+        p { font-size: 12px; color: #888; margin-bottom: 25px; line-height: 1.6; }
 
         input { 
-            width: 100%; padding: 14px; margin: 10px 0; border: 1px solid #eee; 
+            width: 100%; padding: 14px; margin: 8px 0; border: 1px solid #eee; 
             background: #fafafa; box-sizing: border-box; outline: none; transition: 0.3s;
         }
         input:focus { border-color: var(--primary); background: #fff; }
 
+        /* 驗證碼區塊樣式 */
+        .captcha-container { display: flex; align-items: center; gap: 10px; margin: 10px 0; }
+        #captcha-canvas { background: #eef1ec; cursor: pointer; border-radius: 2px; flex: 1; height: 45px; }
+        #captcha-input { margin: 0; flex: 1; }
+
         .main-btn { 
             background: var(--primary); color: white; border: none; padding: 14px; 
-            width: 100%; cursor: pointer; font-weight: 700; border-radius: 2px; margin-top: 10px;
+            width: 100%; cursor: pointer; font-weight: 700; border-radius: 2px; margin-top: 15px; transition: 0.3s;
         }
         .main-btn:disabled { background: #ccc; cursor: not-allowed; }
+        .main-btn:hover:not(:disabled) { background: var(--dark); }
 
-        .back-link { display: inline-block; margin-top: 20px; font-size: 12px; color: #aaa; text-decoration: none; }
+        .back-link { display: inline-block; margin-top: 20px; font-size: 12px; color: #aaa; text-decoration: none; transition: 0.2s; }
+        .back-link:hover { color: #555; }
     </style>
 </head>
 <body oncontextmenu="return false;">
 
     <div class="forgot-card">
         <h1>忘記密碼</h1>
-        <p>請輸入您的系統帳號與當初登記的電子信箱，系統核對無誤後將自動寄發密碼通知信。</p>
+        <p>系統核對無誤後，將寄發密碼至您的信箱。</p>
         
-        <input type="email" id="forgot-account" placeholder="帳號">
-        <input type="email" id="forgot-email" placeholder="電子信箱">
+        <input type="email" id="forgot-account" placeholder="帳號" autocomplete="off">
+        <input type="email" id="forgot-email" placeholder="電子信箱" autocomplete="off">
         
-        <button id="submit-btn" class="main-btn" onclick="requestPassword()">確認送出</button>
+        <div class="captcha-container">
+            <canvas id="captcha-canvas" width="120" height="45" title="點擊更換驗證碼" onclick="drawCaptcha()"></canvas>
+            <input type="text" id="captcha-input" placeholder="驗證碼" autocomplete="off">
+        </div>
         
-        <div id="msg" style="margin-top: 15px; font-size: 13px; font-weight: 700;"></div>
+        <button id="submit-btn" class="main-btn" onclick="requestPassword()">提交</button>
         
-        <a href="classroom.html" class="back-link">返回登入頁面</a>
+        <div id="msg" style="margin-top: 15px; font-size: 13px; font-weight: 700; height: 18px;"></div>
+        
+        <a href="classroom.html" class="back-link">返回雲端教室登入頁</a>
     </div>
 
     <script>
+        // 1. Firebase 系統初始化
+        const firebaseConfig = {
+            apiKey: "AIzaSyALkTnkYY3JZLCTyajahpi4IZKmFX9USdw",
+            authDomain: "su-hao-classroom.firebaseapp.com",
+            projectId: "su-hao-classroom",
+            storageBucket: "su-hao-classroom.firebasestorage.app",
+            messagingSenderId: "764168135846",
+            appId: "1:764168135846:web:f2923a5f4952fa1ca64067",
+            databaseURL: "https://su-hao-classroom-default-rtdb.firebaseio.com/"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
         const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwxFfufe0b7eJpDxSmLgnbVvlq1itLvoD6ZCpvDJKtJg7ChcWn7lpf9LgZqQ4ZsThJiXQ/exec";
 
+        let currentCaptcha = "";
+        let globalClientIP = "unknown_IP";
+
+        // 2. 頁面載入時獲取 IP 與畫驗證碼
+        window.onload = function() {
+            drawCaptcha();
+            fetch('https://api.ipify.org?format=json')
+                .then(res => res.json())
+                .then(data => { globalClientIP = data.ip; })
+                .catch(err => console.log("獲取 IP 失敗", err));
+        };
+
+        // 3. 圖形驗證碼繪製邏輯
+        function drawCaptcha() {
+            const canvas = document.getElementById('captcha-canvas');
+            const ctx = canvas.getContext('2d');
+            const chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjklmnpqrstuvwxyz23456789";
+            
+            const r = Math.floor(Math.random() * 50 + 200);
+            const g = Math.floor(Math.random() * 50 + 200);
+            const b = Math.floor(Math.random() * 50 + 200);
+            ctx.fillStyle = `rgb(${r},${g},${b})`;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            let code = "";
+            for (let i = 0; i < 4; i++) code += chars.charAt(Math.floor(Math.random() * chars.length));
+            currentCaptcha = code;
+
+            for (let i = 0; i < 500; i++) {
+                ctx.fillStyle = `rgba(${Math.random()*255},${Math.random()*255},${Math.random()*255}, ${Math.random()*0.5})`;
+                ctx.fillRect(Math.random()*canvas.width, Math.random()*canvas.height, 1.5, 1.5);
+            }
+
+            const fontFamilies = ['Courier New', 'Georgia', 'Arial', 'Impact', 'Times New Roman'];
+            for (let i = 0; i < code.length; i++) {
+                const fontFamily = fontFamilies[Math.floor(Math.random() * fontFamilies.length)];
+                const fontSize = Math.floor(Math.random() * 10) + 26; 
+                ctx.font = `italic bold ${fontSize}px ${fontFamily}`;
+                ctx.save();
+                
+                const x = 12 + i * 24 + (Math.random() - 0.5) * 6;
+                const y = 32 + (Math.random() - 0.5) * 8; 
+                ctx.translate(x, y);
+                ctx.rotate((Math.random() - 0.5) * 1.0); 
+                
+                const scaleX = 0.7 + Math.random() * 0.4;
+                const scaleY = 0.7 + Math.random() * 0.4;
+                ctx.scale(scaleX, scaleY);
+                const skewX = (Math.random() - 0.5) * 0.6;
+                const skewY = (Math.random() - 0.5) * 0.6;
+                ctx.transform(1, skewY, skewX, 1, 0, 0);
+                
+                const cR = Math.floor(Math.random() * 120);
+                const cG = Math.floor(Math.random() * 120);
+                const cB = Math.floor(Math.random() * 120);
+                
+                if (Math.random() > 0.4) {
+                    ctx.fillStyle = `rgba(${cR},${cG},${cB}, 0.9)`;
+                    ctx.fillText(code[i], 0, 0);
+                } else {
+                    ctx.lineWidth = Math.random() * 1.5 + 0.5; 
+                    ctx.strokeStyle = `rgba(${cR},${cG},${cB}, 0.9)`;
+                    ctx.strokeText(code[i], 0, 0);
+                    ctx.fillStyle = `rgba(${Math.random()*255},${Math.random()*255},${Math.random()*255}, 0.4)`;
+                    ctx.fillText(code[i], 0, 0);
+                }
+                ctx.restore();
+            }
+
+            for (let i = 0; i < 6; i++) {
+                ctx.strokeStyle = `rgba(${Math.random()*150},${Math.random()*150},${Math.random()*150}, 0.8)`;
+                ctx.lineWidth = Math.random() * 2.5 + 0.5;
+                ctx.beginPath();
+                ctx.moveTo(Math.random() * canvas.width * 0.2, Math.random() * canvas.height);
+                ctx.bezierCurveTo(
+                    canvas.width / 2, Math.random() * canvas.height * 2 - canvas.height / 2, 
+                    canvas.width / 2, Math.random() * canvas.height * 2 - canvas.height / 2,
+                    canvas.width * 0.8 + Math.random() * canvas.width * 0.2, Math.random() * canvas.height 
+                );
+                ctx.stroke();
+            }
+        }
+
+        // 4. 核心查詢與防護邏輯
         async function requestPassword() {
+            const now = Date.now();
+            const safeIP = globalClientIP !== "unknown_IP" ? globalClientIP.replace(/[.#$\[\]:]/g, '_') : "unknown_IP";
+            const ipBanRef = db.ref('ip_bans/' + safeIP);
+
+            // 檢查 Firebase 雲端 IP 封鎖
+            if (safeIP !== "unknown_IP") {
+                try {
+                    const snap = await ipBanRef.once('value');
+                    const banData = snap.val();
+                    if (banData && banData.lockUntil > now) {
+                        const remainingSec = Math.ceil((banData.lockUntil - now) / 1000);
+                        alert(`【系統通知】\n此 IP 位址因連續異常操作，已被系統暫時封鎖。\n請等待 ${Math.floor(remainingSec / 60)} 分 ${remainingSec % 60} 秒後再嘗試。`);
+                        return;
+                    }
+                } catch (e) { console.log(e); }
+            }
+
+            // 檢查本地端封鎖
+            let lockUntil = parseInt(localStorage.getItem('login_lock_until') || '0', 10);
+            let loginFailCount = parseInt(localStorage.getItem('login_fail_count') || '0', 10);
+            
+            if (now < lockUntil) {
+                const remainingSec = Math.ceil((lockUntil - now) / 1000);
+                alert(`【系統通知】\n因連續錯誤多次，請等待 ${Math.floor(remainingSec / 60)} 分 ${remainingSec % 60} 秒後再嘗試。`);
+                return;
+            }
+
             const account = document.getElementById('forgot-account').value.trim();
             const email = document.getElementById('forgot-email').value.trim();
-            const btn = document.getElementById('submit-btn');
-            const msg = document.getElementById('msg');
+            const captchaInput = document.getElementById('captcha-input').value.trim();
 
             if (!account || !email) { alert("請填寫完整資訊"); return; }
+            if (!captchaInput) { alert("請輸入驗證碼"); return; }
+            
+            // 驗證碼核對
+            if (captchaInput !== currentCaptcha) {
+                alert("驗證碼錯誤（請注意大小寫需完全一致）");
+                drawCaptcha();
+                document.getElementById('captcha-input').value = "";
+                document.getElementById('captcha-input').focus();
+                return;
+            }
 
+            // 開始發送請求
+            const btn = document.getElementById('submit-btn');
+            const msg = document.getElementById('msg');
             btn.disabled = true;
             msg.style.color = "#8e9775";
-            msg.innerText = "系統核對中...";
+            msg.innerText = "系統資料核對中...";
 
             try {
                 const url = `${SCRIPT_URL}?token=SuHaoClassroom2026_SecureKey&action=forgotPassword&account=${encodeURIComponent(account)}&email=${encodeURIComponent(email)}`;
@@ -78,16 +228,63 @@
 
                 if (result === "SUCCESS") {
                     msg.style.color = "#27ae60";
-                    msg.innerText = "密碼已成功寄出，請檢查您的信箱。";
-                } else if (result === "NOT_FOUND") {
-                    msg.style.color = "#b03a2e";
-                    msg.innerText = "查無匹配資料，請確認帳號或信箱是否正確。";
+                    msg.innerText = "密碼已成功寄出，請前往信箱收件。";
+
+                    localStorage.removeItem('login_fail_count');
+                    localStorage.removeItem('login_lock_until');
+                    if (safeIP !== "unknown_IP") ipBanRef.remove();
                 } else {
+                    // 處理錯誤與累加懲罰機制
                     msg.style.color = "#b03a2e";
-                    msg.innerText = "系統繁忙，請稍後再試。";
+                    msg.innerText = result === "NOT_FOUND" ? "查無匹配資料，請確認帳號或信箱。" : "系統繁忙，請稍後再試。";
+                    
+                    loginFailCount++;
+                    localStorage.setItem('login_fail_count', loginFailCount);
+
+                    let penaltyMinutes = 0;
+                    let cloudFails = loginFailCount;
+
+                    if (safeIP !== "unknown_IP") {
+                        try {
+                            const snap = await ipBanRef.once('value');
+                            let banData = snap.val() || { fails: 0, lockUntil: 0 };
+                            banData.fails += 1;
+                            cloudFails = banData.fails;
+                            
+                            if (banData.fails === 3) penaltyMinutes = 10;
+                            else if (banData.fails === 4) penaltyMinutes = 30;
+                            else if (banData.fails >= 5) penaltyMinutes = 60;
+                            
+                            if (penaltyMinutes > 0) banData.lockUntil = now + (penaltyMinutes * 60 * 1000);
+                            await ipBanRef.set(banData);
+                        } catch(e) {}
+                    }
+
+                    if (cloudFails > loginFailCount) {
+                        loginFailCount = cloudFails;
+                        localStorage.setItem('login_fail_count', loginFailCount);
+                    }
+                    if (penaltyMinutes === 0) {
+                        if (loginFailCount === 3) penaltyMinutes = 10;
+                        else if (loginFailCount === 4) penaltyMinutes = 30;
+                        else if (loginFailCount >= 5) penaltyMinutes = 60;
+                    }
+
+                    if (penaltyMinutes > 0) {
+                        localStorage.setItem('login_lock_until', now + (penaltyMinutes * 60 * 1000));
+                        alert(`偵測到多次輸入錯誤！\n系統已啟動安全防護，暫停您的查詢與 IP 權限 ${penaltyMinutes} 分鐘。`);
+                    } else {
+                        let attemptsLeft = 3 - loginFailCount;
+                        if(attemptsLeft > 0) alert(`資料錯誤！\n(警告：再失敗 ${attemptsLeft} 次將觸發系統鎖定)`);
+                    }
+                    
+                    // 每次失敗強制更換驗證碼
+                    drawCaptcha();
+                    document.getElementById('captcha-input').value = "";
                 }
             } catch (e) {
-                msg.innerText = "連線失敗，請檢查網路。";
+                msg.style.color = "#b03a2e";
+                msg.innerText = "連線失敗，請檢查網路狀態。";
             } finally {
                 btn.disabled = false;
             }
