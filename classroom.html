@@ -766,7 +766,8 @@
                     if (my) {
                         document.getElementById('student-name').innerText = my.name + " 同學";
                         localStorage.setItem('studentName', my.name);
-                        document.getElementById('student-meta').innerHTML = `<span class="info-tag">${my.level} 年級</span><span class="info-tag">${my.subject}</span>`;
+                        const subjectTags = my.subject ? my.subject.toString().split(/[,，]/).filter(s => s.trim() !== "").map(s => `<span class="info-tag">${s.trim()}</span>`).join('') : '';
+                        document.getElementById('student-meta').innerHTML = `<span class="info-tag">${my.level} 年級</span>${subjectTags}`;
                         
                         if (!sessionStorage.getItem('hasSeenPopups')) {
                             sendLoginNotify(my.name, my.studentEmail);
