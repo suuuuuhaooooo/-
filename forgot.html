@@ -225,7 +225,7 @@
                     const banData = snap.val();
                     if (banData && banData.lockUntil > now) {
                         const remainingSec = Math.ceil((banData.lockUntil - now) / 1000);
-                        alert(`【系統通知】\n此 IP 位址因連續異常操作，已被系統暫時封鎖。\n請等待 ${Math.floor(remainingSec / 60)} 分 ${remainingSec % 60} 秒後再嘗試。`);
+                        alert(`【系統通知】\n因連續異常操作，已被系統暫時封鎖。\n請等待 ${Math.floor(remainingSec / 60)} 分 ${remainingSec % 60} 秒後再嘗試。`);
                         return;
                     }
                 } catch (e) { console.log(e); }
@@ -324,7 +324,7 @@
 
                     if (penaltyMinutes > 0) {
                         localStorage.setItem('login_lock_until', now + (penaltyMinutes * 60 * 1000));
-                        alert(`偵測到多次輸入錯誤！\n系統已啟動安全防護，暫停您的查詢與 IP 權限 ${penaltyMinutes} 分鐘。`);
+                        alert(`偵測到多次輸入錯誤！\n系統已啟動安全防護，暫停您的查詢權限 ${penaltyMinutes} 分鐘。`);
                     } else {
                         let attemptsLeft = 3 - loginFailCount;
                         if(attemptsLeft > 0) alert(`資料錯誤！\n(警告：再失敗 ${attemptsLeft} 次將觸發系統鎖定)`);
