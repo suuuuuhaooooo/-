@@ -62,7 +62,6 @@
         input:focus { border-color: var(--primary); background: #fff; box-shadow: 0 0 5px rgba(142,151,117,0.2); }
         input::placeholder { color: #bbb; font-size: 13px; letter-spacing: 0; }
         
-        /* 針對序號輸入框的特別樣式，讓它看起來更像金鑰 */
         #activate-code { text-transform: uppercase; font-family: monospace; font-size: 15px; letter-spacing: 2px; }
         
         .domain-suffix {
@@ -111,14 +110,14 @@
         </div>
 
         <div class="input-group">
-            <label>自訂登入帳號</label>
-            <input type="text" id="custom-username" placeholder="格式：至少3碼英數" autocomplete="off" style="padding-right: 110px;">
+            <label>自訂登入帳號 (至少 8 碼)</label>
+            <input type="text" id="custom-username" placeholder="格式：需包含英文與數字" autocomplete="off" style="padding-right: 110px;">
             <span class="domain-suffix">@suhao.com</span>
         </div>
 
         <div class="input-group">
-            <label>設定登入密碼</label>
-            <input type="password" id="custom-password" placeholder="格式：至少6碼">
+            <label>設定登入密碼 (至少 6 碼)</label>
+            <input type="password" id="custom-password" placeholder="格式：需包含英文與數字">
         </div>
 
         <div class="input-group">
@@ -144,16 +143,10 @@
             }
         });
 
-        // =========================================
-        // ✨ 新增：自動格式化序號 (每4碼加一個 - )
-        // =========================================
         document.getElementById('activate-code').addEventListener('input', function(e) {
             let target = e.target;
-            // 移除非英數字元
             let val = target.value.replace(/[^a-zA-Z0-9]/g, '');
-            // 限制最多 16 碼純文字
             val = val.substring(0, 16);
-            // 每 4 碼自動加上連字號
             let formatted = val.match(/.{1,4}/g)?.join('-') || val;
             target.value = formatted;
         });
@@ -180,7 +173,6 @@
         }
 
         async function processActivation() {
-            // 注意這裡不轉全大寫去後端驗證，因為後端產生的包含小寫，我們讓它保持原樣傳送
             const code = document.getElementById('activate-code').value.trim();
             const username = document.getElementById('custom-username').value.trim();
             const googleEmail = document.getElementById('google-email').value.trim();
@@ -188,10 +180,25 @@
             const pwdConfirm = document.getElementById('confirm-password').value;
 
             if (!code || code.length !== 19) { alert("請輸入完整的 16 碼授權序號！"); return; }
-            if (!username || username.length < 3) { alert("登入帳號格式錯誤，請至少輸入 3 個英數字元！"); return; }
-            if (/[^a-zA-Z0-9_]/.test(username)) { alert("登入帳號僅限英文、數字與底線！"); return; }
             
-            if (!pwd || pwd.length < 6) { alert("密碼格式錯誤，請至少設定 6 碼！"); return; }
+            // ==========================================
+            // 🛡️ 升級版防禦 1：驗證帳號 (8碼以上，英數混合)
+            // ==========================================
+            const usernameRegex = /^(?=.*[a-zA-Z])(?=.*\d)[a-zA-Z0-9]{8,}$/;
+            if (!usernameRegex.test(username)) { 
+                alert("登入帳號格式錯誤！\n\n請設定「至少 8 碼」，且必須是「英文與數字混合」(不可含符號)。"); 
+                return; 
+            }
+            
+            // ==========================================
+            // 🛡️ 升級版防禦 2：驗證密碼 (6碼以上，英數混合)
+            // ==========================================
+            const pwdRegex = /^(?=.*[a-zA-Z])(?=.*\d).{6,}$/;
+            if (!pwdRegex.test(pwd)) { 
+                alert("密碼格式錯誤！\n\n請設定「至少 6 碼」，且必須是「英文與數字混合」。"); 
+                return; 
+            }
+            
             if (pwd !== pwdConfirm) { alert("兩次輸入的密碼不一致！"); return; }
             
             const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
