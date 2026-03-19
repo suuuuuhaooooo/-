@@ -3,8 +3,8 @@
 <head>
     <link rel="icon" href="https://suuuuuhaooooo.github.io/-/favicon.png" type="image/png">
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>蘇昊數理｜教務管理系統</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>蘇昊數理｜教務管理系統 Pro</title>
 
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
@@ -16,197 +16,129 @@
 
         :root { 
             --sidebar-bg: #0f172a; 
-            --sidebar-hover: #1e293b; 
-            --primary: #2563eb; 
-            --primary-hover: #1d4ed8;
-            --text-main: #334155;
-            --text-muted: #64748b;
-            --bg-body: #f8fafc; 
-            --bg-card: #ffffff;
-            --border: #e2e8f0;
-            --danger: #dc2626;
-            --success: #059669;
-            --warning: #d97706;
+            --primary: #1e40af; 
+            --bg-body: #f1f5f9; 
+            --text-main: #1e293b;
+            --border: #cbd5e1;
+        }
+
+        /* 嚴格禁用交互與複製 */
+        html { 
+            -webkit-user-select: none; -moz-user-select: none; -ms-user-select: none; user-select: none;
+            -webkit-touch-callout: none;
         }
 
         body { 
-            font-family: "Noto Serif TC", serif; 
-            background-color: var(--bg-body); 
-            margin: 0; color: var(--text-main); 
-            height: 100vh; overflow: hidden; display: flex;
+            font-family: "Noto Serif TC", serif; background-color: var(--bg-body); 
+            margin: 0; color: var(--text-main); display: flex; height: 100vh; overflow: hidden;
         }
 
-        /* 系統登入介面 */
-        #login-ui { display: flex; justify-content: center; align-items: center; width: 100%; height: 100vh; position: fixed; top: 0; left: 0; background: var(--bg-body); z-index: 10000; }
-        .login-card { background: var(--bg-card); padding: 40px; border-radius: 6px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); width: 320px; text-align: center; border: 1px solid var(--border); }
-        .login-card h1 { font-size: 20px; font-weight: 700; color: #0f172a; margin: 0 0 10px 0; letter-spacing: 1px; }
-        .badge { display: inline-block; background: #e2e8f0; color: #475569; font-size: 12px; padding: 4px 12px; border-radius: 4px; margin-bottom: 25px; font-weight: 600; }
-        input { width: 100%; padding: 12px; margin: 8px 0 16px 0; border: 1px solid var(--border); border-radius: 4px; outline: none; box-sizing: border-box; font-size: 14px; transition: 0.2s;}
-        input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1); }
-        .btn-primary { background: var(--primary); color: white; border: none; padding: 12px; width: 100%; cursor: pointer; font-weight: 600; border-radius: 4px; transition: 0.2s; font-size: 14px; letter-spacing: 1px;}
-        .btn-primary:hover { background: var(--primary-hover); }
+        /* 手機版適應性佈局 (Mobile First) */
+        #admin-ui { display: none; width: 100%; flex-direction: column; }
+        
+        @media (min-width: 768px) {
+            #admin-ui { flex-direction: row; }
+            .sidebar { width: 220px; height: 100vh; }
+            .main-content { padding: 30px; }
+        }
 
-        /* 管理系統主佈局 */
-        #admin-ui { display: none; width: 100%; height: 100vh; }
-        
-        .sidebar { width: 240px; background: var(--sidebar-bg); color: white; display: flex; flex-direction: column; flex-shrink: 0; }
-        .sidebar-brand { padding: 25px 20px; border-bottom: 1px solid #334155; margin-bottom: 15px; }
-        .sidebar-brand h2 { margin: 0; font-size: 18px; font-weight: 700; color: #f8fafc; letter-spacing: 1px; }
-        .sidebar-brand p { margin: 5px 0 0 0; font-size: 12px; color: #94a3b8; }
-        
-        .nav-link { padding: 14px 20px; color: #cbd5e1; text-decoration: none; cursor: pointer; transition: 0.2s; font-size: 14px; display: block; border-left: 3px solid transparent; }
-        .nav-link:hover, .nav-link.active { background: var(--sidebar-hover); color: white; border-left-color: var(--primary); font-weight: 600; }
-        
-        .main-content { flex-grow: 1; padding: 30px 40px; overflow-y: auto; }
-        .dashboard-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 20px; margin-bottom: 25px; }
-        .dashboard-header h1 { margin: 0; font-size: 20px; color: #0f172a; font-weight: 600; }
-        .btn-outline { background: white; color: var(--text-main); border: 1px solid var(--border); padding: 8px 16px; border-radius: 4px; cursor: pointer; font-size: 13px; font-weight: 600; transition: 0.2s; }
-        .btn-outline:hover { background: #f1f5f9; border-color: #cbd5e1; }
+        .sidebar { background: var(--sidebar-bg); color: white; display: flex; flex-direction: column; }
+        .sidebar-brand { padding: 20px; border-bottom: 1px solid #334155; text-align: center; }
+        .sidebar-brand h2 { font-size: 16px; margin: 0; letter-spacing: 2px; }
 
-        /* 數據指標卡片 */
-        .kpi-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin-bottom: 25px; }
-        .kpi-card { background: var(--bg-card); padding: 20px; border-radius: 6px; border: 1px solid var(--border); box-shadow: 0 1px 2px rgba(0,0,0,0.02); display: flex; flex-direction: column; }
-        .kpi-title { font-size: 13px; color: var(--text-muted); font-weight: 600; margin-bottom: 8px; }
-        .kpi-value { font-size: 26px; font-weight: 700; color: #0f172a; }
-        .kpi-sub { font-size: 12px; color: var(--text-muted); margin-top: 5px; }
-        
-        /* 區塊容器 */
-        .section-title { font-size: 16px; font-weight: 600; color: #0f172a; margin: 30px 0 15px 0; border-left: 4px solid var(--primary); padding-left: 10px; }
-        .grid-row { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 25px; }
-        .panel-card { background: var(--bg-card); padding: 25px; border-radius: 6px; border: 1px solid var(--border); box-shadow: 0 1px 2px rgba(0,0,0,0.02); }
-        .panel-header { font-size: 15px; font-weight: 600; color: #0f172a; margin: 0 0 20px 0; border-bottom: 1px solid var(--border); padding-bottom: 10px;}
-        
-        /* 表格樣式 */
-        table { width: 100%; border-collapse: collapse; font-size: 13px; text-align: left; }
-        th { padding: 10px; border-bottom: 2px solid var(--border); color: var(--text-muted); font-weight: 600; }
-        td { padding: 10px; border-bottom: 1px solid var(--border); color: var(--text-main); }
-        tr:hover td { background-color: #f8fafc; }
-        
-        .status-dot { display: inline-block; width: 8px; height: 8px; background: var(--success); border-radius: 50%; margin-right: 6px; }
-        .btn-danger-sm { background: white; color: var(--danger); border: 1px solid #fca5a5; padding: 4px 10px; border-radius: 4px; font-size: 12px; cursor: pointer; transition: 0.2s; font-weight: 600;}
-        .btn-danger-sm:hover { background: #fef2f2; border-color: #ef4444; }
+        .nav-link { padding: 15px 20px; color: #94a3b8; text-decoration: none; font-size: 14px; border-bottom: 1px solid #1e293b; }
+        .nav-link.active { background: #1e293b; color: white; border-left: 4px solid var(--primary); }
 
-        .empty-state { text-align: center; padding: 25px; color: var(--text-muted); font-size: 13px; font-style: normal; }
+        .main-content { flex-grow: 1; overflow-y: auto; padding: 15px; -webkit-overflow-scrolling: touch; }
+        
+        /* 數據卡片設計 */
+        .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; margin-bottom: 20px; }
+        .kpi-card { background: white; padding: 15px; border-radius: 4px; border: 1px solid var(--border); }
+        .kpi-label { font-size: 12px; color: #64748b; margin-bottom: 5px; }
+        .kpi-value { font-size: 20px; font-weight: 700; }
 
-        /* 系統載入狀態 */
-        #loading-screen { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.9); z-index: 1000; flex-direction: column; justify-content: center; align-items: center; }
-        .spinner { border: 3px solid #e2e8f0; border-top: 3px solid var(--primary); border-radius: 50%; width: 24px; height: 24px; animation: spin 1s linear infinite; margin-bottom: 15px; }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        /* 圖表區塊 */
+        .chart-container { background: white; padding: 20px; border-radius: 4px; border: 1px solid var(--border); margin-bottom: 20px; }
+        .chart-title { font-size: 14px; font-weight: 600; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 1px solid #f1f5f9; }
+
+        /* 表格響應式優化 */
+        .table-wrapper { width: 100%; overflow-x: auto; background: white; border: 1px solid var(--border); }
+        table { width: 100%; border-collapse: collapse; font-size: 13px; min-width: 500px; }
+        th { background: #f8fafc; padding: 12px; text-align: left; border-bottom: 2px solid var(--border); color: #475569; }
+        td { padding: 12px; border-bottom: 1px solid #f1f5f9; }
+
+        /* 登入介面 */
+        #login-ui { position: fixed; inset: 0; background: var(--bg-body); display: flex; justify-content: center; align-items: center; z-index: 9999; }
+        .login-box { background: white; padding: 30px; width: 90%; max-width: 350px; border-radius: 4px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
+        .login-box input { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid var(--border); border-radius: 4px; box-sizing: border-box; }
+        .btn-login { width: 100%; padding: 12px; background: var(--primary); color: white; border: none; cursor: pointer; font-weight: 600; }
+
     </style>
 </head>
-<body>
+<body oncontextmenu="return false;" onselectstart="return false;" ondragstart="return false;">
 
     <div id="login-ui">
-        <div class="login-card">
-            <h1>教務管理系統</h1>
-            <div class="badge">管理權限驗證</div>
-            <input type="email" id="admin-email" placeholder="管理員帳號" autocomplete="off">
-            <input type="password" id="admin-password" placeholder="登入密碼">
-            <button class="btn-primary" onclick="adminLogin()">系統登入</button>
+        <div class="login-box">
+            <h2 style="text-align:center; margin-top:0;">管理員驗證</h2>
+            <input type="email" id="adm-email" placeholder="電子郵件">
+            <input type="password" id="adm-pass" placeholder="密碼">
+            <button class="btn-login" onclick="handleLogin()">進入系統</button>
         </div>
     </div>
 
-    <div id="loading-screen">
-        <div class="spinner"></div>
-        <div style="color: var(--text-muted); font-size: 13px; font-weight: 600;">資料庫同步中，請稍候。</div>
-    </div>
-
     <div id="admin-ui">
-        <nav class="sidebar">
-            <div class="sidebar-brand">
-                <h2>蘇昊數理</h2>
-                <p>管理後臺系統</p>
-            </div>
-            <a class="nav-link active">系統與考情總覽</a>
-            <div style="flex-grow: 1;"></div>
-            <div style="padding: 20px; font-size: 11px; color: #475569; border-top: 1px solid #334155;">系統版本 2.2.0<br>Firebase Realtime Data</div>
-        </nav>
+        <aside class="sidebar">
+            <div class="sidebar-brand"><h2>蘇昊數理控制台</h2></div>
+            <nav style="display: flex; flex-direction: column; flex-grow: 1;">
+                <a class="nav-link active">核心考情分析</a>
+                <a class="nav-link">學生資安監控</a>
+                <div style="flex-grow:1"></div>
+                <a onclick="auth.signOut()" class="nav-link" style="color:#f87171">登出系統</a>
+            </nav>
+        </aside>
 
         <main class="main-content">
-            <header class="dashboard-header">
-                <h1>系統與考情總覽</h1>
-                <button class="btn-outline" onclick="logout()">安全登出</button>
-            </header>
+            <div class="kpi-grid">
+                <div class="kpi-card"><div class="kpi-label">今日測驗人次</div><div class="kpi-value" id="count-today">0</div></div>
+                <div class="kpi-card"><div class="kpi-label">全體平均正確率</div><div class="kpi-value" id="avg-accuracy">0%</div></div>
+                <div class="kpi-card" style="border-left: 4px solid #ef4444;"><div class="kpi-label">資安封鎖中 IP</div><div class="kpi-value" id="count-banned">0</div></div>
+            </div>
 
-            <section class="kpi-row">
-                <div class="kpi-card">
-                    <div class="kpi-title">目前在線學員</div>
-                    <div class="kpi-value" id="kpi-online">0</div>
-                    <div class="kpi-sub">即時連線狀態</div>
-                </div>
-                <div class="kpi-card">
-                    <div class="kpi-title">測驗紀錄總數</div>
-                    <div class="kpi-value" id="kpi-total-exams">0</div>
-                    <div class="kpi-sub">全系統測驗人次</div>
-                </div>
-                <div class="kpi-card">
-                    <div class="kpi-title">全體平均測驗分數</div>
-                    <div class="kpi-value" id="kpi-avg-score">0</div>
-                    <div class="kpi-sub">歷史紀錄加總平均</div>
-                </div>
-                <div class="kpi-card">
-                    <div class="kpi-title">系統異常封鎖數</div>
-                    <div class="kpi-value" id="kpi-banned">0</div>
-                    <div class="kpi-sub">當前遭封鎖之 IP</div>
-                </div>
-            </section>
+            <div class="chart-container">
+                <div class="chart-title">跨試卷：知識點弱點分析（正確率由低至高）</div>
+                <canvas id="topicChart" style="max-height: 250px;"></canvas>
+            </div>
 
-            <div class="section-title">測驗數據與考情分析</div>
-            <section class="grid-row">
-                <div class="panel-card">
-                    <h3 class="panel-header">成績區間分佈比例</h3>
-                    <div style="height: 220px; display: flex; justify-content: center;">
-                        <canvas id="scoreChart"></canvas>
-                    </div>
-                </div>
-                
-                <div class="panel-card">
-                    <h3 class="panel-header">高錯誤率題型與單元分析</h3>
-                    <div style="height: 220px;">
-                        <canvas id="errorRateChart"></canvas>
-                    </div>
-                </div>
-            </section>
-
-            <div class="section-title">系統即時監控</div>
-            <section class="grid-row">
-                <div class="panel-card" style="overflow-y: auto; max-height: 300px;">
-                    <h3 class="panel-header">即時在線學員清單</h3>
+            <div class="chart-container">
+                <div class="chart-title">近期測驗紀錄彙整</div>
+                <div class="table-wrapper">
                     <table>
                         <thead>
                             <tr>
-                                <th>學員姓名</th>
-                                <th>所屬年級</th>
+                                <th>學生</th>
+                                <th>測驗名稱</th>
+                                <th>分數</th>
+                                <th>完成時間</th>
                                 <th>狀態</th>
                             </tr>
                         </thead>
-                        <tbody id="online-users-tbody">
-                            <tr><td colspan="3" class="empty-state">資料讀取中...</td></tr>
+                        <tbody id="exam-list">
+                            <tr><td colspan="5" style="text-align:center; padding:40px;">讀取即時數據中...</td></tr>
                         </tbody>
                     </table>
                 </div>
-
-                <div class="panel-card" style="overflow-y: auto; max-height: 300px;">
-                    <h3 class="panel-header">系統安全攔截紀錄</h3>
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>來源 IP 位址</th>
-                                <th>違規次數</th>
-                                <th>操作管理</th>
-                            </tr>
-                        </thead>
-                        <tbody id="banned-ips-tbody">
-                            <tr><td colspan="3" class="empty-state">目前無異常封鎖紀錄。</td></tr>
-                        </tbody>
-                    </table>
-                </div>
-            </section>
+            </div>
         </main>
     </div>
 
     <script>
-        // Firebase 設定與初始化
+        // 禁止 F12 與 開發者工具常用快速鍵
+        document.onkeydown = function(e) {
+            if (e.keyCode == 123 || (e.ctrlKey && e.shiftKey && (e.keyCode == 73 || e.keyCode == 74)) || (e.ctrlKey && e.keyCode == 85)) {
+                return false;
+            }
+        };
+
         const firebaseConfig = {
             apiKey: "AIzaSyALkTnkYY3JZLCTyajahpi4IZKmFX9USdw",
             authDomain: "su-hao-classroom.firebaseapp.com",
@@ -219,224 +151,101 @@
         firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth();
         const db = firebase.database();
-        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwxFfufe0b7eJpDxSmLgnbVvlq1itLvoD6ZCpvDJKtJg7ChcWn7lpf9LgZqQ4ZsThJiXQ/exec";
 
-        let studentsData = []; 
-        let scoreChartInstance = null;
-        let errorRateChartInstance = null;
-
-        // 全域 Chart.js 設定
-        Chart.defaults.font.family = "'Noto Serif TC', serif";
-        Chart.defaults.color = '#64748b';
-
-        // 登入與登出邏輯
-        function adminLogin() {
-            const email = document.getElementById('admin-email').value;
-            const pwd = document.getElementById('admin-password').value;
-            if(!email || !pwd) { alert("請輸入完整的管理員驗證資訊。"); return; }
-            auth.signInWithEmailAndPassword(email, pwd).catch(err => alert("身分驗證失敗，請確認帳號或密碼。"));
+        function handleLogin() {
+            const e = document.getElementById('adm-email').value;
+            const p = document.getElementById('adm-pass').value;
+            auth.signInWithEmailAndPassword(e, p).catch(err => alert("身分證驗證失敗"));
         }
-        function logout() { auth.signOut().then(() => location.reload()); }
 
-        // UI 狀態控制
-        function showLoading() { document.getElementById('loading-screen').style.display = 'flex'; }
-        function hideLoading() { document.getElementById('loading-screen').style.display = 'none'; }
-
-        // 核心權限驗證與資料載入
-        auth.onAuthStateChanged(async (user) => {
-            if (user) {
-                if (user.uid === '5F6F4HEDhpZbYMp7liT4czX0syI3') {
-                    document.getElementById('login-ui').style.display = 'none';
-                    document.getElementById('admin-ui').style.display = 'flex';
-                    showLoading();
-
-                    try {
-                        // 1. 獲取 GAS 學生基本資料
-                        const res = await fetch(SCRIPT_URL + "?token=SuHaoClassroom2026_SecureKey");
-                        studentsData = await res.json();
-
-                        // 2. 訂閱 Firebase 測驗紀錄 (exam_records)
-                        db.ref('exam_records').on('value', snap => {
-                            const allRecords = snap.val() || {};
-                            processExamAnalytics(allRecords);
-                        });
-
-                        // 3. 訂閱 Firebase 在線狀態 (presence)
-                        db.ref('presence').on('value', snap => {
-                            const presenceData = snap.val() || {};
-                            const onlineUids = Object.keys(presenceData);
-                            document.getElementById('kpi-online').innerText = onlineUids.length;
-                            
-                            const tbody = document.getElementById('online-users-tbody');
-                            if(onlineUids.length === 0) {
-                                tbody.innerHTML = `<tr><td colspan="3" class="empty-state">目前系統無在線學員</td></tr>`;
-                            } else {
-                                tbody.innerHTML = "";
-                                onlineUids.forEach(uid => {
-                                    const stu = studentsData.find(s => s.uid === uid);
-                                    const name = stu ? stu.name : '未列冊學員';
-                                    const lvl = stu ? `${stu.level} 年級` : '未登錄';
-                                    
-                                    tbody.innerHTML += `
-                                        <tr>
-                                            <td style="font-weight: 600;">${name}</td>
-                                            <td>${lvl}</td>
-                                            <td><span class="status-dot"></span>連線中</td>
-                                        </tr>`;
-                                });
-                            }
-                        });
-
-                        // 4. 訂閱 Firebase IP 黑名單 (ip_bans)
-                        db.ref('ip_bans').on('value', snap => {
-                            const bansData = snap.val() || {};
-                            const now = Date.now();
-                            let activeBansCount = 0;
-                            const tbody = document.getElementById('banned-ips-tbody');
-                            tbody.innerHTML = "";
-
-                            Object.keys(bansData).forEach(ipKey => {
-                                const data = bansData[ipKey];
-                                if(data.lockUntil > now) {
-                                    activeBansCount++;
-                                    const ipAddress = ipKey.replace(/_/g, '.');
-                                    
-                                    tbody.innerHTML += `
-                                        <tr>
-                                            <td style="font-family: monospace; font-weight: 600;">${ipAddress}</td>
-                                            <td style="color: var(--danger);">${data.fails} 次</td>
-                                            <td><button class="btn-danger-sm" onclick="unbanIP('${ipKey}')">解除封鎖</button></td>
-                                        </tr>`;
-                                }
-                            });
-
-                            document.getElementById('kpi-banned').innerText = activeBansCount;
-                            if(activeBansCount === 0) {
-                                tbody.innerHTML = `<tr><td colspan="3" class="empty-state">目前無系統安全異常紀錄。</td></tr>`;
-                            }
-                        });
-
-                    } catch (e) {
-                        console.error("系統資料初始化失敗", e);
-                        alert("與資料庫連線發生異常，請確認網路狀態。");
-                    }
-                    hideLoading();
-
-                } else {
-                    alert('系統拒絕存取：您不具備存取此控制臺之權限。');
-                    auth.signOut();
-                }
-            } else {
-                document.getElementById('login-ui').style.display = 'flex';
-                document.getElementById('admin-ui').style.display = 'none';
+        auth.onAuthStateChanged(user => {
+            if(user && user.uid === '5F6F4HEDhpZbYMp7liT4czX0syI3') {
+                document.getElementById('login-ui').style.display = 'none';
+                document.getElementById('admin-ui').style.display = 'flex';
+                initDashboard();
             }
         });
 
-        // 處理測驗數據與繪製圖表
-        function processExamAnalytics(allRecords) {
-            let totalExams = 0;
-            let totalScore = 0;
-            
-            // 成績區間統計
-            let scoreDist = { excellent: 0, good: 0, pass: 0, fail: 0 }; // >=90, 80-89, 60-79, <60
-            
-            // 錯題統計字典 (以題目名稱或編號為 Key)
-            let errorCounts = {};
+        async function initDashboard() {
+            // 1. 監控在線與封鎖
+            db.ref('ip_bans').on('value', s => {
+                const b = s.val() || {};
+                document.getElementById('count-banned').innerText = Object.keys(b).filter(k => b[k].lockUntil > Date.now()).length;
+            });
 
-            // 解析 Firebase 資料結構
-            Object.keys(allRecords).forEach(uid => {
-                const userExams = allRecords[uid];
-                Object.keys(userExams).forEach(examId => {
-                    const examDetail = userExams[examId];
-                    if (examDetail && typeof examDetail.score === 'number') {
-                        totalExams++;
-                        totalScore += examDetail.score;
+            // 2. 核心考情邏輯：分析跨試卷的知識點 (Topics)
+            db.ref('exam_records').on('value', snap => {
+                const records = snap.val() || {};
+                const list = document.getElementById('exam-list');
+                list.innerHTML = "";
 
-                        // 分類成績
-                        if (examDetail.score >= 90) scoreDist.excellent++;
-                        else if (examDetail.score >= 80) scoreDist.good++;
-                        else if (examDetail.score >= 60) scoreDist.pass++;
-                        else scoreDist.fail++;
+                let totalScore = 0;
+                let count = 0;
+                let topicStats = {}; // 格式: { "因數與倍數": { correct: 10, total: 15 } }
 
-                        // 解析錯題 (依據 test.html 中 userPick 與 correctAnswer 的比對邏輯)
-                        if (examDetail.details && Array.isArray(examDetail.details)) {
-                            examDetail.details.forEach(q => {
-                                if (q.userPick !== q.correctAnswer) {
-                                    // 若題目無明確 ID，取原始題目的前 15 字作為識別
-                                    const qTitle = (q.originalQuestion || '未知題目').substring(0, 15) + '...';
-                                    errorCounts[qTitle] = (errorCounts[qTitle] || 0) + 1;
-                                }
+                Object.keys(records).forEach(uid => {
+                    const userExams = records[uid];
+                    Object.keys(userExams).forEach(eid => {
+                        const data = userExams[eid];
+                        count++;
+                        totalScore += data.score;
+
+                        // 更新表格
+                        const row = `<tr>
+                            <td>${data.userName || '未知'}</td>
+                            <td>${data.examName || '未命名試卷'}</td>
+                            <td style="font-weight:700; color:${data.score < 60 ? '#ef4444':'#1e293b'}">${data.score}</td>
+                            <td>${new Date(data.finishTime).toLocaleDateString()}</td>
+                            <td>已繳卷</td>
+                        </tr>`;
+                        list.insertAdjacentHTML('afterbegin', row);
+
+                        // 知識點統計：從測驗細節中抓取 topic 欄位
+                        if(data.details) {
+                            data.details.forEach(q => {
+                                const t = q.topic || "一般運算";
+                                if(!topicStats[t]) topicStats[t] = { c: 0, t: 0 };
+                                topicStats[t].t++;
+                                if(q.userPick === q.correctAnswer) topicStats[t].c++;
                             });
                         }
-                    }
+                    });
                 });
-            });
 
-            // 更新 KPI 數值
-            document.getElementById('kpi-total-exams').innerText = totalExams;
-            const avgScore = totalExams > 0 ? (totalScore / totalExams).toFixed(1) : 0;
-            document.getElementById('kpi-avg-score').innerText = avgScore;
+                document.getElementById('count-today').innerText = count;
+                document.getElementById('avg-accuracy').innerText = count > 0 ? Math.round(totalScore/count) + "%" : "0%";
 
-            // 繪製成績分佈圓餅圖
-            const ctxScore = document.getElementById('scoreChart').getContext('2d');
-            if (scoreChartInstance) scoreChartInstance.destroy();
-            scoreChartInstance = new Chart(ctxScore, {
-                type: 'doughnut',
-                data: {
-                    labels: ['90分以上', '80-89分', '60-79分', '不及格 (<60)'],
-                    datasets: [{
-                        data: [scoreDist.excellent, scoreDist.good, scoreDist.pass, scoreDist.fail],
-                        backgroundColor: ['#2563eb', '#60a5fa', '#94a3b8', '#cbd5e1'], 
-                        borderWidth: 0, hoverOffset: 4
-                    }]
-                },
-                options: { 
-                    responsive: true, maintainAspectRatio: false, cutout: '65%',
-                    plugins: { legend: { position: 'right', labels: { padding: 15, boxWidth: 12, font: {size: 13} } } } 
-                }
-            });
-
-            // 篩選出錯誤率前 5 名的題目
-            const sortedErrors = Object.entries(errorCounts)
-                .sort((a, b) => b[1] - a[1])
-                .slice(0, 5);
-            
-            const errorLabels = sortedErrors.length > 0 ? sortedErrors.map(e => e[0]) : ['目前無錯題紀錄'];
-            const errorData = sortedErrors.length > 0 ? sortedErrors.map(e => e[1]) : [0];
-
-            // 繪製錯題率橫條圖
-            const ctxError = document.getElementById('errorRateChart').getContext('2d');
-            if (errorRateChartInstance) errorRateChartInstance.destroy();
-            errorRateChartInstance = new Chart(ctxError, {
-                type: 'bar',
-                data: {
-                    labels: errorLabels,
-                    datasets: [{
-                        label: '全體錯誤次數',
-                        data: errorData,
-                        backgroundColor: '#cbd5e1', 
-                        hoverBackgroundColor: '#2563eb',
-                        borderRadius: 4
-                    }]
-                },
-                options: { 
-                    responsive: true, maintainAspectRatio: false, indexAxis: 'y',
-                    scales: { 
-                        x: { beginAtZero: true, grid: { color: '#f1f5f9' }, ticks: { stepSize: 1 } }, 
-                        y: { grid: { display: false }, ticks: { font: {size: 11} } } 
-                    }, 
-                    plugins: { legend: { display: false }, tooltip: { titleFont: {size: 13} } } 
-                }
+                renderTopicChart(topicStats);
             });
         }
 
-        // IP 解除封鎖管理
-        function unbanIP(ipKey) {
-            if(confirm(`系統確認：\n即將解除 IP (${ipKey.replace(/_/g, '.')}) 的安全封鎖限制，是否執行？`)) {
-                db.ref('ip_bans/' + ipKey).remove()
-                .then(() => alert("執行成功：該 IP 已解除封鎖。"))
-                .catch(err => alert("執行失敗：" + err.message));
-            }
+        let chart;
+        function renderTopicChart(stats) {
+            const ctx = document.getElementById('topicChart').getContext('2d');
+            const labels = Object.keys(stats);
+            const data = labels.map(l => Math.round((stats[l].c / stats[l].t) * 100));
+
+            if(chart) chart.destroy();
+            chart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: '單元正確率 (%)',
+                        data: data,
+                        backgroundColor: data.map(v => v < 60 ? '#fecaca' : '#bfdbfe'),
+                        borderColor: data.map(v => v < 60 ? '#ef4444' : '#3b82f6'),
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: { x: { min: 0, max: 100 } },
+                    plugins: { legend: { display: false } }
+                }
+            });
         }
     </script>
 </body>
