@@ -12,56 +12,75 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;600;700&display=swap');
 
-        :root { --admin-primary: #1e3a8a; --admin-dark: #172554; --admin-accent: #10b981; --bg: #f3f4f6; }
-        body { font-family: "Noto Serif TC", serif; background-color: var(--bg); margin: 0; color: #333; height: 100vh; overflow: hidden; display: flex;}
+        /* 企業級 SaaS 專業色票 */
+        :root { 
+            --sidebar-bg: #1e293b; /* Slate 800 */
+            --sidebar-hover: #0f172a; /* Slate 900 */
+            --primary-blue: #3b82f6; /* Blue 500 */
+            --text-main: #1e293b;
+            --text-muted: #64748b;
+            --bg-light: #f8fafc; /* Slate 50 */
+            --border-color: #e2e8f0;
+        }
 
+        body { 
+            font-family: "Noto Serif TC", serif; 
+            background-color: var(--bg-light); 
+            margin: 0; 
+            color: var(--text-main); 
+            height: 100vh; 
+            overflow: hidden; 
+            display: flex;
+        }
 
-        #login-ui { display: flex; justify-content: center; align-items: center; width: 100%; height: 100vh; position: fixed; top: 0; left: 0; background: var(--bg); z-index: 10000; }
-        .login-card { background: white; padding: 50px; border-radius: 12px; box-shadow: 0 15px 50px rgba(0,0,0,0.1); width: 340px; text-align: center; border-top: 8px solid var(--admin-primary); }
-        .badge { display: inline-block; background: #ef4444; color: white; font-size: 11px; padding: 4px 10px; border-radius: 15px; margin-bottom: 25px; font-weight: bold; letter-spacing: 1px; }
-        input { width: 100%; padding: 14px; margin: 12px 0; border: 1px solid #ddd; border-radius: 6px; outline: none; }
-        input:focus { border-color: var(--admin-primary); box-shadow: 0 0 0 3px rgba(30,58,138,0.1); }
-        .login-btn { background: var(--admin-primary); color: white; border: none; padding: 14px; width: 100%; cursor: pointer; font-weight: bold; border-radius: 6px; transition: 0.3s; margin-top: 15px; letter-spacing: 2px;}
-        .login-btn:hover { background: var(--admin-dark); }
+        /* --- 登入介面 --- */
+        #login-ui { display: flex; justify-content: center; align-items: center; width: 100%; height: 100vh; position: fixed; top: 0; left: 0; background: var(--bg-light); z-index: 10000; }
+        .login-card { background: white; padding: 40px; border-radius: 8px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06); width: 320px; text-align: center; border: 1px solid var(--border-color); }
+        .login-card h1 { font-size: 20px; font-weight: 700; color: var(--text-main); margin: 0 0 10px 0; letter-spacing: 1px; }
+        .badge { display: inline-block; background: #f1f5f9; color: var(--text-muted); font-size: 12px; padding: 4px 12px; border-radius: 4px; margin-bottom: 25px; border: 1px solid var(--border-color); }
+        input { width: 100%; padding: 12px; margin: 8px 0 16px 0; border: 1px solid var(--border-color); border-radius: 6px; outline: none; box-sizing: border-box; font-size: 14px; transition: 0.2s;}
+        input:focus { border-color: var(--primary-blue); box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1); }
+        .login-btn { background: var(--primary-blue); color: white; border: none; padding: 12px; width: 100%; cursor: pointer; font-weight: 600; border-radius: 6px; transition: 0.2s; font-size: 14px; letter-spacing: 1px;}
+        .login-btn:hover { background: #2563eb; }
 
-
+        /* --- 後臺主體佈局 --- */
         #admin-ui { display: none; width: 100%; height: 100vh; }
         
-
-        .sidebar { width: 260px; background: var(--admin-primary); color: white; display: flex; flex-direction: column; padding: 30px 0; flex-shrink: 0;}
-        .sidebar h2 { text-align: center; font-size: 20px; margin-bottom: 40px; letter-spacing: 3px; font-weight: 700; color: white; }
-        .nav-link { padding: 18px 30px; color: #93c5fd; text-decoration: none; cursor: pointer; transition: 0.2s; font-size: 15px; display: flex; align-items: center; gap: 10px; border-left: 4px solid transparent;}
-        .nav-link:hover, .nav-link.active { background: rgba(255,255,255,0.05); color: white; border-left-color: var(--admin-accent); font-weight: 700;}
+        /* 側邊欄 */
+        .sidebar { width: 250px; background: var(--sidebar-bg); color: white; display: flex; flex-direction: column; flex-shrink: 0; }
+        .sidebar-brand { padding: 25px 20px; border-bottom: 1px solid #334155; margin-bottom: 15px; }
+        .sidebar-brand h2 { margin: 0; font-size: 18px; font-weight: 700; color: #f8fafc; letter-spacing: 1px; }
+        .sidebar-brand p { margin: 5px 0 0 0; font-size: 12px; color: #94a3b8; }
         
-
-        .main-content { flex-grow: 1; padding: 40px; background: var(--bg); overflow-y: auto; }
-        .dashboard-header { display: flex; justify-content: space-between; align-items: center; padding-bottom: 20px; margin-bottom: 30px; }
-        .logout-btn { background: rgba(255,255,255,0.1); color: #333; border: 1px solid #ccc; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: bold; transition: 0.2s;}
-        .logout-btn:hover { background: #fee2e2; color: #ef4444; border-color: #fecaca;}
-
-
+        .nav-link { padding: 14px 20px; color: #cbd5e1; text-decoration: none; cursor: pointer; transition: 0.2s; font-size: 14px; display: block; border-left: 3px solid transparent; }
+        .nav-link:hover { background: var(--sidebar-hover); color: white; }
+        .nav-link.active { background: var(--sidebar-hover); color: white; border-left-color: var(--primary-blue); font-weight: 600; }
         
+        /* 內容區 */
+        .main-content { flex-grow: 1; padding: 30px 40px; background: var(--bg-light); overflow-y: auto; }
+        .dashboard-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 20px; margin-bottom: 25px; }
+        .dashboard-header h1 { margin: 0; font-size: 22px; color: var(--text-main); font-weight: 600; }
+        .logout-btn { background: white; color: var(--text-main); border: 1px solid var(--border-color); padding: 8px 16px; border-radius: 4px; cursor: pointer; font-size: 13px; font-weight: 600; transition: 0.2s; box-shadow: 0 1px 2px rgba(0,0,0,0.05);}
+        .logout-btn:hover { background: #f1f5f9; border-color: #cbd5e1; }
 
-        .kpi-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin-bottom: 30px; }
-        .kpi-card { background: white; padding: 25px; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.02); display: flex; flex-direction: column; justify-content: space-between; position: relative; overflow: hidden; }
-        .kpi-title { font-size: 14px; color: #666; margin-bottom: 10px; display: flex; align-items: center; gap: 8px;}
-        .kpi-value { font-size: 36px; font-weight: 700; color: var(--admin-primary); }
-        .kpi-dot { width: 10px; height: 10px; background: #666; border-radius: 50%; position: absolute; top: 25px; right: 25px; }
-        .kpi-active { background: var(--admin-accent); animation: pulse 2s infinite; }
-        @keyframes pulse { 0% { opacity: 1; transform: scale(1); } 50% { opacity: 0.5; transform: scale(1.2); } 100% { opacity: 1; transform: scale(1); } }
+        /* --- 數據卡片 (KPI) --- */
+        .kpi-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin-bottom: 25px; }
+        .kpi-card { background: white; padding: 20px; border-radius: 8px; border: 1px solid var(--border-color); box-shadow: 0 1px 3px rgba(0,0,0,0.05); display: flex; flex-direction: column; position: relative; }
+        .kpi-title { font-size: 13px; color: var(--text-muted); font-weight: 600; margin-bottom: 8px; }
+        .kpi-value { font-size: 28px; font-weight: 700; color: var(--text-main); }
+        .status-dot { width: 8px; height: 8px; background: #10b981; border-radius: 50%; position: absolute; top: 22px; right: 20px; box-shadow: 0 0 0 3px #d1fae5; }
 
+        /* --- 圖表卡片 --- */
+        .chart-card { background: white; padding: 25px; border-radius: 8px; border: 1px solid var(--border-color); box-shadow: 0 1px 3px rgba(0,0,0,0.05); margin-bottom: 25px; }
+        .chart-title { font-size: 15px; font-weight: 600; color: var(--text-main); margin-bottom: 20px; border-bottom: 1px solid #f1f5f9; padding-bottom: 10px;}
         
-        .chart-card { background: white; padding: 25px; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.02); margin-bottom: 30px; }
-        .chart-title { font-size: 16px; font-weight: 700; color: var(--admin-primary); margin-bottom: 20px; display: flex; align-items: center; gap: 10px; }
-        
-  
-        .bottom-row { display: grid; grid-template-columns: 1fr 1.5fr; gap: 20px; }
-        
+        .bottom-row { display: grid; grid-template-columns: 1fr 2fr; gap: 25px; }
 
-        #dashboard-loading { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(243,244,246,0.9); z-index: 1000; flex-direction: column; justify-content: center; align-items: center; }
-        .spinner { border: 4px solid #eee; border-top: 4px solid var(--admin-primary); border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin-bottom: 15px; }
+        /* Loading 遮罩 */
+        #dashboard-loading { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.8); z-index: 1000; flex-direction: column; justify-content: center; align-items: center; }
+        .spinner { border: 3px solid #f1f5f9; border-top: 3px solid var(--primary-blue); border-radius: 50%; width: 30px; height: 30px; animation: spin 1s linear infinite; margin-bottom: 15px; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
 </head>
@@ -70,80 +89,83 @@
     <div id="login-ui">
         <div class="login-card">
             <h1>蘇昊數理管理後臺</h1>
-            <div class="badge">管理員專屬 Admin Only</div>
-            <input type="email" id="admin-email" placeholder="管理員管理帳號">
-            <input type="password" id="admin-password" placeholder="管理員密碼">
-            <button class="login-btn" onclick="adminLogin()">登入控制台</button>
+            <div class="badge">系統管理員登入</div>
+            <input type="email" id="admin-email" placeholder="管理員帳號" autocomplete="off">
+            <input type="password" id="admin-password" placeholder="密碼">
+            <button class="login-btn" onclick="adminLogin()">登入</button>
         </div>
     </div>
 
     <div id="dashboard-loading">
         <div class="spinner"></div>
-        <div style="color: var(--admin-primary); font-weight: bold; font-size: 14px;">即時數據同步中...</div>
+        <div style="color: var(--text-muted); font-size: 13px;">數據同步中...</div>
     </div>
 
-    <div id="admin-ui" style="display: none;">
+    <div id="admin-ui">
         <nav class="sidebar">
-            <h2>蘇昊老師</h2>
-            <a class="nav-link active">即時監控雷達</a>
+            <div class="sidebar-brand">
+                <h2>蘇昊數理</h2>
+                <p>管理員後臺系統</p>
+            </div>
+            <a class="nav-link active">數據總覽</a>
             <a class="nav-link" onclick="alert('功能建設中...')">學員教務管理</a>
-            <a class="nav-link" onclick="alert('功能建設中...')">安全與 IP 黑名單</a>
+            <a class="nav-link" onclick="alert('功能建設中...')">系統安全與日誌</a>
             <div style="flex-grow: 1;"></div>
-            <div style="text-align: center; color: #93c5fd; font-size: 12px; margin-bottom: 20px;">v2.0 Command Center</div>
+            <div style="padding: 20px; font-size: 12px; color: #475569;">版本號 2.0.1</div>
         </nav>
+
         <main class="main-content">
             <header class="dashboard-header">
-                <h1 style="margin: 0; color: var(--admin-primary); font-size: 24px;">即時監控雷達</h1>
-                <button class="logout-btn" onclick="logout()">登出</button>
-            </div>
+                <h1>系統即時狀態</h1>
+                <button class="logout-btn" onclick="logout()">安全登出</button>
+            </header>
 
             <section class="kpi-row">
                 <div class="kpi-card">
-                    <div class="kpi-title">即時在線人數</div>
+                    <div class="kpi-title">當前在線人數</div>
                     <div class="kpi-value" id="online-count">--</div>
-                    <div class="kpi-dot kpi-active" id="online-dot"></div>
+                    <div class="status-dot"></div>
                 </div>
                 <div class="kpi-card">
-                    <div class="kpi-title">總學員人數</div>
+                    <div class="kpi-title">註冊學員總數</div>
                     <div class="kpi-value" id="total-students">--</div>
                 </div>
                 <div class="kpi-card">
-                    <div class="kpi-title">當前封鎖 IP</div>
+                    <div class="kpi-title">異常阻擋次數 (IP)</div>
                     <div class="kpi-value" id="total-banned">--</div>
                 </div>
                 <div class="kpi-card">
-                    <div class="kpi-title">今日新啟用帳號</div>
+                    <div class="kpi-title">本日新增學員</div>
                     <div class="kpi-value" id="today-activated">--</div>
                 </div>
             </section>
 
             <section class="chart-card">
-                <div class="chart-title">近七日系統流量趨勢 (登入 & 啟用)</div>
-                <div style="height: 300px;">
+                <div class="chart-title">近七日系統活躍度趨勢</div>
+                <div style="height: 280px;">
                     <canvas id="trafficChart"></canvas>
                 </div>
             </section>
 
             <section class="bottom-row">
                 <div class="chart-card">
-                    <div class="chart-title">學員年級分佈分析</div>
-                    <div style="height: 250px; display: flex; justify-content: center;">
+                    <div class="chart-title">學員年級分佈</div>
+                    <div style="height: 220px; display: flex; justify-content: center;">
                         <canvas id="gradeChart"></canvas>
                     </div>
                 </div>
                 <div class="chart-card">
-                    <div class="chart-title">熱門解題影片排行榜 (觀看數)</div>
-                    <div style="height: 250px;">
+                    <div class="chart-title">熱門課程教材點擊排行</div>
+                    <div style="height: 220px;">
                         <canvas id="videoChart"></canvas>
                     </div>
                 </div>
             </section>
-
         </main>
     </div>
 
     <script>
-
+        // Firebase 設定與初始化
         const firebaseConfig = {
             apiKey: "AIzaSyALkTnkYY3JZLCTyajahpi4IZKmFX9USdw",
             authDomain: "su-hao-classroom.firebaseapp.com",
@@ -157,67 +179,66 @@
         const auth = firebase.auth();
         const db = firebase.database();
 
+        // GAS API 網址
         const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwxFfufe0b7eJpDxSmLgnbVvlq1itLvoD6ZCpvDJKtJg7ChcWn7lpf9LgZqQ4ZsThJiXQ/exec";
-
 
         let trafficChartInstance, gradeChartInstance, videoChartInstance;
 
-
+        // 登入與登出邏輯
         function adminLogin() {
             const email = document.getElementById('admin-email').value;
             const pwd = document.getElementById('admin-password').value;
-            if(!email || !pwd) { alert("請輸入帳號密碼"); return; }
-            auth.signInWithEmailAndPassword(email, pwd).catch(err => alert("登入失敗：" + err.message));
+            if(!email || !pwd) { alert("請輸入管理員帳號與密碼。"); return; }
+            auth.signInWithEmailAndPassword(email, pwd).catch(err => alert("身分驗證失敗：" + err.message));
         }
 
         function logout() { auth.signOut().then(() => location.reload()); }
 
-        
+        // 權限驗證與資料載入
         auth.onAuthStateChanged(async (user) => {
             if (user) {
-
+                // 驗證管理員 UID
                 if (user.uid === '5F6F4HEDhpZbYMp7liT4czX0syI3') {
                     document.getElementById('login-ui').style.display = 'none';
                     document.getElementById('admin-ui').style.display = 'flex';
                     showLoading();
                     
-
+                    // 1. Firebase 實時數據訂閱
                     db.ref('presence').on('value', snap => {
                         const count = snap.numChildren() || 0;
                         document.getElementById('online-count').innerText = count;
                     });
                     
-
                     db.ref('ip_bans').on('value', snap => {
                         const count = snap.numChildren() || 0;
                         document.getElementById('total-banned').innerText = count;
                     });
 
-
+                    // 2. 獲取 GAS 歷史資料
                     try {
                         const r = await fetch(SCRIPT_URL + "?token=SuHaoClassroom2026_SecureKey");
                         const fullData = await r.json();
                         
-                        
                         document.getElementById('total-students').innerText = fullData.length;
+                        
                         const today = new Date().toLocaleDateString('zh-TW');
                         const todayActivated = fullData.filter(student => {
                             return student.activateTime && new Date(student.activateTime).toLocaleDateString('zh-TW') === today;
                         }).length;
                         document.getElementById('today-activated').innerText = todayActivated;
 
-
+                        // 初始化圖表
                         initCharts(fullData);
                         
                     } catch (e) {
-                        console.error("抓取 Sheets 資料失敗", e);
-                        alert("部分數據抓取失敗，請確認 GAS 連結或網路連線。");
+                        console.error("資料獲取失敗", e);
+                        alert("部分數據無法同步，請檢查網路連線或 API 狀態。");
                     }
                     
                     hideLoading();
 
                 } else {
-                    alert('【警告】權限不足！此為管理員專屬通道，將強制登出您的帳號。');
+                    alert('權限不足：您不具備存取管理後臺的權限。');
                     auth.signOut();
                 }
             } else {
@@ -226,11 +247,12 @@
             }
         });
 
-
+        // 圖表渲染函式 (專業配色)
         function initCharts(data) {
-
             Chart.defaults.font.family = "'Noto Serif TC', serif";
+            Chart.defaults.color = '#64748b'; // 標籤字體顏色
 
+            // 折線圖
             const ctxTraffic = document.getElementById('trafficChart').getContext('2d');
             const dates = Array.from({length: 7}, (_, i) => {
                 const d = new Date(); d.setDate(d.getDate() - (6-i)); 
@@ -241,14 +263,18 @@
                 data: {
                     labels: dates,
                     datasets: [
-                        { label: '學員登入次數', data: [5, 12, 9, 15, 11, 18, 5], borderColor: '#10b981', tension: 0.3, fill: false },
-                        { label: '新帳號啟用數', data: [10, 8, 9, 5, 8, 4, 12], borderColor: '#1e3a8a', tension: 0.3, fill: false }
+                        { label: '學員登入次數', data: [5, 12, 9, 15, 11, 18, 5], borderColor: '#3b82f6', backgroundColor: '#3b82f6', tension: 0.3, fill: false, borderWidth: 2 },
+                        { label: '新帳號啟用數', data: [10, 8, 9, 5, 8, 4, 12], borderColor: '#94a3b8', backgroundColor: '#94a3b8', tension: 0.3, fill: false, borderWidth: 2, borderDash: [5, 5] }
                     ]
                 },
-                options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true, grid: { color: '#eee' } } } }
+                options: { 
+                    responsive: true, maintainAspectRatio: false, 
+                    plugins: { legend: { position: 'top', labels: { boxWidth: 12 } } },
+                    scales: { y: { beginAtZero: true, border: {display: false}, grid: { color: '#f1f5f9' } }, x: { grid: { display: false } } } 
+                }
             });
 
-
+            // 圓餅圖
             const ctxGrade = document.getElementById('gradeChart').getContext('2d');
             const levels = data.map(s => parseInt(s.level) || 0);
             const highSchoolCount = levels.filter(l => l >= 10 && l <= 12).length;
@@ -257,20 +283,22 @@
             gradeChartInstance = new Chart(ctxGrade, {
                 type: 'doughnut',
                 data: {
-                    labels: ['國中 (7-9年級)', '高中 (10-12年級)'],
+                    labels: ['國中學員', '高中學員'],
                     datasets: [{
                         data: [juniorHighCount, highSchoolCount],
-                        backgroundColor: ['#172554', '#10b981'], 
-                        borderWidth: 0
+                        backgroundColor: ['#64748b', '#3b82f6'], 
+                        borderWidth: 0,
+                        hoverOffset: 4
                     }]
                 },
-                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
+                options: { 
+                    responsive: true, maintainAspectRatio: false, cutout: '65%',
+                    plugins: { legend: { position: 'bottom', labels: { padding: 20, boxWidth: 12 } } } 
+                }
             });
 
-
+            // 橫條圖
             const ctxVideo = document.getElementById('videoChart').getContext('2d');
-            
-
             const videoLabels = ['平面幾何解題', '電學綜合練習', '多項式定理', '運動學公式應用', '指數與對數函式'];
             const videoViews = [1350, 1100, 980, 820, 650];
 
@@ -279,17 +307,22 @@
                 data: {
                     labels: videoLabels,
                     datasets: [{
-                        label: '觀看次數',
+                        label: '累計觀看/點擊',
                         data: videoViews,
-                        backgroundColor: ['#172554','#10b981','#10b981','#10b981','#10b981'], 
-                        borderRadius: 5
+                        backgroundColor: '#e2e8f0', 
+                        hoverBackgroundColor: '#3b82f6',
+                        borderRadius: 4
                     }]
                 },
-                options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true } }, plugins: { legend: { display: false } } }
+                options: { 
+                    responsive: true, maintainAspectRatio: false, indexAxis: 'y',
+                    scales: { x: { beginAtZero: true, grid: { color: '#f1f5f9' } }, y: { grid: { display: false } } }, 
+                    plugins: { legend: { display: false } } 
+                }
             });
         }
 
-
+        // UI 輔助
         function showLoading() { document.getElementById('dashboard-loading').style.display = 'flex'; }
         function hideLoading() { document.getElementById('dashboard-loading').style.display = 'none'; }
     </script>
