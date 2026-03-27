@@ -345,6 +345,9 @@
             clearTimeout(idleTimer);
             if (auth.currentUser) {
                 idleTimer = setTimeout(() => {
+                    if (isExamActive) {
+                        return;
+                    }
                     alert("【系統通知】\n\n由於您已長時間未操作，系統已自動將您安全登出。");
                     logout();
                 }, 180000);
