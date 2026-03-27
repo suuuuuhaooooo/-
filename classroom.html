@@ -17,7 +17,7 @@
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-database-compat.js"></script>
-
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;700&display=swap');
         :root { --primary: #8e9775; --dark: #5b6348; --bg: #f8f8f6; --white: #ffffff; }
@@ -178,6 +178,25 @@
     </style>
 </head>
 <body>
+    <button onclick="openRewardModal()" style="background: #8e9775; color: white; border: none; padding: 10px 15px; border-radius: 4px; cursor: pointer; font-weight: bold; margin-bottom: 20px;">
+        我的集點卡
+    </button>
+    
+    <div id="reward-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.85); backdrop-filter: blur(5px); z-index: 10000; justify-content: center; align-items: center;">
+        <div style="background: white; padding: 30px; border-radius: 8px; width: 300px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.1); border-top: 6px solid #8e9775; position: relative;">
+            
+            <span onclick="closeRewardModal()" style="position: absolute; top: 10px; right: 15px; font-size: 24px; cursor: pointer; color: #aaa;">&times;</span>
+            
+            <h2 style="color: #5b6348; margin-top: 0; font-size: 22px; letter-spacing: 1px;">專屬集點卡</h2>
+            <p style="font-size: 13px; color: #888; margin-bottom: 20px;">出示此條碼給管理員掃描即可獲得點數</p>
+            
+            <div id="qrcode-box" style="margin: 0 auto; width: 150px; height: 150px; display: flex; justify-content: center; align-items: center; background: #f8f8f6; border-radius: 4px; padding: 10px;"></div>
+            
+            <div style="margin-top: 25px; font-size: 16px; color: #5b6348; font-weight: bold;">
+                目前累積：<span id="student-points" style="font-size: 36px; color: #27ae60; margin: 0 5px;">0</span> 點
+            </div>
+        </div>
+    </div>
 
     <div id="loading-screen" style="display: none;">
         <div class="loading-dots">
@@ -829,6 +848,48 @@
                 document.getElementById('loading-screen').style.display = 'none';
             }
         });
+        let qrCodeInstance = null; // 儲存 QR Code 實體避免重複繪製
+        let pointsListener = null; // 儲存 Firebase 監聽器
+        
+        // 打開集點卡
+        function openRewardModal() {
+            const user = firebase.auth().currentUser;
+            if (!user) {
+                alert("請先登入才能查看集點卡喔！");
+                return;
+            }
+        
+            // 1. 顯示視窗
+            document.getElementById('reward-modal').style.display = 'flex';
+            
+            // 2. 產生專屬 QR Code (將學生的 UID 轉成條碼)
+            if (!qrCodeInstance) {
+                qrCodeInstance = new QRCode(document.getElementById("qrcode-box"), {
+                    text: user.uid,
+                    width: 150,
+                    height: 150,
+                    colorDark : "#5b6348",
+                    colorLight : "#ffffff"
+                });
+            }
+            
+            // 3. 啟動 Firebase 即時監聽：只要點數變動，畫面上的數字就會自動跳轉！
+            pointsListener = db.ref('rewards/' + user.uid + '/points');
+            pointsListener.on('value', (snap) => {
+                const pts = snap.val() || 0;
+                document.getElementById('student-points').innerText = pts;
+            });
+        }
+        
+        // 關閉集點卡
+        function closeRewardModal() {
+            document.getElementById('reward-modal').style.display = 'none';
+            
+            // 關閉視窗時解除監聽，節省手機與 Firebase 效能
+            if (pointsListener) {
+                pointsListener.off();
+            }
+        }
     </script>
 </body>
 </html>
