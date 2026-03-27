@@ -8,7 +8,15 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;700&display=swap');
         :root { --primary: #8e9775; --dark: #5b6348; --bg: #f8f8f6; --white: #ffffff; }
-        body { font-family: "Noto Serif TC", serif; background-color: var(--bg); margin: 0; display: flex; flex-direction: column; align-items: center; min-height: 100vh; user-select: none; }
+        
+        /* 防反白 (選取) */
+        body { 
+            font-family: "Noto Serif TC", serif; background-color: var(--bg); margin: 0; display: flex; flex-direction: column; align-items: center; min-height: 100vh; 
+            user-select: none; -webkit-user-select: none; -moz-user-select: none; -ms-user-select: none; -webkit-touch-callout: none;
+        }
+        
+        input, select { user-select: text; -webkit-user-select: text; } /* 保留輸入框可以打字 */
+
         .container { background: white; padding: 30px; border-radius: 8px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); width: 90%; max-width: 400px; text-align: center; border-top: 6px solid var(--primary); margin-top: 40px; }
         h2 { color: var(--dark); margin-top: 0; letter-spacing: 1px; }
         p { color: #888; font-size: 14px; margin-bottom: 20px; }
@@ -21,12 +29,10 @@
         #status-box { margin-top: 20px; padding: 15px; border-radius: 4px; background: #f0f3ef; color: var(--dark); font-weight: bold; min-height: 24px; }
     </style>
 </head>
-<body>
-
-    <div class="container" id="login-section">
-        <h2>蘇昊老師專屬掃描器</h2>
-        <input type="password" id="admin-pwd" placeholder="請輸入掃描密碼">
-        <button class="btn" onclick="unlockScanner()">解鎖掃描器</button>
+<body oncontextmenu="return false;"> <div class="container" id="login-section">
+        <h2>集點卡掃描</h2>
+        <input type="password" id="admin-pwd" placeholder="請輸入掃描密碼" autocomplete="new-password">
+        <button class="btn" onclick="unlockScanner()" id="unlock-btn">解鎖掃描器</button>
         <div id="login-msg" style="color: #c0392b; margin-top: 15px; font-size: 14px; font-weight: bold;"></div>
     </div>
 
@@ -34,32 +40,81 @@
         <h2>掃描操作台</h2>
         
         <select id="scan-mode" style="font-weight: bold; color: var(--dark); border: 2px solid var(--primary);">
-            <option value="add_1">🟢 表現優良：加 1 點</option>
-            <option value="add_3">🟢 考試滿分：加 3 點</option>
-            <option value="deduct_10">🔴 兌換禮物：扣 10 點</option>
-            <option value="reset">🔄 學期重置：強制歸零</option>
+            <option value="add_1">表現優良：加 1 點</option>
+            <option value="add_3">考試滿分：加 3 點</option>
+            <option value="deduct_10">兌換禮物：扣 10 點</option>
+            <option value="reset">學期重置：強制歸零</option>
         </select>
         
         <div id="reader"></div>
-        <div id="status-box">🟢 請選擇模式，並對準條碼...</div>
-        <button class="btn btn-lock" onclick="lockScanner()">🔒 重新上鎖</button>
+        <div id="status-box">請選擇模式，並對準條碼...</div>
+        <button class="btn btn-lock" onclick="lockScanner()">重新上鎖</button>
     </div>
 
     <script>
+        // -----------------------------------------
+        // 全套反制防護機制
+        // -----------------------------------------
+        // 禁用複製 (Ctrl+C) 與剪下 (Ctrl+X)
+        document.addEventListener('copy', (e) => e.preventDefault());
+        document.addEventListener('cut', (e) => e.preventDefault());
+        
+        // 禁用開發者工具快捷鍵
+        document.onkeydown = function(event) {
+            if (event.keyCode === 123 || 
+               (event.ctrlKey && event.shiftKey && (event.keyCode === 73 || event.keyCode === 74)) || 
+               (event.ctrlKey && event.keyCode === 85)) { 
+                event.preventDefault();
+                alert("版權所有，禁止開啟開發者工具！");
+                return false;
+            }
+        };
+
         const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwxFfufe0b7eJpDxSmLgnbVvlq1itLvoD6ZCpvDJKtJg7ChcWn7lpf9LgZqQ4ZsThJiXQ/exec";
         let html5QrcodeScanner;
         let currentPwd = "";
         let isProcessing = false;
 
-        function unlockScanner() {
-            const pwd = document.getElementById('admin-pwd').value.trim();
-            if(pwd === "SuHao888_Scanner") {
-                currentPwd = pwd;
-                document.getElementById('login-section').style.display = 'none';
-                document.getElementById('scanner-section').style.display = 'block';
-                startScanner();
-            } else {
-                document.getElementById('login-msg').innerText = "密碼錯誤！";
+        async function unlockScanner() {
+            const pwdInput = document.getElementById('admin-pwd').value.trim();
+            const msgBox = document.getElementById('login-msg');
+            const btn = document.getElementById('unlock-btn');
+
+            if (!pwdInput) {
+                msgBox.innerText = "請輸入密碼！";
+                return;
+            }
+
+            // UI 狀態切換為核對中
+            btn.disabled = true;
+            btn.innerText = "驗證中...";
+            msgBox.innerText = "";
+            msgBox.style.color = "#8e9775";
+
+            // 前端不存密碼，發送一個無 UID 的空請求給 GAS，純粹用來「驗證密碼對不對」
+            const url = `${SCRIPT_URL}?token=SuHaoClassroom2026_SecureKey&action=modifyStudentPoint&adminKey=${encodeURIComponent(pwdInput)}&uid=verify_only`;
+            
+            try {
+                const response = await fetch(url);
+                const data = await response.json();
+
+                // 即使 uid 是 verify_only 會回傳「無效的學生條碼」，但只要不是「密碼錯誤」，就代表密碼過了 GAS 的第一關
+                if (data.message === '拒絕存取：掃描密碼錯誤！') {
+                    msgBox.style.color = "#c0392b";
+                    msgBox.innerText = "密碼錯誤，拒絕存取！";
+                } else {
+                    // 密碼正確，進入掃描畫面
+                    currentPwd = pwdInput; // 暫存起來，等一下掃描時要發給後端
+                    document.getElementById('login-section').style.display = 'none';
+                    document.getElementById('scanner-section').style.display = 'block';
+                    startScanner();
+                }
+            } catch (err) {
+                msgBox.style.color = "#c0392b";
+                msgBox.innerText = "連線失敗，請檢查網路狀態。";
+            } finally {
+                btn.disabled = false;
+                btn.innerText = "解鎖掃描器";
             }
         }
 
@@ -85,7 +140,7 @@
             const statusBox = document.getElementById('status-box');
             statusBox.style.background = "#fcf3cf";
             statusBox.style.color = "#d35400";
-            statusBox.innerText = "⏳ 讀取中，處理點數...";
+            statusBox.innerText = "讀取中，處理點數...";
 
             // 解析下拉選單的模式
             const modeValue = document.getElementById('scan-mode').value;
@@ -97,7 +152,7 @@
             else if(modeValue === 'deduct_10') { reqMode = 'deduct'; reqAmount = 10; }
             else if(modeValue === 'reset') { reqMode = 'reset'; reqAmount = 0; }
 
-            // 發送升級版的 API 請求
+            // 發送升級版的 API 請求 (這裡會帶上剛才暫存的正確密碼)
             const url = `${SCRIPT_URL}?token=SuHaoClassroom2026_SecureKey&action=modifyStudentPoint&adminKey=${encodeURIComponent(currentPwd)}&uid=${encodeURIComponent(decodedText)}&mode=${reqMode}&amount=${reqAmount}`;
             
             try {
@@ -108,11 +163,11 @@
                     statusBox.style.background = "#e8f8f5";
                     statusBox.style.color = "#27ae60";
                     let actionText = data.actionMode === 'add' ? "加點成功" : (data.actionMode === 'deduct' ? "扣除成功" : "已歸零");
-                    statusBox.innerHTML = `✅ <b>${actionText}！</b><br>該生目前：<span style="font-size: 24px;">${data.newPoints}</span> 點`;
+                    statusBox.innerHTML = `<b>${actionText}！</b><br>該生目前：<span style="font-size: 24px;">${data.newPoints}</span> 點`;
                 } else {
                     statusBox.style.background = "#fdedec";
                     statusBox.style.color = "#c0392b";
-                    statusBox.innerText = `❌ 失敗：${data.message}`;
+                    statusBox.innerText = `失敗：${data.message}`;
                 }
             } catch (err) {
                 statusBox.style.background = "#fdedec";
@@ -122,7 +177,7 @@
                 setTimeout(() => {
                     statusBox.style.background = "#f0f3ef";
                     statusBox.style.color = "var(--dark)";
-                    statusBox.innerText = "🟢 請選擇模式，並對準條碼...";
+                    statusBox.innerText = "請選擇模式，並對準條碼...";
                     if(html5QrcodeScanner) html5QrcodeScanner.resume();
                     isProcessing = false;
                 }, 3000);
