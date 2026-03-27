@@ -845,10 +845,38 @@
                 document.getElementById('loading-screen').style.display = 'none';
             }
         });
-        let qrCodeInstance = null; // 儲存 QR Code 實體避免重複繪製
-        let pointsListener = null; // 儲存 Firebase 監聽器
+        // =========================================
+        // 集點卡邏輯區塊 (升級動態時效防護)
+        // =========================================
+        let qrCodeInstance = null; 
+        let pointsListener = null; 
+        let qrRefreshTimer = null; // 新增：控制自動刷新的計時器
         
-        // 打開集點卡
+        // 產生動態 QR Code 的函式
+        function generateDynamicQR() {
+            const user = firebase.auth().currentUser;
+            if (!user) return;
+            
+            const now = Date.now();
+            const salt = Math.random().toString(36).substring(2, 8); 
+            // 原始明碼
+            const rawText = `${user.uid}|${now}|${salt}`;
+            
+            // 使用 btoa 將明碼轉換成 Base64 亂碼
+            const encryptedText = btoa(rawText);
+            
+            const box = document.getElementById("qrcode-box");
+            box.innerHTML = ""; 
+            
+            qrCodeInstance = new QRCode(box, {
+                text: encryptedText, // 放進條碼的是加密後的亂碼！
+                width: 150,
+                height: 150,
+                colorDark : "#5b6348",
+                colorLight : "#ffffff"
+            });
+        }
+
         function openRewardModal() {
             const user = firebase.auth().currentUser;
             if (!user) {
@@ -856,37 +884,30 @@
                 return;
             }
         
-            // 1. 顯示視窗
             document.getElementById('reward-modal').style.display = 'flex';
             
-            // 🌟 新增：如果是手機版，點開卡片後順便把背後的側邊選單收起來
             if (window.innerWidth <= 768) {
                 document.querySelector('.sidebar').classList.remove('open');
             }
             
-            // 2. 產生專屬 QR Code
-            if (!qrCodeInstance) {
-                qrCodeInstance = new QRCode(document.getElementById("qrcode-box"), {
-                    text: user.uid,
-                    width: 150,
-                    height: 150,
-                    colorDark : "#5b6348",
-                    colorLight : "#ffffff"
-                });
-            }
+            // 1. 產生第一次的動態條碼
+            generateDynamicQR();
             
-            // 3. 啟動即時監聽
+            // 2. 設定計時器：每 60 秒自動刷新一次條碼 (防截圖)
+            qrRefreshTimer = setInterval(generateDynamicQR, 60000);
+            
+            // 3. 監聽點數變動
             pointsListener = db.ref('rewards/' + user.uid + '/points');
             pointsListener.on('value', (snap) => {
                 const pts = snap.val() || 0;
                 document.getElementById('student-points').innerText = pts;
             });
         }
+        
         function closeRewardModal() {
             document.getElementById('reward-modal').style.display = 'none';
-            if (pointsListener) {
-                pointsListener.off(); // 解除監聽，節省資源
-            }
+            if (pointsListener) pointsListener.off(); 
+            if (qrRefreshTimer) clearInterval(qrRefreshTimer); // 關閉時停止刷新條碼
         }
     </script>
 </body>
