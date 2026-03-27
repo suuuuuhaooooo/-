@@ -178,10 +178,6 @@
     </style>
 </head>
 <body>
-    <button onclick="openRewardModal()" style="background: #8e9775; color: white; border: none; padding: 10px 15px; border-radius: 4px; cursor: pointer; font-weight: bold; margin-bottom: 20px;">
-        我的集點卡
-    </button>
-    
     <div id="reward-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.85); backdrop-filter: blur(5px); z-index: 10000; justify-content: center; align-items: center;">
         <div style="background: white; padding: 30px; border-radius: 8px; width: 300px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.1); border-top: 6px solid #8e9775; position: relative;">
             
@@ -260,6 +256,9 @@
                     <a id="nav-video" class="nav-link active" onclick="showView('video-view', this)">影音課程</a>
                     <a id="nav-pdf" class="nav-link" onclick="showView('pdf-view', this)">線上教材</a>
                     <a href="test.html" class="nav-link">試務中心</a>
+                    <a class="nav-link" onclick="openRewardModal()" style="color: #27ae60; font-weight: 700;">
+                        我的集點卡
+                    </a>
                     <div style="margin: 20px 20px 0 20px; border-top: 1px dashed #ddd; padding-top: 10px;"></div>
                     <a href="add_shortcut_method.html" target="_blank" class="nav-link" style="color: #d35400; font-weight: 700;">
                         手機桌面捷徑教學
@@ -862,7 +861,12 @@
             // 1. 顯示視窗
             document.getElementById('reward-modal').style.display = 'flex';
             
-            // 2. 產生專屬 QR Code (將學生的 UID 轉成條碼)
+            // 🌟 新增：如果是手機版，點開卡片後順便把背後的側邊選單收起來
+            if (window.innerWidth <= 768) {
+                document.querySelector('.sidebar').classList.remove('open');
+            }
+            
+            // 2. 產生專屬 QR Code
             if (!qrCodeInstance) {
                 qrCodeInstance = new QRCode(document.getElementById("qrcode-box"), {
                     text: user.uid,
@@ -873,22 +877,12 @@
                 });
             }
             
-            // 3. 啟動 Firebase 即時監聽：只要點數變動，畫面上的數字就會自動跳轉！
+            // 3. 啟動即時監聽
             pointsListener = db.ref('rewards/' + user.uid + '/points');
             pointsListener.on('value', (snap) => {
                 const pts = snap.val() || 0;
                 document.getElementById('student-points').innerText = pts;
             });
-        }
-        
-        // 關閉集點卡
-        function closeRewardModal() {
-            document.getElementById('reward-modal').style.display = 'none';
-            
-            // 關閉視窗時解除監聽，節省手機與 Firebase 效能
-            if (pointsListener) {
-                pointsListener.off();
-            }
         }
     </script>
 </body>
