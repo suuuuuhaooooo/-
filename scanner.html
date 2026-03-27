@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>蘇昊數理｜專屬掃描給點器</title>
+    
+    <script src="https://unpkg.com/html5-qrcode"></script>
+    
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;700&display=swap');
+        :root { --primary: #8e9775; --dark: #5b6348; --bg: #f8f8f6; --white: #ffffff; }
+        
+        body { 
+            font-family: "Noto Serif TC", serif; background-color: var(--bg); 
+            margin: 0; display: flex; flex-direction: column; align-items: center; 
+            min-height: 100vh; user-select: none;
+        }
+        
+        .container { 
+            background: white; padding: 30px; border-radius: 8px; 
+            box-shadow: 0 10px 30px rgba(0,0,0,0.05); width: 90%; max-width: 400px; 
+            text-align: center; border-top: 6px solid var(--primary); margin-top: 40px; 
+        }
+
+        h2 { color: var(--dark); margin-top: 0; letter-spacing: 1px; }
+        p { color: #888; font-size: 14px; margin-bottom: 20px; }
+
+        input { 
+            width: 100%; padding: 14px; margin: 10px 0; border: 1px solid #eee; 
+            background: #fafafa; box-sizing: border-box; outline: none; transition: 0.3s;
+            text-align: center; letter-spacing: 2px;
+        }
+        input:focus { border-color: var(--primary); background: #fff; }
+
+        .btn { 
+            background: var(--primary); color: white; border: none; padding: 14px; 
+            width: 100%; cursor: pointer; font-weight: 700; border-radius: 4px; 
+            margin-top: 15px; transition: 0.3s; font-size: 16px;
+        }
+        .btn:hover { background: var(--dark); }
+        .btn-lock { background: #e0e0e0; color: #555; margin-top: 25px; }
+        
+        #reader { width: 100%; margin-top: 10px; border-radius: 8px; overflow: hidden; border: none !important; }
+        #reader__dashboard_section_csr span { font-family: "Noto Serif TC", serif !important; }
+        
+        #status-box { 
+            margin-top: 20px; padding: 15px; border-radius: 4px; 
+            background: #f0f3ef; color: var(--dark); font-weight: bold; min-height: 24px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container" id="login-section">
+        <h2>蘇昊老師專屬掃描器</h2>
+        <p>請輸入最高權限密碼解鎖相機</p>
+        <input type="password" id="admin-pwd" placeholder="請輸入掃描密碼">
+        <button class="btn" onclick="unlockScanner()">解鎖掃描器</button>
+        <div id="login-msg" style="color: #c0392b; margin-top: 15px; font-size: 14px; font-weight: bold;"></div>
+    </div>
+
+    <div class="container" id="scanner-section" style="display: none;">
+        <h2>掃描給點系統</h2>
+        <p>請將鏡頭對準學生的集點 QR Code</p>
+        
+        <div id="reader"></div>
+        
+        <div id="status-box">🟢 等待掃描中...</div>
+        
+        <button class="btn btn-lock" onclick="lockScanner()">🔒 重新上鎖</button>
+    </div>
+
+    <script>
+        // 🚨 這是您 GAS 發布的正式網址
+        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwxFfufe0b7eJpDxSmLgnbVvlq1itLvoD6ZCpvDJKtJg7ChcWn7lpf9LgZqQ4ZsThJiXQ/exec";
+        
+        let html5QrcodeScanner;
+        let currentPwd = "";
+        let isProcessing = false;
+
+        // 解鎖掃描器
+        function unlockScanner() {
+            const pwd = document.getElementById('admin-pwd').value.trim();
+            // 對應 GAS 裡設定的 TEACHER_SECRET_KEY
+            if(pwd === "SuHao888_Scanner") {
+                currentPwd = pwd;
+                document.getElementById('login-section').style.display = 'none';
+                document.getElementById('scanner-section').style.display = 'block';
+                startScanner();
+            } else {
+                document.getElementById('login-msg').innerText = "密碼錯誤，拒絕存取！";
+            }
+        }
+
+        // 重新上鎖 (保護老師手機不被學生偷拿去按)
+        function lockScanner() {
+            if(html5QrcodeScanner) {
+                html5QrcodeScanner.clear(); // 關閉相機
+            }
+            currentPwd = "";
+            document.getElementById('admin-pwd').value = "";
+            document.getElementById('login-msg').innerText = "";
+            document.getElementById('scanner-section').style.display = 'none';
+            document.getElementById('login-section').style.display = 'block';
+        }
+
+        // 啟動相機掃描
+        function startScanner() {
+            // fps: 每秒掃描次數, qrbox: 掃描框大小
+            html5QrcodeScanner = new Html5QrcodeScanner("reader", { fps: 10, qrbox: {width: 250, height: 250} }, false);
+            html5QrcodeScanner.render(onScanSuccess, onScanFailure);
+        }
+
+        // 當成功掃描到 QR Code 時觸發
+        async function onScanSuccess(decodedText, decodedResult) {
+            if(isProcessing) return; // 防呆：避免一次掃到好幾次導致連加
+            isProcessing = true;
+            
+            // 暫停相機畫面，避免重複讀取
+            if(html5QrcodeScanner) html5QrcodeScanner.pause();
+            
+            const statusBox = document.getElementById('status-box');
+            statusBox.style.background = "#fcf3cf";
+            statusBox.style.color = "#d35400";
+            statusBox.innerText = "⏳ 讀取 UID 中，正在連線核發點數...";
+
+            // 組合 API 網址，向 GAS 發送給點請求
+            const url = `${SCRIPT_URL}?token=SuHaoClassroom2026_SecureKey&action=addStudentPoint&adminKey=${encodeURIComponent(currentPwd)}&uid=${encodeURIComponent(decodedText)}`;
+            
+            try {
+                const response = await fetch(url);
+                const data = await response.json();
+
+                if(data.success) {
+                    // 成功加點！
+                    statusBox.style.background = "#e8f8f5";
+                    statusBox.style.color = "#27ae60";
+                    statusBox.innerHTML = `✅ <b>加點成功！</b><br>該生目前累計：<span style="font-size: 24px;">${data.newPoints}</span> 點`;
+                } else {
+                    // 失敗 (可能是密碼錯、UID 錯，或是資料庫連線問題)
+                    statusBox.style.background = "#fdedec";
+                    statusBox.style.color = "#c0392b";
+                    statusBox.innerText = `❌ 加點失敗：${data.message}`;
+                }
+            } catch (err) {
+                statusBox.style.background = "#fdedec";
+                statusBox.style.color = "#c0392b";
+                statusBox.innerText = "連線異常，請檢查網路狀態。";
+            } finally {
+                // 停頓 3 秒後，自動恢復相機畫面，準備掃下一個學生
+                setTimeout(() => {
+                    statusBox.style.background = "#f0f3ef";
+                    statusBox.style.color = "var(--dark)";
+                    statusBox.innerText = "🟢 等待掃描中...";
+                    if(html5QrcodeScanner) html5QrcodeScanner.resume();
+                    isProcessing = false;
+                }, 3000);
+            }
+        }
+
+        // 背景掃描失敗時略過 (這是正常的，因為相機每秒都在找條碼)
+        function onScanFailure(error) { }
+    </script>
+</body>
+</html>
