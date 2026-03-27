@@ -240,7 +240,7 @@
                     <a id="nav-video" class="nav-link active" onclick="showView('video-view', this)">影音課程</a>
                     <a id="nav-pdf" class="nav-link" onclick="showView('pdf-view', this)">線上教材</a>
                     <a href="test.html" class="nav-link">試務中心</a>
-                    <a class="nav-link" onclick="openRewardModal()" style="color: #27ae60; font-weight: 700;">
+                    <a class="nav-link" onclick="openRewardModal()" ; font-weight: 700;">
                         我的集點卡
                     </a>
                     <div style="margin: 20px 20px 0 20px; border-top: 1px dashed #ddd; padding-top: 10px;"></div>
@@ -881,6 +881,12 @@
                 const pts = snap.val() || 0;
                 document.getElementById('student-points').innerText = pts;
             });
+        }
+        function closeRewardModal() {
+            document.getElementById('reward-modal').style.display = 'none';
+            if (pointsListener) {
+                pointsListener.off(); // 解除監聽，節省資源
+            }
         }
     </script>
 </body>
