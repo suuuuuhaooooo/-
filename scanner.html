@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>蘇昊數理｜集點掃描</title>
+    
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-database-compat.js"></script>
     <script src="https://unpkg.com/html5-qrcode"></script>
@@ -12,7 +13,6 @@
         @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;700&display=swap');
         :root { --primary: #8e9775; --dark: #5b6348; --bg: #f8f8f6; --white: #ffffff; }
         
-        /* 防反白 (選取) */
         body { 
             font-family: "Noto Serif TC", serif; background-color: var(--bg); margin: 0; display: flex; flex-direction: column; align-items: center; min-height: 100vh; 
             user-select: none; -webkit-user-select: none; -moz-user-select: none; -ms-user-select: none; -webkit-touch-callout: none;
@@ -23,8 +23,12 @@
         .container { background: white; padding: 30px; border-radius: 8px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); width: 90%; max-width: 400px; text-align: center; border-top: 6px solid var(--primary); margin-top: 40px; }
         h2 { color: var(--dark); margin-top: 0; letter-spacing: 1px; }
         p { color: #888; font-size: 14px; margin-bottom: 20px; }
+        
+        /* 針對自訂點數輸入框優化 */
         input, select { width: 100%; padding: 14px; margin: 10px 0; border: 1px solid #eee; background: #fafafa; box-sizing: border-box; outline: none; transition: 0.3s; text-align: center; font-family: "Noto Serif TC", serif; font-size: 16px;}
         input:focus, select:focus { border-color: var(--primary); background: #fff; }
+        input[type="number"]::-webkit-inner-spin-button { opacity: 1; height: 30px; } /* 讓數字上下按鈕明顯一點 */
+
         .btn { background: var(--primary); color: white; border: none; padding: 14px; width: 100%; cursor: pointer; font-weight: 700; border-radius: 4px; margin-top: 15px; transition: 0.3s; font-size: 16px; }
         .btn:hover { background: var(--dark); }
         .btn:disabled { background: #ccc; cursor: not-allowed; }
@@ -37,28 +41,29 @@
 
     <div class="container" id="login-section">
         <h2>集點卡掃描</h2>
-        <input type="password" id="admin-pwd" placeholder="請輸入掃描密碼" autocomplete="new-password">
+        <input type="password" id="admin-pwd" placeholder="請輸入密碼" autocomplete="new-password">
         <button class="btn" onclick="unlockScanner()" id="unlock-btn">登入</button>
         <div id="login-msg" style="color: #c0392b; margin-top: 15px; font-size: 14px; font-weight: bold;"></div>
     </div>
 
     <div class="container" id="scanner-section" style="display: none;">
-        <h2>掃描操作台</h2>
-        <select id="scan-mode" style="font-weight: bold; color: var(--dark); border: 2px solid var(--primary);">
-            <option value="add_1">表現優良：加 1 點</option>
-            <option value="add_3">考試滿分：加 3 點</option>
-            <option value="deduct_10">兌換禮物：扣 10 點</option>
-            <option value="reset">🔄 學期重置：強制歸零</option>
-        </select>
+        <h2>掃描操作</h2>
+        
+        <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+            <select id="scan-action" onchange="toggleAmountInput()" style="flex: 1; font-weight: bold; color: var(--dark); border: 2px solid var(--primary); margin: 0; padding: 12px;">
+                <option value="add">加點</option>
+                <option value="deduct">扣除</option>
+                <option value="reset">歸零</option>
+            </select>
+            <input type="number" id="scan-amount" value="1" min="1" max="999" placeholder="數量" style="flex: 1; font-weight: bold; color: var(--dark); border: 2px solid var(--primary); margin: 0; padding: 12px;">
+        </div>
+        
         <div id="reader"></div>
-        <div id="status-box">請選擇模式，並對準條碼...</div>
-        <button class="btn btn-lock" onclick="lockScanner()">重新上鎖</button>
+        <div id="status-box">請設定點數，並對準條碼...</div>
+        <button class="btn btn-lock" onclick="lockScanner()">登出</button>
     </div>
 
     <script>
-        // -----------------------------------------
-        // 反開發者工具
-        // -----------------------------------------
         document.addEventListener('copy', (e) => e.preventDefault());
         document.addEventListener('cut', (e) => e.preventDefault());
         document.onkeydown = function(event) {
@@ -71,9 +76,6 @@
             }
         };
 
-        // -----------------------------------------
-        // Firebase 與 IP 封鎖連動系統
-        // -----------------------------------------
         const firebaseConfig = {
             apiKey: "AIzaSyALkTnkYY3JZLCTyajahpi4IZKmFX9USdw",
             authDomain: "su-hao-classroom.firebaseapp.com",
@@ -89,7 +91,6 @@
         let globalClientIP = "";
         let safeIP = "unknown_IP";
 
-        // 網頁載入時獲取 IP
         window.onload = async function() {
             try {
                 const res = await fetch('https://api.ipify.org?format=json');
@@ -97,95 +98,62 @@
                 globalClientIP = data.ip;
                 safeIP = globalClientIP.replace(/[.#$\[\]:]/g, '_');
                 checkBanStatus();
-            } catch (err) {
-                console.log("獲取 IP 失敗", err);
-                checkBanStatus();
-            }
+            } catch (err) { checkBanStatus(); }
         };
 
-        // 檢查是否已被封鎖
         async function checkBanStatus() {
             const now = Date.now();
-            
-            // 1. 檢查雲端 Firebase 封鎖清單
             if (safeIP !== "unknown_IP") {
                 try {
                     const snap = await db.ref('ip_bans/' + safeIP).once('value');
                     const banData = snap.val();
-                    if (banData && banData.lockUntil > now) {
-                        applyBanUI(banData.lockUntil);
-                        return true;
-                    }
-                } catch (e) { console.log("IP 檢查失敗", e); }
+                    if (banData && banData.lockUntil > now) { applyBanUI(banData.lockUntil); return true; }
+                } catch (e) {}
             }
-
-            // 2. 檢查本地鎖定 (雙重保險)
             let lockUntil = parseInt(localStorage.getItem('scanner_lock_until') || '0', 10);
-            if (now < lockUntil) {
-                applyBanUI(lockUntil);
-                return true;
-            }
+            if (now < lockUntil) { applyBanUI(lockUntil); return true; }
             return false;
         }
 
-        // 執行鎖定介面
         function applyBanUI(lockUntil) {
             const now = Date.now();
             const remainingSec = Math.ceil((lockUntil - now) / 1000);
             if (remainingSec <= 0) return;
-            
             const min = Math.floor(remainingSec / 60);
             const sec = remainingSec % 60;
-            
-            const pwdInput = document.getElementById('admin-pwd');
-            const btn = document.getElementById('unlock-btn');
+            document.getElementById('admin-pwd').disabled = true;
+            document.getElementById('unlock-btn').disabled = true;
             const msgBox = document.getElementById('login-msg');
-            
-            pwdInput.disabled = true;
-            btn.disabled = true;
             msgBox.style.color = "#c0392b";
-            msgBox.innerText = `IP 已遭封鎖！\n請等待 ${min} 分 ${sec} 秒後重整網頁。`;
+            msgBox.innerText = `偵測多次失誤！\n請等待 ${min} 分 ${sec} 秒後重整網頁。`;
         }
 
-        // 紀錄失敗次數並觸發封鎖
         async function handleFailedAttempt() {
             let failCount = parseInt(localStorage.getItem('scanner_fail_count') || '0', 10);
             failCount++;
             localStorage.setItem('scanner_fail_count', failCount);
-
             const now = Date.now();
             let penaltyMinutes = 0;
             let cloudFails = failCount;
-
             if (safeIP !== "unknown_IP") {
                 try {
                     const snap = await db.ref('ip_bans/' + safeIP).once('value');
                     let banData = snap.val() || { fails: 0, lockUntil: 0 };
                     banData.fails += 1;
                     cloudFails = banData.fails;
-                    
                     if (banData.fails === 3) penaltyMinutes = 10;
                     else if (banData.fails === 4) penaltyMinutes = 30;
                     else if (banData.fails >= 5) penaltyMinutes = 60;
-                    
-                    if (penaltyMinutes > 0) {
-                        banData.lockUntil = now + (penaltyMinutes * 60 * 1000);
-                    }
+                    if (penaltyMinutes > 0) banData.lockUntil = now + (penaltyMinutes * 60 * 1000);
                     await db.ref('ip_bans/' + safeIP).set(banData);
-                } catch(e) { console.log("更新 IP 失敗次數錯誤", e); }
+                } catch(e) {}
             }
-
-            if (cloudFails > failCount) {
-                failCount = cloudFails;
-                localStorage.setItem('scanner_fail_count', failCount);
-            }
-
+            if (cloudFails > failCount) { failCount = cloudFails; localStorage.setItem('scanner_fail_count', failCount); }
             if (penaltyMinutes === 0) {
                 if (failCount === 3) penaltyMinutes = 10;
                 else if (failCount === 4) penaltyMinutes = 30;
                 else if (failCount >= 5) penaltyMinutes = 60;
             }
-
             if (penaltyMinutes > 0) {
                 const lockUntil = now + (penaltyMinutes * 60 * 1000);
                 localStorage.setItem('scanner_lock_until', lockUntil);
@@ -194,69 +162,58 @@
                 let attemptsLeft = 3 - failCount;
                 const msgBox = document.getElementById('login-msg');
                 msgBox.style.color = "#c0392b";
-                if(attemptsLeft > 0) {
-                    msgBox.innerText = `密碼錯誤，拒絕存取！\n(警告：再失敗 ${attemptsLeft} 次將觸發 IP 封鎖)`;
-                } else {
-                    msgBox.innerText = "密碼錯誤，拒絕存取！";
-                }
+                if(attemptsLeft > 0) msgBox.innerText = `密碼錯誤，拒存取！\n(警告：再失敗 ${attemptsLeft} 次將觸發 IP 封鎖)`;
+                else msgBox.innerText = "密碼錯誤，拒絕存取！";
             }
         }
 
-        // -----------------------------------------
+        // ==========================================
         // 掃描器核心邏輯
-        // -----------------------------------------
+        // ==========================================
         const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwxFfufe0b7eJpDxSmLgnbVvlq1itLvoD6ZCpvDJKtJg7ChcWn7lpf9LgZqQ4ZsThJiXQ/exec";
         let html5QrcodeScanner;
         let currentPwd = "";
         let isProcessing = false;
 
-        async function unlockScanner() {
-            // 進入前先檢查是否已被封鎖
-            if (await checkBanStatus()) return;
+        // 如果選擇「歸零」，自動鎖定數量輸入框
+        function toggleAmountInput() {
+            const action = document.getElementById('scan-action').value;
+            const amountInput = document.getElementById('scan-amount');
+            if (action === 'reset') {
+                amountInput.disabled = true;
+                amountInput.style.background = "#e0e0e0";
+            } else {
+                amountInput.disabled = false;
+                amountInput.style.background = "#fafafa";
+            }
+        }
 
+        async function unlockScanner() {
+            if (await checkBanStatus()) return;
             const pwdInput = document.getElementById('admin-pwd').value.trim();
             const msgBox = document.getElementById('login-msg');
             const btn = document.getElementById('unlock-btn');
-
-            if (!pwdInput) {
-                msgBox.innerText = "請輸入密碼！";
-                return;
-            }
-
-            btn.disabled = true;
-            btn.innerText = "驗證中...";
-            msgBox.innerText = "";
-            msgBox.style.color = "#8e9775";
-
-            // 發送空請求給 GAS 驗證密碼
-            const url = `${SCRIPT_URL}?token=SuHaoClassroom2026_SecureKey&action=modifyStudentPoint&adminKey=${encodeURIComponent(pwdInput)}&uid=verify_only`;
+            if (!pwdInput) { msgBox.innerText = "請輸入密碼！"; return; }
+            btn.disabled = true; btn.innerText = "驗證中..."; msgBox.innerText = ""; msgBox.style.color = "#8e9775";
             
+            const url = `${SCRIPT_URL}?token=SuHaoClassroom2026_SecureKey&action=modifyStudentPoint&adminKey=${encodeURIComponent(pwdInput)}&uid=verify_only`;
             try {
                 const response = await fetch(url);
                 const data = await response.json();
-
                 if (data.message === '拒絕存取：掃描密碼錯誤！') {
-                    // 密碼錯誤 ➔ 觸發封鎖計算邏輯
                     await handleFailedAttempt();
                 } else {
-                    // 密碼正確 ➔ 清除錯誤紀錄與封鎖狀態
-                    localStorage.removeItem('scanner_fail_count');
-                    localStorage.removeItem('scanner_lock_until');
+                    localStorage.removeItem('scanner_fail_count'); localStorage.removeItem('scanner_lock_until');
                     if (safeIP !== "unknown_IP") db.ref('ip_bans/' + safeIP).remove();
-                    
                     currentPwd = pwdInput; 
                     document.getElementById('login-section').style.display = 'none';
                     document.getElementById('scanner-section').style.display = 'block';
                     startScanner();
                 }
             } catch (err) {
-                msgBox.style.color = "#c0392b";
-                msgBox.innerText = "連線失敗，請檢查網路狀態。";
+                msgBox.style.color = "#c0392b"; msgBox.innerText = "連線失敗，請檢查網路狀態。";
             } finally {
-                if (!document.getElementById('admin-pwd').disabled) {
-                    btn.disabled = false;
-                    btn.innerText = "解鎖掃描器";
-                }
+                if (!document.getElementById('admin-pwd').disabled) { btn.disabled = false; btn.innerText = "登入"; }
             }
         }
 
@@ -284,14 +241,12 @@
             statusBox.style.color = "#d35400";
             statusBox.innerText = "讀取中，處理點數...";
 
-            const modeValue = document.getElementById('scan-mode').value;
-            let reqMode = 'add';
-            let reqAmount = 1;
-
-            if(modeValue === 'add_1') { reqMode = 'add'; reqAmount = 1; }
-            else if(modeValue === 'add_3') { reqMode = 'add'; reqAmount = 3; }
-            else if(modeValue === 'deduct_10') { reqMode = 'deduct'; reqAmount = 10; }
-            else if(modeValue === 'reset') { reqMode = 'reset'; reqAmount = 0; }
+            // 抓取自訂的選項與數字
+            const reqMode = document.getElementById('scan-action').value;
+            let reqAmount = parseInt(document.getElementById('scan-amount').value) || 1;
+            
+            // 如果是歸零，不管數字打多少都強制傳 0 過去
+            if (reqMode === 'reset') reqAmount = 0;
 
             const url = `${SCRIPT_URL}?token=SuHaoClassroom2026_SecureKey&action=modifyStudentPoint&adminKey=${encodeURIComponent(currentPwd)}&uid=${encodeURIComponent(decodedText)}&mode=${reqMode}&amount=${reqAmount}`;
             
@@ -302,7 +257,7 @@
                 if(data.success) {
                     statusBox.style.background = "#e8f8f5";
                     statusBox.style.color = "#27ae60";
-                    let actionText = data.actionMode === 'add' ? "加點成功" : (data.actionMode === 'deduct' ? "扣除成功" : "已歸零");
+                    let actionText = data.actionMode === 'add' ? `成功加 ${reqAmount} 點` : (data.actionMode === 'deduct' ? `成功扣 ${reqAmount} 點` : "已強制歸零");
                     statusBox.innerHTML = `<b>${actionText}！</b><br>該生目前：<span style="font-size: 24px;">${data.newPoints}</span> 點`;
                 } else {
                     statusBox.style.background = "#fdedec";
@@ -317,7 +272,7 @@
                 setTimeout(() => {
                     statusBox.style.background = "#f0f3ef";
                     statusBox.style.color = "var(--dark)";
-                    statusBox.innerText = "請選擇模式，並對準條碼...";
+                    statusBox.innerText = "請設定點數，並對準條碼...";
                     if(html5QrcodeScanner) html5QrcodeScanner.resume();
                     isProcessing = false;
                 }, 3000);
