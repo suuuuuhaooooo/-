@@ -993,7 +993,7 @@
                                 document.getElementById('loading-screen').style.display = 'none';
                                 
                                 const dateString = finalExpireDate.getFullYear() + "/" + (finalExpireDate.getMonth() + 1) + "/" + finalExpireDate.getDate();
-                                alert("【系統通知】\n您的授權已到期\n使用期限於 " + dateString + " 屆滿。\n\n如需繼續使用雲端教室，請聯繫管理員辦理帳號延展。");
+                                alert("【系統通知】\n\n您的授權已到期，\n使用期限於 " + dateString + " 屆滿。\n如需繼續使用雲端教室，請聯繫管理員辦理帳號延展。");
                                 
                                 logout(); // 強制登出並停止載入資料
                                 return;
