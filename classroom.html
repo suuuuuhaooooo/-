@@ -974,30 +974,39 @@
                         // ==========================================
                         const today = new Date();
                         today.setHours(0, 0, 0, 0); 
-                    
+
                         const safeParseDate = (str) => {
                             if (!str || str.toString().trim() === "") return null;
-                            let datePart = str.toString().split(' ')[0].replace(/-/g, '/');
-                            let d = new Date(datePart);
-                            if (isNaN(d.getTime())) return null;
-                            d.setHours(0, 0, 0, 0); // 強制校正為凌晨
-                            return d;
+                            
+                            // 1. 優先嘗試解析 Google 後端傳來的原生格式 (ISO字串或日期物件)
+                            let d = new Date(str);
+                            if (!isNaN(d.getTime())) {
+                                d.setHours(0, 0, 0, 0);
+                                return d;
+                            }
+
+                            // 2. 如果原生解析失敗，代表是老師手動輸入的奇葩格式 (例如: 2026-1-1)
+                            // 我們把 T 跟空格都切掉，換成斜線再來一次
+                            let datePart = str.toString().split('T')[0].split(' ')[0].replace(/-/g, '/');
+                            d = new Date(datePart);
+                            if (!isNaN(d.getTime())) {
+                                d.setHours(0, 0, 0, 0);
+                                return d;
+                            }
+                            return null;
                         };
-                    
+
                         let finalExpireDate = null;
-                    
-                        // 1. 優先權：S 欄 (expiryDate)
                         let sDate = safeParseDate(my.expiryDate);
+
                         if (sDate) {
                             finalExpireDate = sDate;
-                        } 
-                        // 2. 次要權：P 欄 (startTime) 加 90 天
-                        else {
+                        } else {
                             let pDate = safeParseDate(my.startTime);
                             if (pDate) {
                                 finalExpireDate = new Date(pDate);
                                 finalExpireDate.setDate(finalExpireDate.getDate() + 90);
-                                finalExpireDate.setHours(0, 0, 0, 0); 
+                                finalExpireDate.setHours(0, 0, 0, 0);
                             }
                         }
                     
