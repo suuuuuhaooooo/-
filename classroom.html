@@ -937,6 +937,10 @@
 
         auth.onAuthStateChanged(async (user) => {
             if (user) {
+                const adminEmails = ["admin888@suhao.com", "suuuuuhaooooo@gmail.com"];
+                if (adminEmails.includes(user.email.toLowerCase())) {
+                    document.getElementById('nav-admin-scanner').style.display = 'block';
+                }
                 const authStatusRef = db.ref('auth_status/' + user.uid);
                 authStatusRef.on('value', snap => {
                     const data = snap.val();
