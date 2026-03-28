@@ -407,6 +407,14 @@
             <p style="font-size: 13px; color: #888; margin-bottom: 20px;">出示此條碼給管理員掃描即可獲得點數</p>
             
             <div id="qrcode-box" style="margin: 0 auto; width: 150px; height: 150px; display: flex; justify-content: center; align-items: center; background: #f8f8f6; border-radius: 4px; padding: 10px;"></div>
+            <div id="qr-timer-container" style="display: none; margin: 15px auto 0; width: 150px; text-align: center;">
+                <div style="font-size: 11px; color: #888; margin-bottom: 6px; letter-spacing: 1px;">
+                    動態安全碼更新倒數：<span id="qr-countdown-text" style="color: #e74c3c; font-weight: bold; font-size: 13px;">60</span> 秒
+                </div>
+                <div style="width: 100%; height: 4px; background: #eee; border-radius: 2px; overflow: hidden;">
+                    <div id="qr-progress-bar" style="width: 100%; height: 100%; background: #27ae60; transition: width 1s linear;"></div>
+                </div>
+            </div>
             
             <div style="margin-top: 25px; font-size: 16px; color: #5b6348; font-weight: bold;">
                 目前累積：<span id="student-points" style="font-size: 36px; color: #27ae60; margin: 0 5px;">0</span> 點
@@ -989,23 +997,21 @@
             });
         }
 
-        function openRewardModal() {
-            const user = firebase.auth().currentUser;
-            if (!user) {
-                alert("請先登入才能查看集點卡喔！");
-                return;
-            }
-        
-            document.getElementById('reward-modal').style.display = 'flex';
-            if (window.innerWidth <= 768) {
-                document.querySelector('.sidebar').classList.remove('open');
-            }
-            
-            // 顯示載入中狀態
+        let qrCodeInstance = null; 
+        let pointsListener = null; 
+        let qrRefreshTimer = null;     // 控制每 60 秒向後端要新條碼的計時器
+        let qrCountdownInterval = null;// 控制 UI 秒數與進度條動畫的計時器
+        let currentQrSeconds = 60;
+
+        // 獨立出「向後端索取條碼」的函式
+        function fetchSecureQrCode(user) {
             const box = document.getElementById("qrcode-box");
-            box.innerHTML = "<div style='font-size:12px; color:#888; text-align:center; margin-top:60px;'>安全憑證生成中...</div>";
+            const timerContainer = document.getElementById("qr-timer-container");
             
-            // 向 GAS 後端請求一次性動態簽章條碼
+            // 索取中先隱藏計時器，顯示載入文字
+            timerContainer.style.display = "none";
+            box.innerHTML = "<div style='font-size:12px; color:#888; text-align:center;'>安全憑證生成中...</div>";
+            
             const url = `${SCRIPT_URL}?token=SuHaoClassroom2026_SecureKey&action=getQrToken&uid=${user.uid}`;
             fetch(url)
                 .then(res => res.json())
@@ -1017,15 +1023,62 @@
                             width: 150, height: 150,
                             colorDark : "#5b6348", colorLight : "#ffffff"
                         });
+                        
+                        // 條碼生成成功，重置秒數與進度條
+                        currentQrSeconds = 60;
+                        document.getElementById("qr-countdown-text").innerText = currentQrSeconds;
+                        
+                        const bar = document.getElementById("qr-progress-bar");
+                        bar.style.transition = "none"; // 瞬間拉回滿血
+                        bar.style.width = "100%";
+                        bar.style.background = "#27ae60"; // 恢復綠色
+                        
+                        // 延遲一點點加回動畫效果，讓進度條開始平滑減少
+                        setTimeout(() => { bar.style.transition = "width 1s linear"; }, 50);
+                        
+                        timerContainer.style.display = "block";
                     } else {
-                        box.innerHTML = "<div style='font-size:12px; color:#c0392b; text-align:center; margin-top:60px;'>憑證請求失敗</div>";
+                        box.innerHTML = "<div style='font-size:12px; color:#c0392b; text-align:center;'>憑證請求失敗</div>";
                     }
                 })
                 .catch(err => {
-                    box.innerHTML = "<div style='font-size:12px; color:#c0392b; text-align:center; margin-top:60px;'>網路連線異常</div>";
+                    box.innerHTML = "<div style='font-size:12px; color:#c0392b; text-align:center;'>網路連線異常</div>";
                 });
+        }
+
+        function openRewardModal() {
+            const user = firebase.auth().currentUser;
+            if (!user) { alert("請先登入才能查看集點卡喔！"); return; }
+        
+            document.getElementById('reward-modal').style.display = 'flex';
+            if (window.innerWidth <= 768) { document.querySelector('.sidebar').classList.remove('open'); }
             
-            // 監聽點數變動
+            // 1. 首次打開，立刻索取第一張條碼
+            fetchSecureQrCode(user);
+            
+            // 2. 啟動背景刷新機制 (每 60 秒拿一次新條碼)
+            if (qrRefreshTimer) clearInterval(qrRefreshTimer);
+            qrRefreshTimer = setInterval(() => fetchSecureQrCode(user), 60000);
+            
+            // 3. 啟動前端 UI 倒數動畫
+            if (qrCountdownInterval) clearInterval(qrCountdownInterval);
+            qrCountdownInterval = setInterval(() => {
+                currentQrSeconds--;
+                if (currentQrSeconds < 0) currentQrSeconds = 0;
+                
+                document.getElementById("qr-countdown-text").innerText = currentQrSeconds;
+                
+                // 計算剩餘百分比
+                const percent = (currentQrSeconds / 60) * 100;
+                const bar = document.getElementById("qr-progress-bar");
+                bar.style.width = percent + "%";
+                
+                // 剩下 15 秒時，進度條變紅色警告
+                if (currentQrSeconds <= 15) { bar.style.background = "#e74c3c"; }
+                
+            }, 1000);
+            
+            // 4. 監聽點數即時變動
             pointsListener = db.ref('rewards/' + user.uid + '/points');
             pointsListener.on('value', (snap) => {
                 document.getElementById('student-points').innerText = snap.val() || 0;
@@ -1035,8 +1088,13 @@
         function closeRewardModal() {
             document.getElementById('reward-modal').style.display = 'none';
             if (pointsListener) pointsListener.off(); 
-            // 關閉時清空條碼，迫使下次打開重新向後端申請新時效的條碼
+            
+            // 關閉視窗時，必須清除所有計時器，避免在背景偷吃效能
+            if (qrRefreshTimer) clearInterval(qrRefreshTimer);
+            if (qrCountdownInterval) clearInterval(qrCountdownInterval);
+            
             document.getElementById("qrcode-box").innerHTML = ""; 
+            document.getElementById("qr-timer-container").style.display = "none";
         }
     </script>
 </body>
