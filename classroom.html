@@ -975,6 +975,7 @@
                         // 內部函式：強制將各種日期格式轉為正確的 Date 物件
                         const safeParseDate = (str) => {
                             if (!str || str.toString().trim() === "") return null;
+                            let datePart = str.toString().split(' ')[0];
                             // 1. 將橫線換成斜線 (相容性最高)
                             let s = str.toString().replace(/-/g, '/');
                             // 2. 處理 2025/1/1 這種格式，確保能被 Date 接受
