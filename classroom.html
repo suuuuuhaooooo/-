@@ -997,29 +997,46 @@
             }
         
             document.getElementById('reward-modal').style.display = 'flex';
-            
             if (window.innerWidth <= 768) {
                 document.querySelector('.sidebar').classList.remove('open');
             }
             
-            // 1. 產生第一次的動態條碼
-            generateDynamicQR();
+            // 顯示載入中狀態
+            const box = document.getElementById("qrcode-box");
+            box.innerHTML = "<div style='font-size:12px; color:#888; text-align:center; margin-top:60px;'>安全憑證生成中...</div>";
             
-            // 2. 設定計時器：每 60 秒自動刷新一次條碼 (防截圖)
-            qrRefreshTimer = setInterval(generateDynamicQR, 60000);
+            // 向 GAS 後端請求一次性動態簽章條碼
+            const url = `${SCRIPT_URL}?token=SuHaoClassroom2026_SecureKey&action=getQrToken&uid=${user.uid}`;
+            fetch(url)
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success) {
+                        box.innerHTML = "";
+                        qrCodeInstance = new QRCode(box, {
+                            text: data.token,
+                            width: 150, height: 150,
+                            colorDark : "#5b6348", colorLight : "#ffffff"
+                        });
+                    } else {
+                        box.innerHTML = "<div style='font-size:12px; color:#c0392b; text-align:center; margin-top:60px;'>憑證請求失敗</div>";
+                    }
+                })
+                .catch(err => {
+                    box.innerHTML = "<div style='font-size:12px; color:#c0392b; text-align:center; margin-top:60px;'>網路連線異常</div>";
+                });
             
-            // 3. 監聽點數變動
+            // 監聽點數變動
             pointsListener = db.ref('rewards/' + user.uid + '/points');
             pointsListener.on('value', (snap) => {
-                const pts = snap.val() || 0;
-                document.getElementById('student-points').innerText = pts;
+                document.getElementById('student-points').innerText = snap.val() || 0;
             });
         }
         
         function closeRewardModal() {
             document.getElementById('reward-modal').style.display = 'none';
             if (pointsListener) pointsListener.off(); 
-            if (qrRefreshTimer) clearInterval(qrRefreshTimer); // 關閉時停止刷新條碼
+            // 關閉時清空條碼，迫使下次打開重新向後端申請新時效的條碼
+            document.getElementById("qrcode-box").innerHTML = ""; 
         }
     </script>
 </body>
