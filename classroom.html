@@ -1157,9 +1157,7 @@
                 currentQrSeconds--;
                 if (currentQrSeconds < 0) currentQrSeconds = 0;
                 
-                // 將秒數格式化為 00:XX
                 const secStr = currentQrSeconds < 10 ? "0" + currentQrSeconds : currentQrSeconds;
-                
                 const countdownText = document.getElementById("qr-countdown-text");
                 if (countdownText) {
                     countdownText.innerText = "00:" + secStr;
@@ -1167,35 +1165,39 @@
                 
             }, 1000);
             
-            // 點數即時監聽與動畫觸發器
+            // ==========================================
+            // 點數監聽與動畫
+            // ==========================================
+            let isInitialLoad = true; // 建立初次載入保險絲
             pointsListener = db.ref('rewards/' + user.uid + '/points');
-            let previousPoints = null; // 用來記憶上一次的點數
+            let previousPoints = null; 
 
             pointsListener.on('value', (snap) => {
                 const newPoints = snap.val() || 0;
                 const ptsEl = document.getElementById('student-points');
                 
                 if (ptsEl) {
-                    // 判斷：必須不是第一次打開(null)，且點數真的有變動才播動畫
-                    if (previousPoints !== null && previousPoints !== newPoints) {
+                    // 判斷：必須「不是初次載入」且「點數真有變動」才播動畫
+                    if (!isInitialLoad && previousPoints !== null && previousPoints !== newPoints) {
                         
-                        // 先清空所有動畫 class，並用小魔法強制瀏覽器重新繪製 (Reflow)
                         ptsEl.classList.remove('anim-add', 'anim-deduct', 'anim-reset');
-                        void ptsEl.offsetWidth; 
+                        void ptsEl.offsetWidth; // 觸發重繪 (Reflow)
 
-                        // 根據點數變動的狀況，掛上對應的動畫
                         if (newPoints === 0 && previousPoints > 0) {
-                            ptsEl.classList.add('anim-reset');  // 歸零動畫
+                            ptsEl.classList.add('anim-reset');
                         } else if (newPoints > previousPoints) {
-                            ptsEl.classList.add('anim-add');    // 加點動畫
+                            ptsEl.classList.add('anim-add');  
                         } else if (newPoints < previousPoints) {
-                            ptsEl.classList.add('anim-deduct'); // 扣點動畫
+                            ptsEl.classList.add('anim-deduct'); 
                         }
                     }
                     
-                    // 更新數字，並把這次的數字記下來當作「上一次的點數」
+                    // 更新數字與歷史紀錄
                     ptsEl.innerText = newPoints;
                     previousPoints = newPoints;
+
+                    // 延遲 500 毫秒避開快取造成的雙重觸發
+                    setTimeout(() => { isInitialLoad = false; }, 500);
                 }
             });
         }
@@ -1211,6 +1213,12 @@
             const timerContainer = document.getElementById("qr-timer-container");
             if (box) box.innerHTML = ""; 
             if (timerContainer) timerContainer.style.display = "none";
+            
+            // 關閉時順便清除殘留的動畫 class
+            const ptsEl = document.getElementById('student-points');
+            if (ptsEl) {
+                ptsEl.classList.remove('anim-add', 'anim-deduct', 'anim-reset');
+            }
         }
         
         // =========================================
