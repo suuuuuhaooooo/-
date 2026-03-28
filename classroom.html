@@ -175,6 +175,32 @@
             .resource-card { flex-direction: column; align-items: flex-start; gap: 12px; }
             .resource-card .download-btn { align-self: flex-end; }
         }
+        /* 學生端：點數變動即時特效 */
+        /* 1. 加點：放大、變金黃色、發光 */
+        @keyframes point-add {
+            0% { transform: scale(1); color: #27ae60; }
+            50% { transform: scale(1.6); color: #f1c40f; text-shadow: 0 0 15px rgba(241,196,15,0.6); }
+            100% { transform: scale(1); color: #27ae60; }
+        }
+        /* 2. 扣點：左右震動警告、變紅色 */
+        @keyframes point-deduct {
+            0% { transform: translateX(0); color: #27ae60; }
+            20% { transform: translateX(-8px); color: #e74c3c; }
+            40% { transform: translateX(8px); color: #e74c3c; }
+            60% { transform: translateX(-8px); color: #e74c3c; }
+            80% { transform: translateX(8px); color: #e74c3c; }
+            100% { transform: translateX(0); color: #27ae60; }
+        }
+        /* 3. 歸零：縮小、變灰暗、再恢復 */
+        @keyframes point-reset {
+            0% { opacity: 1; transform: scale(1); color: #27ae60; }
+            50% { opacity: 0.3; transform: scale(0.5); color: #7f8c8d; }
+            100% { opacity: 1; transform: scale(1); color: #27ae60; }
+        }
+        
+        .anim-add { animation: point-add 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275); display: inline-block; }
+        .anim-deduct { animation: point-deduct 0.5s ease-in-out; display: inline-block; }
+        .anim-reset { animation: point-reset 0.8s ease-in-out; display: inline-block; }
     </style>
 </head>
 <body>
@@ -1035,10 +1061,36 @@
                 
             }, 1000);
             
+            // 點數即時監聽與動畫觸發器
             pointsListener = db.ref('rewards/' + user.uid + '/points');
+            let previousPoints = null; // 用來記憶上一次的點數
+
             pointsListener.on('value', (snap) => {
+                const newPoints = snap.val() || 0;
                 const ptsEl = document.getElementById('student-points');
-                if (ptsEl) ptsEl.innerText = snap.val() || 0;
+                
+                if (ptsEl) {
+                    // 判斷：必須不是第一次打開(null)，且點數真的有變動才播動畫
+                    if (previousPoints !== null && previousPoints !== newPoints) {
+                        
+                        // 先清空所有動畫 class，並用小魔法強制瀏覽器重新繪製 (Reflow)
+                        ptsEl.classList.remove('anim-add', 'anim-deduct', 'anim-reset');
+                        void ptsEl.offsetWidth; 
+
+                        // 根據點數變動的狀況，掛上對應的動畫
+                        if (newPoints === 0 && previousPoints > 0) {
+                            ptsEl.classList.add('anim-reset');  // 歸零動畫
+                        } else if (newPoints > previousPoints) {
+                            ptsEl.classList.add('anim-add');    // 加點動畫
+                        } else if (newPoints < previousPoints) {
+                            ptsEl.classList.add('anim-deduct'); // 扣點動畫
+                        }
+                    }
+                    
+                    // 更新數字，並把這次的數字記下來當作「上一次的點數」
+                    ptsEl.innerText = newPoints;
+                    previousPoints = newPoints;
+                }
             });
         }
         
