@@ -969,33 +969,40 @@
                     const my = data.find(i => i.uid === user.uid);                        
                     
                     if (my) {
-                        // 帳號期限自動管理系統
+                        // 帳號期限管理系統
                         const today = new Date();
                         today.setHours(0, 0, 0, 0); 
-
+                        // 內部函式：強制將各種日期格式轉為正確的 Date 物件
+                        const safeParseDate = (str) => {
+                            if (!str || str.toString().trim() === "") return null;
+                            // 1. 將橫線換成斜線 (相容性最高)
+                            let s = str.toString().replace(/-/g, '/');
+                            // 2. 處理 2025/1/1 這種格式，確保能被 Date 接受
+                            let d = new Date(s);
+                            return isNaN(d.getTime()) ? null : d;
+                        };
                         let finalExpireDate = null;
-
                         // 1. 優先權：如果 S 欄 (expiryDate) 有填，以該日期為準
-                        if (my.expiryDate && my.expiryDate.toString().trim() !== "") {
-                            finalExpireDate = new Date(my.expiryDate);
+                        let sDate = safeParseDate(my.expiryDate);
+                        if (sDate) {
+                            finalExpireDate = sDate;
                         } 
-                        // 2. 次要權：如果 S 欄沒填，但 P 欄 (startTime) 有啟用紀錄，自動給予 90 天
-                        else if (my.startTime) {
-                            finalExpireDate = new Date(my.startTime);
-                            finalExpireDate.setDate(finalExpireDate.getDate() + 90);
+                        // 2. 次要權：如果 S 欄沒填，但 P 欄 (startTime) 有啟用紀錄，自動加 90 天
+                        else {
+                            let pDate = safeParseDate(my.startTime);
+                            if (pDate) {
+                                finalExpireDate = new Date(pDate);
+                                finalExpireDate.setDate(finalExpireDate.getDate() + 90);
+                            }
                         }
-
                         // 3. 過期攔截 (排除管理員)
                         if (finalExpireDate && my.name !== "管理員") {
                             finalExpireDate.setHours(0, 0, 0, 0);
-                            
                             if (today > finalExpireDate) {
                                 document.getElementById('loading-screen').style.display = 'none';
-                                
                                 const dateString = finalExpireDate.getFullYear() + "/" + (finalExpireDate.getMonth() + 1) + "/" + finalExpireDate.getDate();
-                                alert("【系統通知】\n\n您的授權已到期，\n使用期限於 " + dateString + " 屆滿。\n如需繼續使用雲端教室，請聯繫管理員辦理帳號延展。");
-                                
-                                logout(); // 強制登出並停止載入資料
+                                alert(`【系統通知】\n\n您的授權已到期，\n使用期限於 " + dateString + " 屆滿。\n如需繼續使用雲端教室，請聯繫管理員辦理帳號延展。`);
+                                logout(); 
                                 return;
                             }
                         }
