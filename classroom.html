@@ -937,9 +937,6 @@
 
         auth.onAuthStateChanged(async (user) => {
             if (user) {
-                if (user.email === "suuuuuhaooooo@gmail.com") {
-                    document.getElementById('nav-admin-scanner').style.display = 'block';
-                }
                 const authStatusRef = db.ref('auth_status/' + user.uid);
                 authStatusRef.on('value', snap => {
                     const data = snap.val();
@@ -966,9 +963,12 @@
                 try {
                     const r = await fetch(SCRIPT_URL + "?token=SuHaoClassroom2026_SecureKey");
                     const data = await r.json();
-                    const my = data.find(i => i.uid === user.uid);
+                    const my = data.find(i => i.uid === user.uid);                        
                     
                     if (my) {
+                        if (my.name === "管理員") {
+                            document.getElementById('nav-admin-scanner').style.display = 'block';
+                        }
                         document.getElementById('student-name').innerText = my.name + " 同學";
                         localStorage.setItem('studentName', my.name);
                         const subjectTags = my.subject ? my.subject.toString().split(/[,，]/).filter(s => s.trim() !== "").map(s => `<span class="info-tag">${s.trim()}</span>`).join('') : '';
