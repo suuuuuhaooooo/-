@@ -240,7 +240,7 @@
                     <a id="nav-video" class="nav-link active" onclick="showView('video-view', this)">影音課程</a>
                     <a id="nav-pdf" class="nav-link" onclick="showView('pdf-view', this)">線上教材</a>
                     <a href="test.html" class="nav-link">試務中心</a>
-                    <a class="nav-link" onclick="openRewardModal()" ; font-weight: 700;">
+                    <a class="nav-link" onclick="openRewardModal()" style="color: #27ae60; font-weight: 700;">
                         我的集點卡
                     </a>
                     <a id="nav-rewards" class="nav-link" onclick="showView('rewards-view', this)">獎勵制度</a>
@@ -966,44 +966,15 @@
             }
         });
         // =========================================
-        // 集點卡邏輯區塊 (升級動態時效防護)
+        // 集點卡邏輯區塊 (GAS 數位簽章動態時效防護)
         // =========================================
-        let qrCodeInstance = null; 
-        let pointsListener = null; 
-        let qrRefreshTimer = null; // 新增：控制自動刷新的計時器
-        
-        // 產生動態 QR Code 的函式
-        function generateDynamicQR() {
-            const user = firebase.auth().currentUser;
-            if (!user) return;
-            
-            const now = Date.now();
-            const salt = Math.random().toString(36).substring(2, 8); 
-            // 原始明碼
-            const rawText = `${user.uid}|${now}|${salt}`;
-            
-            // 使用 btoa 將明碼轉換成 Base64 亂碼
-            const encryptedText = btoa(rawText);
-            
-            const box = document.getElementById("qrcode-box");
-            box.innerHTML = ""; 
-            
-            qrCodeInstance = new QRCode(box, {
-                text: encryptedText, // 放進條碼的是加密後的亂碼！
-                width: 150,
-                height: 150,
-                colorDark : "#5b6348",
-                colorLight : "#ffffff"
-            });
-        }
-
         let qrCodeInstance = null; 
         let pointsListener = null; 
         let qrRefreshTimer = null;     // 控制每 60 秒向後端要新條碼的計時器
         let qrCountdownInterval = null;// 控制 UI 秒數與進度條動畫的計時器
         let currentQrSeconds = 60;
 
-        // 獨立出「向後端索取條碼」的函式
+        // 向後端索取高強度簽章條碼
         function fetchSecureQrCode(user) {
             const box = document.getElementById("qrcode-box");
             const timerContainer = document.getElementById("qr-timer-container");
@@ -1016,6 +987,9 @@
             fetch(url)
                 .then(res => res.json())
                 .then(data => {
+                    // 防呆：如果載入完成時，學生已經把視窗關掉了，就不要往下執行
+                    if (document.getElementById('reward-modal').style.display === 'none') return;
+
                     if (data.success) {
                         box.innerHTML = "";
                         qrCodeInstance = new QRCode(box, {
@@ -1024,18 +998,17 @@
                             colorDark : "#5b6348", colorLight : "#ffffff"
                         });
                         
-                        // 條碼生成成功，重置秒數與進度條
+                        // 重置秒數與進度條
                         currentQrSeconds = 60;
                         document.getElementById("qr-countdown-text").innerText = currentQrSeconds;
                         
                         const bar = document.getElementById("qr-progress-bar");
-                        bar.style.transition = "none"; // 瞬間拉回滿血
-                        bar.style.width = "100%";
-                        bar.style.background = "#27ae60"; // 恢復綠色
-                        
-                        // 延遲一點點加回動畫效果，讓進度條開始平滑減少
-                        setTimeout(() => { bar.style.transition = "width 1s linear"; }, 50);
-                        
+                        if (bar) {
+                            bar.style.transition = "none"; 
+                            bar.style.width = "100%";
+                            bar.style.background = "#27ae60"; 
+                            setTimeout(() => { bar.style.transition = "width 1s linear"; }, 50);
+                        }
                         timerContainer.style.display = "block";
                     } else {
                         box.innerHTML = "<div style='font-size:12px; color:#c0392b; text-align:center;'>憑證請求失敗</div>";
@@ -1053,35 +1026,32 @@
             document.getElementById('reward-modal').style.display = 'flex';
             if (window.innerWidth <= 768) { document.querySelector('.sidebar').classList.remove('open'); }
             
-            // 1. 首次打開，立刻索取第一張條碼
             fetchSecureQrCode(user);
             
-            // 2. 啟動背景刷新機制 (每 60 秒拿一次新條碼)
             if (qrRefreshTimer) clearInterval(qrRefreshTimer);
             qrRefreshTimer = setInterval(() => fetchSecureQrCode(user), 60000);
             
-            // 3. 啟動前端 UI 倒數動畫
             if (qrCountdownInterval) clearInterval(qrCountdownInterval);
             qrCountdownInterval = setInterval(() => {
                 currentQrSeconds--;
                 if (currentQrSeconds < 0) currentQrSeconds = 0;
                 
-                document.getElementById("qr-countdown-text").innerText = currentQrSeconds;
+                const countdownText = document.getElementById("qr-countdown-text");
+                if(countdownText) countdownText.innerText = currentQrSeconds;
                 
-                // 計算剩餘百分比
                 const percent = (currentQrSeconds / 60) * 100;
                 const bar = document.getElementById("qr-progress-bar");
-                bar.style.width = percent + "%";
-                
-                // 剩下 15 秒時，進度條變紅色警告
-                if (currentQrSeconds <= 15) { bar.style.background = "#e74c3c"; }
+                if (bar) {
+                    bar.style.width = percent + "%";
+                    if (currentQrSeconds <= 15) { bar.style.background = "#e74c3c"; }
+                }
                 
             }, 1000);
             
-            // 4. 監聽點數即時變動
             pointsListener = db.ref('rewards/' + user.uid + '/points');
             pointsListener.on('value', (snap) => {
-                document.getElementById('student-points').innerText = snap.val() || 0;
+                const ptsEl = document.getElementById('student-points');
+                if (ptsEl) ptsEl.innerText = snap.val() || 0;
             });
         }
         
@@ -1089,12 +1059,13 @@
             document.getElementById('reward-modal').style.display = 'none';
             if (pointsListener) pointsListener.off(); 
             
-            // 關閉視窗時，必須清除所有計時器，避免在背景偷吃效能
             if (qrRefreshTimer) clearInterval(qrRefreshTimer);
             if (qrCountdownInterval) clearInterval(qrCountdownInterval);
             
-            document.getElementById("qrcode-box").innerHTML = ""; 
-            document.getElementById("qr-timer-container").style.display = "none";
+            const box = document.getElementById("qrcode-box");
+            const timerContainer = document.getElementById("qr-timer-container");
+            if (box) box.innerHTML = ""; 
+            if (timerContainer) timerContainer.style.display = "none";
         }
     </script>
 </body>
