@@ -1253,51 +1253,83 @@
             if(isScannerProcessing) return; 
             isScannerProcessing = true;
 
+            const statusBox = document.getElementById('scanner-status-box');
+
             try {
-                const statusBox = document.getElementById('scanner-status-box');
+                // UI 變成查詢中...
                 statusBox.style.background = "#fcf3cf";
                 statusBox.style.color = "#d35400";
                 statusBox.innerHTML = `<div style="display: flex; justify-content: center; align-items: center; gap: 8px;">
                                         <div class="loading-dots"><div></div><div></div><div></div></div>
-                                        <span>處理中...</span>
+                                        <span>身分解析中...</span>
                                        </div>`;
 
                 const reqMode = document.getElementById('scan-action').value;
                 let reqAmount = parseInt(document.getElementById('scan-amount').value) || 1;
                 if (reqMode === 'reset') reqAmount = 0;
 
-                // 將密碼與條碼送往 GAS 後端進行 RC4 解密與驗證
-                const url = `${SCRIPT_URL}?token=SuHaoClassroom2026_SecureKey&action=modifyStudentPoint&adminKey=${encodeURIComponent(sessionAdminKey)}&uid=${encodeURIComponent(decodedText)}&mode=${reqMode}&amount=${reqAmount}`;
+                // 先向後端預覽以解密並取得學生姓名
+                const verifyUrl = `${SCRIPT_URL}?token=SuHaoClassroom2026_SecureKey&action=modifyStudentPoint&adminKey=${encodeURIComponent(sessionAdminKey)}&uid=${encodeURIComponent(decodedText)}&mode=preview`;
                 
-                const response = await fetch(url);
+                const verifyRes = await fetch(verifyUrl);
+                const verifyData = await verifyRes.json();
+
+                if (!verifyData.success) {
+                    // 如果解密失敗、密碼錯誤或條碼過期，直接中斷
+                    throw new Error(verifyData.message);
+                }
+
+                // 跳出確認視窗
+                let actionTextTw = reqMode === 'add' ? '加' : (reqMode === 'deduct' ? '扣' : '歸零');
+                let confirmMsg = reqMode === 'reset' ? '「點數歸零」' : `「${actionTextTw} ${reqAmount} 點」`;
+                
+                // 使用原生的 confirm 視窗
+                const isConfirm = confirm(`【系統通知】\n\n學生姓名：${verifyData.studentName}\n執行動作：${confirmMsg}\n\n您確定要執行此操作嗎？`);
+
+                if (!isConfirm) {
+                    // 按下「取消」，中斷寫入並恢復掃描器狀態
+                    statusBox.style.background = "#f0f3ef";
+                    statusBox.style.color = "var(--dark)";
+                    statusBox.innerText = "已取消操作。請對準下一個條碼...";
+                    setTimeout(() => { isScannerProcessing = false; }, 1500); // 稍微延遲避免重複掃到同一個
+                    return; 
+                }
+
+                // 按下「確定」，正式寫入 Firebase
+                statusBox.innerHTML = `<div style="display: flex; justify-content: center; align-items: center; gap: 8px;">
+                                        <div class="loading-dots"><div></div><div></div><div></div></div>
+                                        <span>點數寫入中...</span>
+                                       </div>`;
+                                       
+                const modifyUrl = `${SCRIPT_URL}?token=SuHaoClassroom2026_SecureKey&action=modifyStudentPoint&adminKey=${encodeURIComponent(sessionAdminKey)}&uid=${encodeURIComponent(decodedText)}&mode=${reqMode}&amount=${reqAmount}`;
+                
+                const response = await fetch(modifyUrl);
                 const data = await response.json();
 
                 if(data.success) {
                     statusBox.style.background = "#e8f8f5";
                     statusBox.style.color = "#27ae60";
                     let actionText = data.actionMode === 'add' ? `成功加 ${reqAmount} 點` : (data.actionMode === 'deduct' ? `成功扣 ${reqAmount} 點` : "已強制歸零");
-                    statusBox.innerHTML = `<div class="success-pop"><b>${actionText}！</b><br>該生目前：<span style="font-size: 28px;">${data.newPoints}</span> 點</div>`;
+                    // 成功畫面現在會顯示學生姓名了！
+                    statusBox.innerHTML = `<div class="success-pop"><b>${verifyData.studentName} ${actionText}！</b><br>該生目前：<span style="font-size: 28px;">${data.newPoints}</span> 點</div>`;
                 } else {
-                    statusBox.style.background = "#fdedec";
-                    statusBox.style.color = "#c0392b";
-                    statusBox.innerHTML = `<div class="success-pop">失敗：${data.message}</div>`;
-                    if(data.message.includes('密碼錯誤')) sessionAdminKey = ""; // 密碼錯誤就清空，下次強制重打
+                    throw new Error(data.message);
                 }
+
             } catch (err) {
-                const statusBox = document.getElementById('scanner-status-box');
-                if (statusBox) {
-                    statusBox.style.background = "#fdedec";
-                    statusBox.style.color = "#c0392b";
-                    statusBox.innerText = "連線異常，請確認網路狀態！";
-                }
+                // 錯誤處理
+                statusBox.style.background = "#fdedec";
+                statusBox.style.color = "#c0392b";
+                let errMsg = err.message || "連線異常，請確認網路狀態！";
+                statusBox.innerHTML = `<div class="success-pop">失敗：${errMsg}</div>`;
+                if(errMsg.includes('密碼錯誤')) sessionAdminKey = ""; // 密碼錯誤重置
             } finally {
+                // 3秒後恢復正常掃描狀態
                 setTimeout(() => {
-                    const statusBox = document.getElementById('scanner-status-box');
-                    if (statusBox) {
-                        statusBox.style.background = "#f0f3ef";
-                        statusBox.style.color = "var(--dark)";
-                        statusBox.innerText = "請設定點數，並對準條碼...";
-                    }
+                    if (statusBox.innerText.includes("取消操作")) return; // 若是取消操作，前面已處理過
+                    statusBox.style.background = "#f0f3ef";
+                    statusBox.style.color = "var(--dark)";
+                    statusBox.innerText = "請設定點數，並對準條碼...";
                     isScannerProcessing = false; 
                 }, 3000);
             }
