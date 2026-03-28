@@ -278,10 +278,9 @@
                         我的集點卡
                     </a>
                     <a id="nav-rewards" class="nav-link" onclick="showView('rewards-view', this)">獎勵制度</a>
-                    <a id="nav-admin-scanner" class="nav-link" onclick="showView('scanner-view', this); initScanner();" style="display: none;">
+                    <a id="nav-admin-scanner" class="nav-link" onclick="initScanner(this);" style="display: none;">
                         集點卡管理
                     </a>
-                    <div style="margin: 20px 20px 0 20px; border-top: 1px dashed #ddd; padding-top: 10px;"></div>
                     <a href="add_shortcut_method.html" target="_blank" class="nav-link">
                         手機桌面捷徑教學
                     </a>
@@ -1162,13 +1161,27 @@
             }
         }
 
-        function initScanner() {
-            // 為了極致的安全，即使學生破解 UI 按到這個按鈕，沒有密碼一樣無法啟動掃描加點
+        function initScanner(navEl) {
+            // 1. 優先從瀏覽器的本地暫存找密碼
             if (!sessionAdminKey) {
-                sessionAdminKey = prompt("請輸入管理員掃描密碼以啟動鏡頭：");
-                if (!sessionAdminKey) return; // 取消則不啟動
+                sessionAdminKey = localStorage.getItem('suhao_scanner_pwd') || "";
             }
 
+            // 2. 如果暫存沒有，才跳出視窗詢問
+            if (!sessionAdminKey) {
+                sessionAdminKey = prompt("管理員驗證\n請輸入掃描密碼：");
+                
+                // 如果按取消或沒輸入，程式就在這裡直接中斷
+                if (!sessionAdminKey) return; 
+                
+                // 如果有輸入，就存進瀏覽器
+                localStorage.setItem('suhao_scanner_pwd', sessionAdminKey);
+            }
+
+            // 3. 密碼確認沒問題了，才把畫面「切換到掃描頁面」，並把選單按鈕反白
+            showView('scanner-view', navEl);
+
+            // 4. 啟動鏡頭
             if (!html5QrcodeScanner) {
                 html5QrcodeScanner = new Html5QrcodeScanner("reader", { fps: 10, qrbox: {width: 250, height: 250} }, false);
                 html5QrcodeScanner.render(onScanSuccess, onScanFailure);
