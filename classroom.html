@@ -967,15 +967,16 @@
                     const r = await fetch(SCRIPT_URL + "?token=SuHaoClassroom2026_SecureKey");
                     const data = await r.json();
                     const my = data.find(i => i.uid === user.uid);                        
-                        if (my) {
+                    
+                    if (my) {
+                        // ==========================================
                         // 帳號期限管理系統
+                        // ==========================================
                         const today = new Date();
                         today.setHours(0, 0, 0, 0); 
                     
-                        // 內部函式：強制將各種日期格式轉為正確的 Date 物件
                         const safeParseDate = (str) => {
                             if (!str || str.toString().trim() === "") return null;
-
                             let datePart = str.toString().split(' ')[0].replace(/-/g, '/');
                             let d = new Date(datePart);
                             if (isNaN(d.getTime())) return null;
@@ -985,18 +986,18 @@
                     
                         let finalExpireDate = null;
                     
-                        // 1. 優先權：如果 S 欄 (expiryDate) 有填，以該日期為準
+                        // 1. 優先權：S 欄 (expiryDate)
                         let sDate = safeParseDate(my.expiryDate);
                         if (sDate) {
                             finalExpireDate = sDate;
                         } 
-                        // 2. 次要權：如果 S 欄沒填，但 P 欄 (startTime) 有啟用紀錄，自動加 90 天
+                        // 2. 次要權：P 欄 (startTime) 加 90 天
                         else {
                             let pDate = safeParseDate(my.startTime);
                             if (pDate) {
                                 finalExpireDate = new Date(pDate);
                                 finalExpireDate.setDate(finalExpireDate.getDate() + 90);
-                                finalExpireDate.setHours(0, 0, 0, 0); // 確保加完 90 天後仍維持在凌晨
+                                finalExpireDate.setHours(0, 0, 0, 0); 
                             }
                         }
                     
@@ -1008,15 +1009,22 @@
                                 // 格式化日期為 YYYY/MM/DD
                                 const dateString = finalExpireDate.getFullYear() + "/" + (finalExpireDate.getMonth() + 1) + "/" + finalExpireDate.getDate();
                                 alert(`【系統通知】\n\n您的授權已到期，\n使用期限於 ${dateString} 屆滿。\n如需繼續使用雲端教室，請聯繫管理員辦理帳號延展。`);
+                                
                                 logout(); 
                                 return;
                             }
                         }
+
+                        // ==========================================
+                        // 資料渲染區
+                        // ==========================================
                         if (my.name === "管理員") {
                             document.getElementById('nav-admin-scanner').style.display = 'block';
                         }
+                        
                         document.getElementById('student-name').innerText = my.name + " 同學";
                         localStorage.setItem('studentName', my.name);
+                        
                         const subjectTags = my.subject ? my.subject.toString().split(/[,，]/).filter(s => s.trim() !== "").map(s => `<span class="info-tag">${s.trim()}</span>`).join('') : '';
                         document.getElementById('student-meta').innerHTML = `<span class="info-tag">${my.level} 年級</span>${subjectTags}`;
                         
