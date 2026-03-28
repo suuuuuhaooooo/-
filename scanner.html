@@ -232,25 +232,22 @@
         }
 
         async function onScanSuccess(decodedText, decodedResult) {
+            // 防呆鎖：如果正在處理中，直接無視新的掃描
             if(isProcessing) return; 
             isProcessing = true;
-            if(html5QrcodeScanner) html5QrcodeScanner.pause();
-            
-            const statusBox = document.getElementById('status-box');
-            statusBox.style.background = "#fcf3cf";
-            statusBox.style.color = "#d35400";
-            statusBox.innerText = "讀取中，處理點數...";
 
-            // 抓取自訂的選項與數字
-            const reqMode = document.getElementById('scan-action').value;
-            let reqAmount = parseInt(document.getElementById('scan-amount').value) || 1;
-            
-            // 如果是歸零，不管數字打多少都強制傳 0 過去
-            if (reqMode === 'reset') reqAmount = 0;
-
-            const url = `${SCRIPT_URL}?token=SuHaoClassroom2026_SecureKey&action=modifyStudentPoint&adminKey=${encodeURIComponent(currentPwd)}&uid=${encodeURIComponent(decodedText)}&mode=${reqMode}&amount=${reqAmount}`;
-            
             try {
+                const statusBox = document.getElementById('status-box');
+                statusBox.style.background = "#fcf3cf";
+                statusBox.style.color = "#d35400";
+                statusBox.innerText = "讀取中，處理點數...";
+
+                const reqMode = document.getElementById('scan-action').value;
+                let reqAmount = parseInt(document.getElementById('scan-amount').value) || 1;
+                if (reqMode === 'reset') reqAmount = 0;
+
+                const url = `${SCRIPT_URL}?token=SuHaoClassroom2026_SecureKey&action=modifyStudentPoint&adminKey=${encodeURIComponent(currentPwd)}&uid=${encodeURIComponent(decodedText)}&mode=${reqMode}&amount=${reqAmount}`;
+                
                 const response = await fetch(url);
                 const data = await response.json();
 
@@ -265,16 +262,24 @@
                     statusBox.innerText = `失敗：${data.message}`;
                 }
             } catch (err) {
-                statusBox.style.background = "#fdedec";
-                statusBox.style.color = "#c0392b";
-                statusBox.innerText = "連線異常，請檢查網路狀態。";
+                // 如果遭遇任何網路異常，確保一定會跳出錯誤提示
+                const statusBox = document.getElementById('status-box');
+                if (statusBox) {
+                    statusBox.style.background = "#fdedec";
+                    statusBox.style.color = "#c0392b";
+                    statusBox.innerText = "連線異常，請確認網路狀態！";
+                }
             } finally {
+
                 setTimeout(() => {
-                    statusBox.style.background = "#f0f3ef";
-                    statusBox.style.color = "var(--dark)";
-                    statusBox.innerText = "請設定點數，並對準條碼...";
-                    if(html5QrcodeScanner) html5QrcodeScanner.resume();
-                    isProcessing = false;
+                    const statusBox = document.getElementById('status-box');
+                    if (statusBox) {
+                        statusBox.style.background = "#f0f3ef";
+                        statusBox.style.color = "var(--dark)";
+                        statusBox.innerText = "請設定點數，並對準條碼...";
+                    }
+
+                    isProcessing = false; // 解除防呆鎖
                 }, 3000);
             }
         }
