@@ -1212,55 +1212,9 @@
             if (box) box.innerHTML = ""; 
             if (timerContainer) timerContainer.style.display = "none";
         }
+        
         // =========================================
         // 掃描器邏輯
-        // =========================================
-        let html5QrcodeScanner = null;
-        let isScannerProcessing = false;
-        let sessionAdminKey = ""; // 首次啟動時輸入
-
-        function toggleAmountInput() {
-            const action = document.getElementById('scan-action').value;
-            const amountInput = document.getElementById('scan-amount');
-            if (action === 'reset') {
-                amountInput.disabled = true;
-                amountInput.style.background = "#e0e0e0";
-            } else {
-                amountInput.disabled = false;
-                amountInput.style.background = "#fafafa";
-            }
-        }
-
-        function initScanner(navEl) {
-            // 1. 優先從瀏覽器的本地暫存找密碼
-            if (!sessionAdminKey) {
-                sessionAdminKey = localStorage.getItem('suhao_scanner_pwd') || "";
-            }
-
-            // 2. 如果暫存沒有，才跳出視窗詢問
-            if (!sessionAdminKey) {
-                sessionAdminKey = prompt("管理員驗證\n請輸入密碼：");
-                
-                // 如果按取消或沒輸入，程式就在這裡直接中斷
-                if (!sessionAdminKey) return; 
-                
-                // 如果有輸入，就存進瀏覽器
-                localStorage.setItem('suhao_scanner_pwd', sessionAdminKey);
-            }
-
-            // 3. 密碼確認沒問題了，才把畫面「切換到掃描頁面」，並把選單按鈕反白
-            showView('scanner-view', navEl);
-
-            // 4. 啟動鏡頭
-            if (!html5QrcodeScanner) {
-                html5QrcodeScanner = new Html5QrcodeScanner("reader", { fps: 10, qrbox: {width: 250, height: 250} }, false);
-                html5QrcodeScanner.render(onScanSuccess, onScanFailure);
-                document.getElementById('scanner-status-box').innerText = "請設定點數，並對準學生的集點卡...";
-            }
-        }
-
-        // =========================================
-        // 掃描器邏輯 (防卡死終極版)
         // =========================================
         let html5QrcodeScanner = null;
         let isScannerProcessing = false;
