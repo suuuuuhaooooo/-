@@ -240,7 +240,7 @@
                     <a id="nav-video" class="nav-link active" onclick="showView('video-view', this)">影音課程</a>
                     <a id="nav-pdf" class="nav-link" onclick="showView('pdf-view', this)">線上教材</a>
                     <a href="test.html" class="nav-link">試務中心</a>
-                    <a class="nav-link" onclick="openRewardModal()" style="color: #27ae60; font-weight: 700;">
+                    <a class="nav-link" onclick="openRewardModal()">
                         我的集點卡
                     </a>
                     <a id="nav-rewards" class="nav-link" onclick="showView('rewards-view', this)">獎勵制度</a>
@@ -407,13 +407,10 @@
             <p style="font-size: 13px; color: #888; margin-bottom: 20px;">出示此條碼給管理員掃描即可獲得點數</p>
             
             <div id="qrcode-box" style="margin: 0 auto; width: 150px; height: 150px; display: flex; justify-content: center; align-items: center; background: #f8f8f6; border-radius: 4px; padding: 10px;"></div>
-            <div id="qr-timer-container" style="display: none; margin: 15px auto 0; width: 150px; text-align: center;">
-                <div style="font-size: 11px; color: #888; margin-bottom: 6px; letter-spacing: 1px;">
-                    動態安全碼更新倒數：<span id="qr-countdown-text" style="color: #e74c3c; font-weight: bold; font-size: 13px;">60</span> 秒
-                </div>
-                <div style="width: 100%; height: 4px; background: #eee; border-radius: 2px; overflow: hidden;">
-                    <div id="qr-progress-bar" style="width: 100%; height: 100%; background: #27ae60; transition: width 1s linear;"></div>
-                </div>
+            <div id="qr-timer-container" style="display: none; margin-top: 12px; text-align: center;">
+                <span style="font-size: 12px; color: #aaa; font-family: monospace; letter-spacing: 1px;">
+                    自動更新 <span id="qr-countdown-text">00:60</span>
+                </span>
             </div>
             
             <div style="margin-top: 25px; font-size: 16px; color: #5b6348; font-weight: bold;">
@@ -1001,14 +998,6 @@
                         // 重置秒數與進度條
                         currentQrSeconds = 60;
                         document.getElementById("qr-countdown-text").innerText = currentQrSeconds;
-                        
-                        const bar = document.getElementById("qr-progress-bar");
-                        if (bar) {
-                            bar.style.transition = "none"; 
-                            bar.style.width = "100%";
-                            bar.style.background = "#27ae60"; 
-                            setTimeout(() => { bar.style.transition = "width 1s linear"; }, 50);
-                        }
                         timerContainer.style.display = "block";
                     } else {
                         box.innerHTML = "<div style='font-size:12px; color:#c0392b; text-align:center;'>憑證請求失敗</div>";
@@ -1036,14 +1025,12 @@
                 currentQrSeconds--;
                 if (currentQrSeconds < 0) currentQrSeconds = 0;
                 
-                const countdownText = document.getElementById("qr-countdown-text");
-                if(countdownText) countdownText.innerText = currentQrSeconds;
+                // 將秒數格式化為 00:XX
+                const secStr = currentQrSeconds < 10 ? "0" + currentQrSeconds : currentQrSeconds;
                 
-                const percent = (currentQrSeconds / 60) * 100;
-                const bar = document.getElementById("qr-progress-bar");
-                if (bar) {
-                    bar.style.width = percent + "%";
-                    if (currentQrSeconds <= 15) { bar.style.background = "#e74c3c"; }
+                const countdownText = document.getElementById("qr-countdown-text");
+                if (countdownText) {
+                    countdownText.innerText = "00:" + secStr;
                 }
                 
             }, 1000);
