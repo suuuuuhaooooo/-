@@ -172,11 +172,26 @@
         const db = firebase.database(); 
         let globalClientIP = "";
 
+        // 網頁載入時的初始化動作 (獲取IP & 自動帶入序號)
         window.onload = function() {
+            // 1. 獲取 IP
             fetch('https://api.ipify.org?format=json')
                 .then(res => res.json())
                 .then(data => { globalClientIP = data.ip; })
                 .catch(err => console.log("獲取 IP 失敗", err));
+
+            // 2. QR Code 掃描後，自動帶入序號並鎖定欄位
+            const urlParams = new URLSearchParams(window.location.search);
+            const autoCode = urlParams.get('code');
+            if (autoCode) {
+                const codeInputEl = document.getElementById('activate-code');
+                if (codeInputEl) {
+                    codeInputEl.value = autoCode; // 自動填入
+                    codeInputEl.readOnly = true;  // 唯讀鎖定
+                    codeInputEl.style.backgroundColor = "#eef1ec"; // 變灰色背景提示唯讀
+                    codeInputEl.style.cursor = "not-allowed";
+                }
+            }
         };
         
         const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwxFfufe0b7eJpDxSmLgnbVvlq1itLvoD6ZCpvDJKtJg7ChcWn7lpf9LgZqQ4ZsThJiXQ/exec";
