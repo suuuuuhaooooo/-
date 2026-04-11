@@ -1558,7 +1558,8 @@
             btn.disabled = true;
         
             try {
-                const url = `${SCRIPT_URL}?token=SuHaoClassroom2026_SecureKey&action=changePassword&email=${encodeURIComponent(email)}&oldPwd=${encodeURIComponent(oldPwd)}&newPwd=${encodeURIComponent(newPwd)}`;
+                const currentIp = document.getElementById('login-ip').innerText.replace('IP: ', '').trim();
+                const url = `${SCRIPT_URL}?token=SuHaoClassroom2026_SecureKey&action=changePassword&email=${encodeURIComponent(email)}&oldPwd=${encodeURIComponent(oldPwd)}&newPwd=${encodeURIComponent(newPwd)}&ip=${encodeURIComponent(currentIp)}`;
                 const response = await fetch(url);
                 const result = await response.json();
         
