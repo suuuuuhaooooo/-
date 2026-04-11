@@ -453,27 +453,27 @@
                 </div>
             </section>
         <section id="tab-profile" class="view-section" style="padding: 20px; max-width: 800px; margin: 0 auto;">
-          <h2 style="color: #5b6348; border-bottom: 2px solid #8e9775; padding-bottom: 10px; margin-bottom: 20px;">個人檔案</h2>
+          <h2 style="color: #4a5238; border-bottom: 2px solid #8e9775; padding-bottom: 10px; margin-bottom: 20px;">▌個人檔案</h2>
           
           <div style="background: #fff; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); padding: 20px; margin-bottom: 20px; border-left: 5px solid #8e9775;">
-            <h3 style="margin-top: 0; color: #333; font-size: 18px;">系統資訊</h3>
+            <h3 style="margin-top: 0; color: #4a5238; font-size: 18px;">系統資訊</h3>
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; font-size: 15px; color: #555;">
               <div><strong>登入帳號 (Email)：</strong><br><span id="prof-email">載入中...</span></div>
               <div>
-                    <strong>登入密碼：</strong><br>
-                    <div style="display: flex; align-items: center; gap: 10px; margin-top: 4px;">
-                        <span id="prof-pwd" style="letter-spacing: 4px; font-size: 24px; line-height: 0.8; color: #5b6348;">••••••••</span>
-                        <span onclick="openChangePwdModal()" style="cursor: pointer; font-size: 16px; transition: 0.2s; opacity: 0.6;" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.6'" title="修改密碼">✏️</span>
-                    </div>
-                </div>
-              <div><strong>授權序號：</strong><br><span id="prof-auth" style="color: #27ae60; font-family: monospace;">載入中...</span></div>
-              <div><strong>系統啟用時間：</strong><br><span id="prof-start">載入中...</span></div>
-              <div><strong>權限延展日期：</strong><br><span id="prof-expiry">載入中...</span></div>
+                  <strong>登入密碼：</strong><br>
+                  <div style="display: flex; align-items: center; gap: 10px; margin-top: 4px;">
+                      <span id="prof-pwd" style="letter-spacing: 4px; font-size: 24px; line-height: 0.8; color: #5b6348;">••••••••</span>
+                      <span onclick="openChangePwdModal()" style="cursor: pointer; font-size: 16px; transition: 0.2s; opacity: 0.6;" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.6'" title="修改密碼">✏️</span>
+                  </div>
+              </div>
+              <div><strong>授權序號：</strong><br><span id="prof-auth" style="color: #7a9c81; font-family: monospace; font-weight: bold;">載入中...</span></div>
+              <div><strong>啟用時間：</strong><br><span id="prof-start">載入中...</span></div>
+              <div><strong>延展日期：</strong><br><span id="prof-expiry">載入中...</span></div>
             </div>
           </div>
         
-          <div style="background: #fff; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); padding: 20px; margin-bottom: 20px; border-left: 5px solid #3498db;">
-            <h3 style="margin-top: 0; color: #333; font-size: 18px;">課程資訊</h3>
+          <div style="background: #fff; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); padding: 20px; margin-bottom: 20px; border-left: 5px solid #7a9c81;">
+            <h3 style="margin-top: 0; color: #4a5238; font-size: 18px;">課程資訊</h3>
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; font-size: 15px; color: #555; line-height: 1.6;">
               <div><strong>學生姓名：</strong> <span id="prof-name"></span></div>
               <div><strong>就讀學校：</strong> <span id="prof-school"></span></div>
@@ -486,24 +486,23 @@
               <div><strong>上課地點：</strong> <span id="prof-location"></span></div>
               <div><strong>來回路程：</strong> <span id="prof-distance"></span></div>
               <div><strong>單堂時數：</strong> <span id="prof-duration"></span> 小時</div>
-              <div><strong>目前剩餘堂數：</strong> <strong id="prof-lessons" style="color: #e74c3c; font-size: 18px;">0</strong> 堂</div>
+              <div><strong>目前剩餘堂數：</strong> <strong id="prof-lessons" style="color: #a85751; font-size: 18px;">0</strong> 堂</div>
             </div>
           </div>
         
-          <div style="background: #fdf8e4; border-radius: 10px; padding: 20px; margin-bottom: 20px; border: 1px solid #f1c40f;">
-            <h3 style="margin-top: 0; color: #d35400; font-size: 16px;">請假與遲到規範</h3>
-            <p style="font-size: 14px; color: #555; line-height: 1.8; margin: 0; text-align: justify;">
+          <div style="background: #f4f6f1; border-radius: 10px; padding: 20px; margin-bottom: 20px; border: 1px solid #c9d1be;">
+            <h3 style="margin-top: 0; color: #5b6348; font-size: 16px;">請假與遲到規範</h3>
+            <p style="font-size: 14px; color: #666; line-height: 1.8; margin: 0; text-align: justify;">
               若因特殊狀況需請假，<strong>請於課程前 24 小時告知</strong>，方便老師調整備課進度並將時段釋出給其他同學。如屬可協調之情形，將視雙方時間另行安排補課；反之，當日臨時請假或無故缺席者，因時段已為孩子保留，該堂課將視同正常上課，照常收費，得另行補課。還請見諒與配合。
             </p>
           </div>
         
           <div style="background: #f9f9f9; border: 2px dashed #8e9775; padding: 15px; border-radius: 8px; text-align: center;">
-            <span style="color: #5b6348; font-weight: bold; font-size: 16px;">綁定 LINE</span>
-            <div id="prof-bind-msg" style="margin-top: 10px; background: #fff; padding: 10px; font-family: monospace; font-size: 20px; color: #27ae60; font-weight: bold; border-radius: 5px;">
+            <span style="color: #4a5238; font-weight: bold; font-size: 16px;">綁定 LINE</span>
+            <div id="prof-bind-msg" style="margin-top: 10px; background: #fff; padding: 10px; font-family: monospace; font-size: 20px; color: #7a9c81; font-weight: bold; border-radius: 5px;">
               載入中...
             </div>
           </div>
-        
         </section>
         </main>
     </div>
@@ -540,20 +539,20 @@
         <div id="pwd-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.85); backdrop-filter: blur(5px); z-index: 10002; justify-content: center; align-items: center;">
         <div style="background: white; padding: 30px; border-radius: 8px; width: 320px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); border-top: 6px solid #8e9775; position: relative;">
             <span onclick="closeChangePwdModal()" style="position: absolute; top: 10px; right: 15px; font-size: 24px; cursor: pointer; color: #aaa;">&times;</span>
-            <h2 style="color: #5b6348; margin-top: 0; font-size: 20px; margin-bottom: 5px;">修改登入密碼</h2>
+            <h2 style="color: #4a5238; margin-top: 0; font-size: 20px; margin-bottom: 5px;">修改登入密碼</h2>
             <p style="font-size: 12px; color: #888; margin-bottom: 20px; line-height: 1.5;">密碼規則：至少 8 個字元，並包含英文與數字的組合。</p>
             
             <div class="input-group">
-                <input type="password" id="old-pwd-input" placeholder="請輸入『原密碼』" style="padding: 12px; font-size: 14px;">
+                <input type="password" id="old-pwd-input" placeholder="請輸入『原密碼』" style="padding: 12px; font-size: 14px; background: #fafafa; border: 1px solid #eee; border-radius: 4px; width: 100%; box-sizing: border-box; outline: none; transition: 0.3s;" onfocus="this.style.borderColor='#7a9c81'" onblur="this.style.borderColor='#eee'">
             </div>
-            <div class="input-group">
-                <input type="password" id="new-pwd-input" placeholder="請設定『新密碼』" style="padding: 12px; font-size: 14px;">
+            <div class="input-group" style="margin-top: 10px;">
+                <input type="password" id="new-pwd-input" placeholder="請設定『新密碼』" style="padding: 12px; font-size: 14px; background: #fafafa; border: 1px solid #eee; border-radius: 4px; width: 100%; box-sizing: border-box; outline: none; transition: 0.3s;" onfocus="this.style.borderColor='#7a9c81'" onblur="this.style.borderColor='#eee'">
             </div>
-            <div class="input-group">
-                <input type="password" id="confirm-pwd-input" placeholder="請再次輸入『新密碼』" style="padding: 12px; font-size: 14px;">
+            <div class="input-group" style="margin-top: 10px;">
+                <input type="password" id="confirm-pwd-input" placeholder="請再次輸入『新密碼』" style="padding: 12px; font-size: 14px; background: #fafafa; border: 1px solid #eee; border-radius: 4px; width: 100%; box-sizing: border-box; outline: none; transition: 0.3s;" onfocus="this.style.borderColor='#7a9c81'" onblur="this.style.borderColor='#eee'">
             </div>
             
-            <button id="submit-pwd-btn" onclick="submitChangePwd()" style="background: #8e9775; color: white; border: none; padding: 12px; width: 100%; border-radius: 4px; cursor: pointer; font-weight: bold; margin-top: 15px; letter-spacing: 1px; transition: 0.3s;">確認修改</button>
+            <button id="submit-pwd-btn" onclick="submitChangePwd()" style="background: #8e9775; color: white; border: none; padding: 12px; width: 100%; border-radius: 4px; cursor: pointer; font-weight: bold; margin-top: 15px; letter-spacing: 1px; transition: 0.3s;" onmouseover="this.style.background='#5b6348'" onmouseout="this.style.background='#8e9775'">確認修改</button>
         </div>
     </div>
     <script>
