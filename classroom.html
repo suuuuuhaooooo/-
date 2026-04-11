@@ -483,6 +483,54 @@
             </div>
         </div>
     </div>
+    <div id="tab-profile" class="tab-content" style="display: none; padding: 20px; max-width: 800px; margin: 0 auto;">
+  
+      <h2 style="color: #5b6348; border-bottom: 2px solid #8e9775; padding-bottom: 10px; margin-bottom: 20px;">個人檔案</h2>
+      
+      <div style="background: #fff; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); padding: 20px; margin-bottom: 20px; border-left: 5px solid #8e9775;">
+        <h3 style="margin-top: 0; color: #333; font-size: 18px;">系統資訊</h3>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; font-size: 15px; color: #555;">
+          <div><strong>登入帳號 (Email)：</strong><br><span id="prof-email">載入中...</span></div>
+          <div><strong>登入密碼：</strong><br><span id="prof-pwd" style="letter-spacing: 2px;">••••••••</span></div>
+          <div><strong>授權序號：</strong><br><span id="prof-auth" style="color: #27ae60; font-family: monospace;">載入中...</span></div>
+          <div><strong>系統啟用時間：</strong><br><span id="prof-start">載入中...</span></div>
+          <div><strong>權限延展日期：</strong><br><span id="prof-expiry">載入中...</span></div>
+        </div>
+      </div>
+    
+      <div style="background: #fff; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); padding: 20px; margin-bottom: 20px; border-left: 5px solid #3498db;">
+        <h3 style="margin-top: 0; color: #333; font-size: 18px;">課程資訊</h3>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; font-size: 15px; color: #555; line-height: 1.6;">
+          <div><strong>學生姓名：</strong> <span id="prof-name"></span></div>
+          <div><strong>就讀學校：</strong> <span id="prof-school"></span></div>
+          <div><strong>年段/科目：</strong> <span id="prof-level-sub"></span></div>
+          <div><strong>教材版本：</strong> <span id="prof-version"></span></div>
+          <div><strong>家長聯絡人：</strong> <span id="prof-parent"></span></div>
+          <div><strong>聯絡電話：</strong> <span id="prof-phone"></span></div>
+          <div style="grid-column: span 2;"><strong>聯絡信箱：</strong> <span id="prof-emails"></span></div>
+          <hr style="grid-column: span 2; border: 0; border-top: 1px dashed #eee; margin: 5px 0;">
+          <div><strong>上課地點：</strong> <span id="prof-location"></span></div>
+          <div><strong>來回路程：</strong> <span id="prof-distance"></span></div>
+          <div><strong>單堂時數：</strong> <span id="prof-duration"></span> 小時</div>
+          <div><strong>目前剩餘堂數：</strong> <strong id="prof-lessons" style="color: #e74c3c; font-size: 18px;">0</strong> 堂</div>
+        </div>
+      </div>
+    
+      <div style="background: #fdf8e4; border-radius: 10px; padding: 20px; margin-bottom: 20px; border: 1px solid #f1c40f;">
+        <h3 style="margin-top: 0; color: #d35400; font-size: 16px;">請假與遲到規範</h3>
+        <p style="font-size: 14px; color: #555; line-height: 1.8; margin: 0; text-align: justify;">
+          若因特殊狀況需請假，<strong>請於課程前 24 小時告知</strong>，方便老師調整備課進度並將時段釋出給其他同學。如屬可協調之情形，將視雙方時間另行安排補課；反之，當日臨時請假或無故缺席者，因時段已為孩子保留，該堂課將視同正常上課，照常收費，得另行補課。還請見諒與配合。
+        </p>
+      </div>
+    
+      <div style="background: #f9f9f9; border: 2px dashed #8e9775; padding: 15px; border-radius: 8px; text-align: center;">
+        <span style="color: #5b6348; font-weight: bold; font-size: 16px;">綁定 LINE</span>
+        <div id="prof-bind-msg" style="margin-top: 10px; background: #fff; padding: 10px; font-family: monospace; font-size: 20px; color: #27ae60; font-weight: bold; border-radius: 5px;">
+          載入中...
+        </div>
+      </div>
+    
+    </div>
     <script>
         // 控制手機版漢堡選單開關
         function toggleMobileMenu() {
@@ -1380,6 +1428,49 @@
                 if (html5QrcodeScanner) html5QrcodeScanner.resume();
             }, 3000);
         }
+        function updateProfilePage(data) {
+        // 1. 帳號與安全
+        document.getElementById('prof-email').innerText = data.email || "未設定";
+        document.getElementById('prof-auth').innerText = data.authCode || "無序號";
+        
+        // 密碼黑點隱藏
+        if (data.password) {
+            document.getElementById('prof-pwd').innerText = "•".repeat(data.password.toString().length);
+        } else {
+            document.getElementById('prof-pwd').innerText = "未設定";
+        }
+    
+        // 日期處理：如果 startTime 為空，則顯示尚未啟用
+        let startTimeStr = data.startTime ? new Date(data.startTime).toLocaleDateString() : "首次登入後啟用";
+        let expiryTimeStr = data.expiryDate ? new Date(data.expiryDate).toLocaleDateString() : "無限期";
+        document.getElementById('prof-start').innerText = startTimeStr;
+        document.getElementById('prof-expiry').innerText = expiryTimeStr;
+    
+        // 2. 個人與課程資訊
+        document.getElementById('prof-name').innerText = data.name || "未提供";
+        document.getElementById('prof-school').innerText = data.school || "未提供";
+        document.getElementById('prof-level-sub').innerText = (data.level || "") + " " + (data.subject || "");
+        document.getElementById('prof-version').innerText = data.version || "未提供";
+        document.getElementById('prof-parent').innerText = data.parentContact || "未提供";
+        document.getElementById('prof-phone').innerText = data.phone || "未提供";
+        
+        // 將學生信箱與家長信箱合併顯示
+        let allEmails = [data.studentEmail, data.parentEmail].filter(e => e && e !== "未設定").join(" / ");
+        document.getElementById('prof-emails').innerText = allEmails || "未提供";
+    
+        document.getElementById('prof-location').innerText = data.location || "未提供";
+        document.getElementById('prof-distance').innerText = data.distance || "未提供";
+        document.getElementById('prof-duration').innerText = data.duration || "未提供";
+        document.getElementById('prof-lessons').innerText = data.lessons || "0";
+    
+        // 3. 綁定
+        if (data.authCode) {
+            let suffix = data.authCode.toString().slice(-4);
+            document.getElementById('prof-bind-msg').innerText = "綁定 " + data.name + suffix;
+        } else {
+            document.getElementById('prof-bind-msg').innerText = "請聯繫管理員獲取序號";
+        }
+    }
 
         function onScanFailure(error) {}
     </script>
