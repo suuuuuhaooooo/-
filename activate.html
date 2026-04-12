@@ -119,7 +119,7 @@
         </div>
 
         <div class="input-group">
-            <label>設定登入密碼 (至少 6 碼)</label>
+            <label>設定登入密碼 (至少 8 碼)</label>
             <input type="password" id="custom-password" placeholder="需含大小寫英文與數字">
         </div>
 
@@ -244,7 +244,7 @@
 
             if (!code || code.length !== 19) { alert("請輸入正確的授權序號！"); return; }
             if (!/^(?=.*[a-zA-Z])(?=.*\d)[a-zA-Z0-9]{8,}$/.test(username)) { alert("帳號格式錯誤！\n\n請設定至少 8 碼，且必須包含「英文字母」與「數字」。"); return; }
-            if (!/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{6,}$/.test(pwd)) { alert("密碼格式錯誤！\n\n請設定至少 6 碼，且必須包含「大寫英文」、「小寫英文」與「數字」。"); return; }
+            if (!/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/.test(pwd)) { alert("密碼格式錯誤！\n\n請設定至少 8 碼，且必須包含「大寫英文」、「小寫英文」與「數字」。"); return; }
             if (pwd !== pwdConfirm) { alert("兩次輸入的密碼不一致！"); return; }
             if (!googleEmail.toLowerCase().endsWith('@gmail.com')) { alert("備用信箱請輸入 Gmail！"); return; }
 
