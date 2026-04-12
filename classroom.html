@@ -285,7 +285,7 @@
                         我的集點卡
                     </a>
                     <a id="nav-rewards" class="nav-link" onclick="showView('rewards-view', this)">獎勵制度</a>
-                    <a id="nav-admin-scanner" class="nav-link" onclick="initScanner(this);" style="display: none;">
+                    <a id="nav-admin-scanner" class="nav-link" onclick="event.preventDefault(); initScanner(this);" style="display: none;">
                         集點卡管理
                     </a>
                     <a href="add_shortcut_method.html" target="_blank" class="nav-link">
@@ -1355,6 +1355,7 @@
         }
 
         async function initScanner(navEl) {
+            // 1. 如果沒有密碼，先叫出彈窗
             if (!sessionAdminKey) {
                 let inputPwd = await new Promise((resolve) => {
                     const modal = document.getElementById('scanner-pwd-modal');
@@ -1362,11 +1363,10 @@
                     const submitBtn = document.getElementById('scanner-pwd-submit');
                     const cancelBtn = document.getElementById('scanner-pwd-cancel');
 
-                    input.value = ''; // 清空上次打的字
-                    modal.style.display = 'flex'; // 顯示彈窗
+                    input.value = ''; 
+                    modal.style.display = 'flex'; 
                     setTimeout(() => input.focus(), 100);
 
-                    // 清理事件，避免重複綁定
                     const cleanup = () => {
                         modal.style.display = 'none';
                         submitBtn.onclick = null;
@@ -1377,8 +1377,10 @@
                     cancelBtn.onclick = () => { cleanup(); resolve(null); };
                 });
 
+                // 如果按了取消或沒輸入，直接終止，不切換畫面
                 if (!inputPwd) return; 
 
+                // 2. 拿到密碼後，開始跟後台驗證
                 document.getElementById('loading-screen').style.display = 'flex';
                 document.querySelector('#loading-screen .loading-text').innerText = "權限驗證中...";
 
@@ -1402,6 +1404,7 @@
                 }
             }
 
+            // 3. 密碼驗證通過，才切換到掃描器畫面並啟動相機
             showView('scanner-view', navEl);
 
             if (!html5QrcodeScanner) {
