@@ -463,32 +463,34 @@
           
           <div style="background: #fff; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); padding: 20px; margin-bottom: 20px; border-left: 5px solid #8e9775;">
             <h3 style="margin-top: 0; color: #4a5238; font-size: 18px;">系統資訊</h3>
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; font-size: 15px; color: #555;">
-              <div><strong>登入帳號 (Email)：</strong><br><span id="prof-email">載入中...</span></div>
-              <div>
+            <div class="profile-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; font-size: 15px; color: #555;">
+              <div style="grid-column: span 2; word-break: break-all;"><strong>登入帳號 (Email)：</strong><br><span id="prof-email">載入中...</span></div>
+              
+              <div style="grid-column: span 2;">
                   <strong>登入密碼：</strong><br>
-                  <div style="display: flex; align-items: center; gap: 10px; margin-top: 4px;">
-                      <span id="prof-pwd" style="letter-spacing: 4px; font-size: 24px; line-height: 0.8; color: #5b6348;">𒊹𒊹𒊹𒊹𒊹𒊹𒊹𒊹</span>
+                  <div style="display: flex; align-items: center; gap: 10px; margin-top: 4px; flex-wrap: wrap;">
+                      <span id="prof-pwd" style="letter-spacing: 4px; font-size: 24px; line-height: 0.8; color: #5b6348; word-break: break-all;">𒊹𒊹𒊹𒊹𒊹𒊹𒊹𒊹</span>
                       <span onclick="openChangePwdModal()" style="cursor: pointer; font-size: 16px; transition: 0.2s; opacity: 0.6;" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.6'" title="修改密碼">修改</span>
                   </div>
               </div>
+              
               <div><strong>授權序號：</strong><br><span id="prof-auth" style="color: #7a9c81; font-family: monospace; font-weight: bold;">載入中...</span></div>
               <div><strong>啟用時間：</strong><br><span id="prof-start">載入中...</span></div>
-              <div><strong>延展日期：</strong><br><span id="prof-expiry">載入中...</span></div>
+              <div style="grid-column: span 2;"><strong>延展日期：</strong><br><span id="prof-expiry">載入中...</span></div>
             </div>
           </div>
         
           <div style="background: #fff; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); padding: 20px; margin-bottom: 20px; border-left: 5px solid #7a9c81;">
             <h3 style="margin-top: 0; color: #4a5238; font-size: 18px;">課程資訊</h3>
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; font-size: 15px; color: #555; line-height: 1.6;">
+            <div class="profile-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; font-size: 15px; color: #555; line-height: 1.6;">
               <div><strong>學生姓名：</strong> <span id="prof-name"></span></div>
               <div><strong>就讀學校：</strong> <span id="prof-school"></span></div>
               <div><strong>年段/科目：</strong> <span id="prof-level-sub"></span></div>
               <div><strong>教材版本：</strong> <span id="prof-version"></span></div>
               <div><strong>家長聯絡人：</strong> <span id="prof-parent"></span></div>
               <div><strong>聯絡電話：</strong> <span id="prof-phone"></span></div>
-              <div style="grid-column: span 2;"><strong>聯絡信箱：</strong> <span id="prof-emails"></span></div>
-              <hr style="grid-column: span 2; border: 0; border-top: 1px dashed #eee; margin: 5px 0;">
+              <div style="grid-column: span 2; word-break: break-all;"><strong>聯絡信箱：</strong> <span id="prof-emails"></span></div>
+              <hr style="grid-column: span 2; border: 0; border-top: 1px dashed #eee; margin: 5px 0; width: 100%;">
               <div><strong>上課地點：</strong> <span id="prof-location"></span></div>
               <div><strong>來回路程：</strong> <span id="prof-distance"></span></div>
               <div><strong>單堂時數：</strong> <span id="prof-duration"></span> 小時</div>
