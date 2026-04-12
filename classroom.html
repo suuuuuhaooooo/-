@@ -1341,17 +1341,14 @@
 
         async function initScanner(navEl) {
             if (!sessionAdminKey) {
-                let inputPwd = prompt("管理員驗證\n請輸入密碼：");
+                let inputPwd = prompt("管理員身分驗證\n請輸入密碼：");
                 
-                // 如果按了取消或沒輸入，直接擋在門外
                 if (!inputPwd) return; 
 
-                // 啟動過場動畫，避免畫面卡住
                 document.getElementById('loading-screen').style.display = 'flex';
-                document.querySelector('#loading-screen .loading-text').innerText = "密碼驗證中...";
+                document.querySelector('#loading-screen .loading-text').innerText = "權限驗證中...";
 
                 try {
-                    // 送出「純驗證 (verify_only)」請求給後端
                     const verifyUrl = `${SCRIPT_URL}?token=SuHaoClassroom2026_SecureKey&action=modifyStudentPoint&adminKey=${encodeURIComponent(inputPwd)}&uid=verify_only`;
                     const res = await fetch(verifyUrl);
                     const data = await res.json();
@@ -1359,27 +1356,24 @@
                     document.getElementById('loading-screen').style.display = 'none';
 
                     if (data.success) {
-                        // 驗證成功，才把密碼存入系統暫存變數
                         sessionAdminKey = inputPwd; 
                     } else {
-                        // 驗證失敗，直接彈出錯誤並終止動作
-                        alert("失敗" + data.message);
+                        alert("驗證失敗：" + data.message);
                         return; 
                     }
                 } catch (e) {
                     document.getElementById('loading-screen').style.display = 'none';
-                    alert("網路連線異常，無法驗證密碼。");
+                    alert("網路連線異常，無法完成驗證。");
                     return;
                 }
             }
 
-            // 密碼驗證 100% 正確後，才允許切換到掃描器畫面
             showView('scanner-view', navEl);
 
             if (!html5QrcodeScanner) {
                 html5QrcodeScanner = new Html5QrcodeScanner("reader", { fps: 10, qrbox: {width: 250, height: 250} }, false);
                 html5QrcodeScanner.render(onScanSuccess, onScanFailure);
-                document.getElementById('scanner-status-box').innerText = "請設定點數，並對準學生的集點卡...";
+                document.getElementById('scanner-status-box').innerText = "請設定點數，並對準學生條碼...";
             }
         }
 
