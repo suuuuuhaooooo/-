@@ -1137,11 +1137,20 @@
                         if (vIds.length > 0) {
                             const vNames = my.vNames ? my.vNames.toString().split(',') : [];
                             videoBox.innerHTML = `<div id="video-grid" class="video-grid"></div>`;
-                            document.getElementById('video-grid').innerHTML = vIds.map((id, i) => `
-                                <div class="video-card" onclick="window.open('https://drive.google.com/file/d/${id.trim()}/view', '_blank')">
+                            
+                            document.getElementById('video-grid').innerHTML = vIds.map((rawId, i) => {
+                                let id = rawId.trim();
+                                let targetUrl = id.startsWith("http") ? id : `https://drive.google.com/file/d/${id}/view`;
+                                let hintText = (id.includes("folders") || id.includes("drive.google.com/drive")) 
+                                               ? "點擊開啟影音資料夾" 
+                                               : "點擊另開分頁播放影片";
+                                
+                                return `
+                                <div class="video-card" onclick="window.open('${targetUrl}', '_blank')">
                                     <div style="color: var(--primary); font-weight: 700; font-size: 15px; margin-bottom: 5px;">${(vNames[i] || '單元 '+(i+1)).trim()}</div>
-                                    <div style="font-size: 12px; color: #999;">點擊另開分頁播放影片</div>
-                                </div>`).join('');
+                                    <div style="font-size: 12px; color: #999;">${hintText}</div>
+                                </div>`;
+                            }).join('');
                         } else {
                             videoBox.innerHTML = '<div class="no-data-msg">目前暫無影音內容。</div>';
                         }
