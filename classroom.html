@@ -497,11 +497,9 @@
             </p>
           </div>
         
-          <div style="background: #f9f9f9; border: 2px dashed #8e9775; padding: 15px; border-radius: 8px; text-align: center;">
-            <span style="color: #4a5238; font-weight: bold; font-size: 16px;">綁定 LINE</span>
-            <div id="prof-bind-msg" style="margin-top: 10px; background: #fff; padding: 10px; font-family: monospace; font-size: 20px; color: #7a9c81; font-weight: bold; border-radius: 5px;">
-              載入中...
-            </div>
+          <div id="bind-container" style="padding: 15px; border-radius: 8px; text-align: center; transition: 0.3s; background: #f9f9f9; border: 2px dashed #8e9775;">
+            <div class="loading-dots" style="justify-content: center; margin: 10px 0;"><div></div><div></div><div></div></div>
+            <span style="color: #888; font-size: 14px;">綁定狀態確認中...</span>
           </div>
         </section>
         </main>
@@ -1513,11 +1511,62 @@
             document.getElementById('prof-duration').innerText = data.duration || "未提供";
             document.getElementById('prof-lessons').innerText = data.lessons || "0";
         
-            if (data.authCode) {
+            // ==========================================
+            // LINE 綁定狀態
+            // ==========================================
+            const bindContainer = document.getElementById('bind-container');
+            
+            // 判斷 1：代表已綁定
+            if (data.lineUid && data.lineUid.toString().startsWith("U")) {
+                window.currentBindString = ""; 
+                bindContainer.onclick = null;
+                bindContainer.style.background = "#eef1ec"; 
+                bindContainer.style.border = "2px solid #8e9775"; 
+                bindContainer.style.cursor = "default";
+                
+                bindContainer.innerHTML = `
+                    <div style="font-size: 28px; margin-bottom: 5px;">✅</div>
+                    <span style="color: #4a5238; font-weight: bold; font-size: 16px;">已成功綁定 LINE 官方帳號</span>
+                    <div style="margin-top: 8px; font-size: 13px; color: #5b6348; line-height: 1.5;">
+                      您的帳號已啟用專屬通知服務。<br>可接收成績、收費明細與安全登入警報。
+                    </div>
+                `;
+            } 
+            // 判斷 2：未綁定，且有授權序號 -> 顯示綁定按鈕與密語
+            else if (data.authCode) {
                 let suffix = data.authCode.toString().slice(-4);
-                document.getElementById('prof-bind-msg').innerText = "綁定 " + data.name + suffix;
-            } else {
-                document.getElementById('prof-bind-msg').innerText = "請聯繫管理員獲取序號";
+                window.currentBindString = "綁定 " + data.name + suffix; 
+                
+                bindContainer.onclick = openLineBinding; // 呼叫跳轉函式
+                bindContainer.style.background = "#f9f9f9";
+                bindContainer.style.border = "2px dashed #8e9775"; 
+                bindContainer.style.cursor = "pointer";
+                
+                bindContainer.onmouseover = function() { this.style.background = '#f4f6f1'; }
+                bindContainer.onmouseout = function() { this.style.background = '#f9f9f9'; }
+        
+                bindContainer.innerHTML = `
+                    <span style="color: #4a5238; font-weight: bold; font-size: 16px;">📲 點擊此處綁定 LINE</span>
+                    <div style="margin-top: 10px; background: #fff; padding: 10px; font-family: monospace; font-size: 20px; color: #7a9c81; font-weight: bold; border-radius: 5px; border: 1px solid #e0e0e0; box-shadow: inset 0 2px 4px rgba(0,0,0,0.02);">
+                      ${window.currentBindString}
+                    </div>
+                    <div style="font-size: 12px; color: #888; margin-top: 10px;">點擊將自動為您開啟 LINE 並輸入專屬密語</div>
+                `;
+            } 
+            // 判斷 3：未綁定，且沒序號 -> 顯示請聯絡老師
+            else {
+                window.currentBindString = ""; 
+                bindContainer.onclick = null;
+                bindContainer.style.background = "#fcf3cf"; 
+                bindContainer.style.border = "2px dashed #d35400"; 
+                bindContainer.style.cursor = "default";
+                
+                bindContainer.innerHTML = `
+                    <span style="color: #d35400; font-weight: bold; font-size: 16px;">⚠️ 尚未產生綁定序號</span>
+                    <div style="margin-top: 10px; font-size: 14px; color: #888;">
+                      請聯繫管理員獲取您的專屬授權序號。
+                    </div>
+                `;
             }
         }
         
