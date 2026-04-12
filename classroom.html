@@ -1466,7 +1466,8 @@
             
             // 密碼黑點放大顯示
             if (data.password) {
-                document.getElementById('prof-pwd').innerText = "•".repeat(data.password.toString().length);
+                document.getElementById('prof-pwd').innerText = "••••••••";
+                document.getElementById('prof-pwd').style.letterSpacing = "2px";
                 // 將密碼偷偷存在本地，方便等一下彈窗驗證使用
                 localStorage.setItem('current_user_email', data.email);
             } else {
@@ -1631,7 +1632,7 @@
         
                     closeChangePwdModal();
                     // 將畫面上的黑點長度更新
-                    document.getElementById('prof-pwd').innerText = "•".repeat(newPwd.length);
+                    document.getElementById('prof-pwd').innerText = "••••••••";
                 } else {
                     alert("失敗：" + result.message);
                 }
