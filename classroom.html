@@ -1525,10 +1525,10 @@
                 bindContainer.style.cursor = "default";
                 
                 bindContainer.innerHTML = `
-                    <div style="font-size: 28px; margin-bottom: 5px;">✅</div>
+                    <div style="font-size: 28px; margin-bottom: 5px;"></div>
                     <span style="color: #4a5238; font-weight: bold; font-size: 16px;">已成功綁定 LINE 官方帳號</span>
                     <div style="margin-top: 8px; font-size: 13px; color: #5b6348; line-height: 1.5;">
-                      您的帳號已啟用專屬通知服務。<br>可接收成績、收費明細與安全登入警報。
+                      您的帳號已啟用綁定之相關功能。
                     </div>
                 `;
             } 
@@ -1546,11 +1546,11 @@
                 bindContainer.onmouseout = function() { this.style.background = '#f9f9f9'; }
         
                 bindContainer.innerHTML = `
-                    <span style="color: #4a5238; font-weight: bold; font-size: 16px;">📲 點擊此處綁定 LINE</span>
+                    <span style="color: #4a5238; font-weight: bold; font-size: 16px;">點擊此處綁定 LINE</span>
                     <div style="margin-top: 10px; background: #fff; padding: 10px; font-family: monospace; font-size: 20px; color: #7a9c81; font-weight: bold; border-radius: 5px; border: 1px solid #e0e0e0; box-shadow: inset 0 2px 4px rgba(0,0,0,0.02);">
                       ${window.currentBindString}
                     </div>
-                    <div style="font-size: 12px; color: #888; margin-top: 10px;">點擊將自動為您開啟 LINE 並輸入專屬密語</div>
+                    <div style="font-size: 12px; color: #888; margin-top: 10px;">點擊將自動為您開啟 LINE 並輸入關鍵字</div>
                 `;
             } 
             // 判斷 3：未綁定，且沒序號 -> 顯示請聯絡老師
@@ -1562,7 +1562,7 @@
                 bindContainer.style.cursor = "default";
                 
                 bindContainer.innerHTML = `
-                    <span style="color: #d35400; font-weight: bold; font-size: 16px;">⚠️ 尚未產生綁定序號</span>
+                    <span style="color: #d35400; font-weight: bold; font-size: 16px;">尚未產生綁定序號</span>
                     <div style="margin-top: 10px; font-size: 14px; color: #888;">
                       請聯繫管理員獲取您的專屬授權序號。
                     </div>
@@ -1634,6 +1634,24 @@
                 btn.style.background = "#8e9775";
                 btn.disabled = false;
             }
+        }
+        // =========================================
+        // LINE 點擊跳轉函式
+        // =========================================
+        function openLineBinding() {
+            if (!window.currentBindString) {
+                alert("目前無效的綁定關鍵字，請確認您的授權序號！");
+                return;
+            }
+            navigator.clipboard.writeText(window.currentBindString).catch(e => console.log("複製失敗", e));
+            
+            const lineOA_ID = "@000gwomo"; 
+            
+            // 組合 LINE 官方帳號專用傳訊網址 (oaMessage)
+            const lineUrl = `https://line.me/R/oaMessage/${lineOA_ID}/?${encodeURIComponent(window.currentBindString)}`;
+            
+            // 開啟連結
+            window.open(lineUrl, '_blank');
         }
 
         function onScanFailure(error) {}
