@@ -1610,42 +1610,63 @@
             }
         
             // 系統啟用時間設定
-            if (data.startTime) {
-                document.getElementById('prof-start').innerText = new Date(data.startTime).toLocaleDateString('zh-TW');
+            if (data.name === "管理員") {
+                document.getElementById('prof-start').innerText = "系統管理員";
+                document.getElementById('prof-expiry').innerText = "無限期";
             } else {
-                document.getElementById('prof-start').innerText = "查詢中...";
-                const user = firebase.auth().currentUser;
-                if (user) {
-                    db.ref(`login_stats/${user.uid}/firstLoginTime`).once('value').then(snap => {
-                        const firstTime = snap.val();
-                        if (firstTime) {
-                            document.getElementById('prof-start').innerText = firstTime.split(' ')[0].replace(/-/g, '/');
-                        } else {
+                // 先確認老師有沒有在 Sheet 手動填寫「到期日」
+                let hasManualExpiry = false;
+                if (data.expiryDate && data.expiryDate.toString().trim() !== "") {
+                    document.getElementById('prof-expiry').innerText = new Date(data.expiryDate).toLocaleDateString('zh-TW');
+                    hasManualExpiry = true;
+                } else {
+                    document.getElementById('prof-expiry').innerText = "計算中...";
+                }
+
+                // 判斷啟動日 (Sheet 有就用 Sheet，沒有就去 Firebase 查)
+                if (data.startTime && data.startTime.toString().trim() !== "") {
+                    // 狀況 A：Sheet 裡面已經有啟動日了
+                    let sDate = new Date(data.startTime);
+                    document.getElementById('prof-start').innerText = sDate.toLocaleDateString('zh-TW');
+                    
+                    // 如果沒有手動到期日，就拿 Sheet 的啟動日 + 90天
+                    if (!hasManualExpiry) {
+                        let calcDate = new Date(sDate);
+                        calcDate.setDate(calcDate.getDate() + 90);
+                        document.getElementById('prof-expiry').innerText = calcDate.toLocaleDateString('zh-TW') + " (系統預設)";
+                    }
+                } else {
+                    // 狀況 B：Sheet 是空的，去 Firebase 抓首次登入紀錄
+                    document.getElementById('prof-start').innerText = "查詢中...";
+                    const user = firebase.auth().currentUser;
+                    
+                    if (user) {
+                        db.ref(`login_stats/${user.uid}/firstLoginTime`).once('value').then(snap => {
+                            const firstTime = snap.val();
+                            
+                            if (firstTime) {
+                                // 抓到 Firebase 紀錄了！顯示在畫面上
+                                let startDateStr = firstTime.split(' ')[0].replace(/-/g, '/');
+                                document.getElementById('prof-start').innerText = startDateStr;
+                                
+                                // 🌟 關鍵修復：抓到時間後，順便幫他算 + 90天！
+                                if (!hasManualExpiry) {
+                                    let calcDate = new Date(startDateStr);
+                                    calcDate.setDate(calcDate.getDate() + 90);
+                                    document.getElementById('prof-expiry').innerText = calcDate.toLocaleDateString('zh-TW') + " (系統預設)";
+                                }
+                            } else {
+                                // 真的從來沒登入過
+                                document.getElementById('prof-start').innerText = "尚未啟用";
+                                if (!hasManualExpiry) document.getElementById('prof-expiry').innerText = "尚未啟用";
+                            }
+                        }).catch(() => {
                             document.getElementById('prof-start').innerText = "尚未啟用";
-                        }
-                    }).catch(() => {
-                        document.getElementById('prof-start').innerText = "尚未啟用";
-                    });
+                            if (!hasManualExpiry) document.getElementById('prof-expiry').innerText = "尚未啟用";
+                        });
+                    }
                 }
             }
-
-            // 到期日判斷邏輯
-            let expiryTimeStr = "";
-            if (data.name === "管理員") {
-                expiryTimeStr = "無限期";
-            } else if (data.expiryDate && data.expiryDate.toString().trim() !== "") {
-                // 如果 Sheet 有填日期，以 Sheet 為準
-                expiryTimeStr = new Date(data.expiryDate).toLocaleDateString('zh-TW');
-            } else if (data.startTime) {
-                // 如果 Sheet 是空的，則由系統自動計算「啟動日 + 90 天」
-                let calcDate = new Date(data.startTime);
-                calcDate.setDate(calcDate.getDate() + 90);
-                expiryTimeStr = calcDate.toLocaleDateString('zh-TW') + " (系統預設)";
-            } else {
-                expiryTimeStr = "尚未啟用";
-            }
-            
-            document.getElementById('prof-expiry').innerText = expiryTimeStr;
         
             // 基本資訊
             document.getElementById('prof-name').innerText = data.name || "未提供";
