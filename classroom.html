@@ -1604,13 +1604,12 @@
             if (data.password) {
                 document.getElementById('prof-pwd').innerText = "••••••••";
                 document.getElementById('prof-pwd').style.letterSpacing = "2px";
-                // 將密碼偷偷存在本地，方便等一下彈窗驗證使用
                 localStorage.setItem('current_user_email', data.email);
             } else {
                 document.getElementById('prof-pwd').innerText = "未設定";
             }
         
-            // 系統啟用時間：若 sheet 沒資料，去 Firebase 抓首次登入時間
+            // 系統啟用時間設定
             if (data.startTime) {
                 document.getElementById('prof-start').innerText = new Date(data.startTime).toLocaleDateString('zh-TW');
             } else {
@@ -1620,18 +1619,32 @@
                     db.ref(`login_stats/${user.uid}/firstLoginTime`).once('value').then(snap => {
                         const firstTime = snap.val();
                         if (firstTime) {
-                            // 只取日期部分 YYYY-MM-DD
                             document.getElementById('prof-start').innerText = firstTime.split(' ')[0].replace(/-/g, '/');
                         } else {
-                            document.getElementById('prof-start').innerText = "首次登入後啟用";
+                            document.getElementById('prof-start').innerText = "尚未啟用";
                         }
                     }).catch(() => {
                         document.getElementById('prof-start').innerText = "尚未啟用";
                     });
                 }
             }
-        
-            let expiryTimeStr = data.expiryDate ? new Date(data.expiryDate).toLocaleDateString('zh-TW') : "無限期";
+
+            // 到期日判斷邏輯
+            let expiryTimeStr = "";
+            if (data.name === "管理員") {
+                expiryTimeStr = "無限期";
+            } else if (data.expiryDate && data.expiryDate.toString().trim() !== "") {
+                // 如果 Sheet 有填日期，以 Sheet 為準
+                expiryTimeStr = new Date(data.expiryDate).toLocaleDateString('zh-TW');
+            } else if (data.startTime) {
+                // 如果 Sheet 是空的，則由系統自動計算「啟動日 + 90 天」
+                let calcDate = new Date(data.startTime);
+                calcDate.setDate(calcDate.getDate() + 90);
+                expiryTimeStr = calcDate.toLocaleDateString('zh-TW') + " (系統預設)";
+            } else {
+                expiryTimeStr = "尚未啟用";
+            }
+            
             document.getElementById('prof-expiry').innerText = expiryTimeStr;
         
             // 基本資訊
