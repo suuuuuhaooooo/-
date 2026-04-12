@@ -1011,6 +1011,16 @@
         };
 
         function showView(viewId, navEl) {
+            if (viewId !== 'scanner-view') {
+                sessionAdminKey = ""; // 清空記憶中的密碼
+                if (html5QrcodeScanner) {
+                    try {
+                        html5QrcodeScanner.clear(); // 關閉相機節省資源
+                        html5QrcodeScanner = null;
+                    } catch(e) { console.log("相機關閉異常", e); }
+                }
+            }
+
             document.querySelectorAll('.view-section').forEach(v => v.classList.remove('active'));
             document.querySelectorAll('.nav-link').forEach(n => n.classList.remove('active'));
             document.getElementById(viewId).classList.add('active');
@@ -1331,12 +1341,9 @@
 
         function initScanner(navEl) {
             if (!sessionAdminKey) {
-                sessionAdminKey = localStorage.getItem('suhao_scanner_pwd') || "";
-            }
-            if (!sessionAdminKey) {
                 sessionAdminKey = prompt("管理員驗證\n請輸入密碼：");
+
                 if (!sessionAdminKey) return; 
-                localStorage.setItem('suhao_scanner_pwd', sessionAdminKey);
             }
 
             showView('scanner-view', navEl);
