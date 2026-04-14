@@ -319,8 +319,7 @@
                 mask.style.display = 'none';
 
                 if (result === "SUCCESS") {
-                    msg.style.color = "#27ae60";
-                    msg.innerHTML = "密碼已成功寄出，請前往信箱收件。";
+                    alert("密碼已成功寄出，請前往信箱收件。");
 
                     localStorage.removeItem('login_fail_count');
                     localStorage.removeItem('login_lock_until');
