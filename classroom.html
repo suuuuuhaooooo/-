@@ -520,7 +520,7 @@
             <h2 style="color: #5b6348; margin-top: 0; font-size: 22px; letter-spacing: 1px;">我的集點卡</h2>
             <p style="font-size: 13px; color: #888; margin-bottom: 20px;">出示此條碼給管理員掃描即可獲得點數</p>
             
-            <div id="qrcode-box" style="margin: 0 auto; width: 150px; height: 150px; display: flex; justify-content: center; align-items: center; background: #f8f8f6; border-radius: 4px; padding: 10px;"></div>
+            <div id="qrcode-box" style="margin: 0 auto; width: 200px; height: 200px; display: flex; justify-content: center; align-items: center; background: #f8f8f6; border-radius: 4px; padding: 10px;"></div>
             <div id="qr-timer-container" style="display: none; margin-top: 12px; text-align: center;">
                 <span style="font-size: 12px; color: #aaa; font-family: monospace; letter-spacing: 1px;">
                     自動更新 <span id="qr-countdown-text">00:60</span>
@@ -1288,8 +1288,9 @@
                         box.innerHTML = "";
                         qrCodeInstance = new QRCode(box, {
                             text: data.token,
-                            width: 150, height: 150,
-                            colorDark : "#5b6348", colorLight : "#ffffff"
+                            width: 200, height: 200,
+                            colorDark : "#5b6348", colorLight : "#ffffff",
+                            correctLevel: QRCode.CorrectLevel.L
                         });
                         
                         // 重置秒數與進度條
