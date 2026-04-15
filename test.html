@@ -621,6 +621,7 @@
                 const studentName = localStorage.getItem('studentName') || "雲端同學";
 
                 const formData = new URLSearchParams();
+                formData.append("token", "SuHaoClassroom2026_SecureKey");
                 formData.append("action", "submitExam");
                 formData.append("idToken", idToken); // 放入憑證
                 formData.append("examId", currentExam.id);
