@@ -1145,8 +1145,17 @@
         }
 
         let globalClientIP = "";
+        document.addEventListener('DOMContentLoaded', function() {
+            drawCaptcha();
+            // 獲取使用者 IP
+            fetch('https://api.ipify.org?format=json')
+                .then(res => res.json())
+                .then(data => { 
+                    globalClientIP = data.ip; 
+                    document.getElementById('login-ip').innerText = "IP: " + data.ip; 
+                })
+                .catch(err => console.log("獲取 IP 失敗", err));
 
-        // 2. 獲取系統公告
             function initMarquee(text) {
                 const marqueeEl = document.getElementById('login-marquee');
                 const marqueeContainer = document.querySelector('.marquee-container');
@@ -1155,11 +1164,9 @@
                 marqueeEl.style.opacity = "0";
                 
                 setTimeout(() => {
-
                     marqueeEl.innerHTML = text;
                     marqueeEl.style.paddingLeft = "100%";
                     
-
                     const containerWidth = marqueeContainer.offsetWidth;
                     const textWidth = marqueeEl.offsetWidth;
                     const duration = (containerWidth + textWidth) / 60;
@@ -1176,7 +1183,7 @@
                 }, 300);
             }
 
-            // 發送請求給 GAS
+            // 發送請求給 GAS 抓公告
             fetch(SCRIPT_URL + "?token=SuHaoClassroom2026_SecureKey&action=getSystemNotice")
                 .then(res => res.json())
                 .then(data => {
@@ -1187,9 +1194,11 @@
                     }
                 })
                 .catch(err => {
-                    // 就算網路失敗斷線，也會啟動預設公告，絕對不卡死！
+
                     initMarquee("歡迎來到蘇昊雲端教室！");
                 });
+        });
+
         function showView(viewId, navEl) {
             if (viewId !== 'scanner-view') {
                 sessionAdminKey = ""; // 清空記憶中的密碼
