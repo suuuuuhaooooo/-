@@ -1157,7 +1157,7 @@
                 .then(data => {
                     const marqueeEl = document.getElementById('login-marquee');
                     if (data.success && data.notice && data.notice.trim() !== "") {
-                        marqueeEl.innerHTML = "【系統公告】" + data.notice;
+                        marqueeEl.innerHTML = "" + data.notice;
                     } else {
                         // 如果沒有設定公告，就顯示預設的歡迎詞
                         marqueeEl.innerHTML = "系統例行維護時間為每週二至週四上午 09:30 - 11:30。";
