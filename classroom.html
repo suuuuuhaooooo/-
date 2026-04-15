@@ -244,8 +244,10 @@
             font-weight: 700;
             letter-spacing: 1px;
         }
-        .marquee-content:hover {
-            animation-play-state: paused;
+        @media (hover: hover) {
+            .marquee-content:hover {
+                animation-play-state: paused !important;
+            }
         }
         @keyframes marquee {
             0% { transform: translate(0, 0); }
@@ -1168,19 +1170,22 @@
                         marqueeEl.innerHTML = "[例行維護] 系統例行維護時間為每週二至週四上午 09:30 - 11:30。";
                     }
                     setTimeout(() => {
-                        const speed = 60;
-                        
-                        // 計算「容器寬度」與「文字實際寬度」
+                        const speed = 60; 
                         const containerWidth = marqueeEl.parentElement.offsetWidth;
                         const textWidth = marqueeEl.offsetWidth;
-                        
-                        // 總移動距離 = 容器寬度 (從最右邊進來) + 文字寬度 (整段走完出去)
                         const totalDistance = containerWidth + textWidth;
-                        
-                        // 物理公式：時間 (秒) = 距離 / 速度
                         const duration = totalDistance / speed;
-                        
                         marqueeEl.style.animationDuration = duration + "s";
+
+                        const marqueeContainer = document.querySelector('.marquee-container');
+                        
+                        const pauseMarquee = () => { marqueeEl.style.animationPlayState = 'paused'; };
+                        const playMarquee = () => { marqueeEl.style.animationPlayState = 'running'; };
+
+                        marqueeContainer.addEventListener('touchstart', pauseMarquee, {passive: true});
+                        marqueeContainer.addEventListener('touchend', playMarquee);
+                        marqueeContainer.addEventListener('touchcancel', playMarquee);
+                        
                     }, 50);
                 })
         };
