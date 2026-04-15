@@ -239,7 +239,6 @@
         .marquee-content {
             display: inline-block;
             padding-left: 100%;
-            animation-name: marquee;
             animation-timing-function: linear;
             animation-iteration-count: infinite;
             font-weight: 700;
@@ -1177,6 +1176,7 @@
                         const totalDistance = containerWidth + textWidth;
                         const duration = totalDistance / speed;
                         marqueeEl.style.animationDuration = duration + "s";
+                        marqueeEl.style.animationName = "marquee";
 
                         const marqueeContainer = document.querySelector('.marquee-container');
                         
