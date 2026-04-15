@@ -239,7 +239,6 @@
         }
         .marquee-content {
             display: inline-block;
-            opacity: 0;
             animation-timing-function: linear;
             animation-iteration-count: infinite;
             font-weight: 700;
@@ -1147,64 +1146,50 @@
 
         let globalClientIP = "";
 
-        window.onload = function() {
-            drawCaptcha();
-            
-            // 1. 獲取使用者 IP
-            fetch('https://api.ipify.org?format=json')
-                .then(res => res.json())
-                .then(data => { 
-                    globalClientIP = data.ip; 
-                    document.getElementById('login-ip').innerText = "IP: " + data.ip; 
-                })
-                .catch(err => console.log("獲取 IP 失敗", err));
-            // 2. 獲取系統公告
+        // 2. 獲取系統公告
+            function initMarquee(text) {
+                const marqueeEl = document.getElementById('login-marquee');
+                const marqueeContainer = document.querySelector('.marquee-container');
+
+                marqueeEl.style.transition = "opacity 0.3s ease";
+                marqueeEl.style.opacity = "0";
+                
+                setTimeout(() => {
+
+                    marqueeEl.innerHTML = text;
+                    marqueeEl.style.paddingLeft = "100%";
+                    
+
+                    const containerWidth = marqueeContainer.offsetWidth;
+                    const textWidth = marqueeEl.offsetWidth;
+                    const duration = (containerWidth + textWidth) / 60;
+                    
+                    marqueeEl.style.animationDuration = duration + "s";
+                    marqueeEl.style.animationName = "marquee";
+                    marqueeEl.style.opacity = "1";
+                    
+                    marqueeContainer.onmouseenter = () => marqueeEl.style.animationPlayState = 'paused';
+                    marqueeContainer.onmouseleave = () => marqueeEl.style.animationPlayState = 'running';
+                    marqueeContainer.ontouchstart = () => marqueeEl.style.animationPlayState = 'paused';
+                    marqueeContainer.ontouchend = () => marqueeEl.style.animationPlayState = 'running';
+                    marqueeContainer.ontouchcancel = () => marqueeEl.style.animationPlayState = 'running';
+                }, 300);
+            }
+
+            // 發送請求給 GAS
             fetch(SCRIPT_URL + "?token=SuHaoClassroom2026_SecureKey&action=getSystemNotice")
                 .then(res => res.json())
                 .then(data => {
-                    const marqueeEl = document.getElementById('login-marquee');
-
-                    marqueeEl.style.opacity = "0";
-
                     if (data.success && data.notice && data.notice.trim() !== "") {
-                        marqueeEl.innerHTML = data.notice;
+                        initMarquee(data.notice);
                     } else {
-                        marqueeEl.innerHTML = "【例行維護】系統例行維護時間為每週二至週四上午 09:30 - 11:30。";
+                        initMarquee("【例行維護】系統例行維護時間為每週二至週四上午 09:30 - 11:30。");
                     }
-
-                    setTimeout(() => {
-                        const speed = 60; 
-                        
-                        // 量文字的真實寬度
-                        const containerWidth = marqueeEl.parentElement.offsetWidth;
-                        const textWidth = marqueeEl.offsetWidth;
-                        
-                        marqueeEl.style.paddingLeft = "100%";
-                        
-                        const totalDistance = containerWidth + textWidth;
-                        const duration = totalDistance / speed;
-                        marqueeEl.style.animationDuration = duration + "s";
-                        marqueeEl.style.animationName = "marquee";
-                        
-                        marqueeEl.style.transition = "opacity 0.3s ease";
-                        marqueeEl.style.opacity = "1";
-                        
-                        const marqueeContainer = document.querySelector('.marquee-container');
-                        
-                        const pauseMarquee = () => { marqueeEl.style.animationPlayState = 'paused'; };
-                        const playMarquee = () => { marqueeEl.style.animationPlayState = 'running'; };
-
-                        marqueeContainer.addEventListener('touchstart', pauseMarquee, {passive: true});
-                        marqueeContainer.addEventListener('touchend', playMarquee);
-                        marqueeContainer.addEventListener('touchcancel', playMarquee);
-                        
-                    }, 50); 
                 })
                 .catch(err => {
-                    const marqueeEl = document.getElementById('login-marquee');
-                    marqueeEl.innerHTML = "歡迎來到蘇昊雲端教室！";
+                    // 就算網路失敗斷線，也會啟動預設公告，絕對不卡死！
+                    initMarquee("歡迎來到蘇昊雲端教室！");
                 });
-
         function showView(viewId, navEl) {
             if (viewId !== 'scanner-view') {
                 sessionAdminKey = ""; // 清空記憶中的密碼
