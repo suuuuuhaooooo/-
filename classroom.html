@@ -215,26 +215,30 @@
             100% { transform: scale(1); opacity: 1; }
         }
         .success-pop { animation: popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
-        /* 跑馬燈樣式 */
+        /* 跑馬燈樣式*/
         .marquee-container {
-            width: 100%;
-            background: #fff3cd;
-            border-bottom: 1px solid #ffe69c;
-            color: #856404;
-            font-size: 13px;
-            padding: 8px 0;
             position: absolute;
-            top: 0;
-            left: 0;
+            top: 12vh;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 85%;
+            max-width: 480px;
+            background: rgba(30, 30, 30, 0.85);
+            color: #ffffff;
+            font-size: 13px;
+            padding: 10px 20px;
+            border-radius: 30px;
+            border: 1px solid rgba(255,255,255,0.1);
             overflow: hidden;
             white-space: nowrap;
             z-index: 1001;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+            backdrop-filter: blur(4px);
         }
         .marquee-content {
             display: inline-block;
             padding-left: 100%;
-            animation: marquee 25s linear infinite;
+            animation: marquee 15s linear infinite;
             font-weight: 700;
             letter-spacing: 1px;
         }
