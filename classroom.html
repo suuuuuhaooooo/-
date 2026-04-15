@@ -919,9 +919,49 @@
             icon.innerText = (pwd.type === "password") ? "🔓" : "🔒";
         }
 
+        // 系統維護時間 (週二~週四 09:30~11:30)
+        function isMaintenanceTime() {
+            // 取得台灣時間
+            let twTime = new Date(new Date().toLocaleString("en-US", {timeZone: "Asia/Taipei"}));
+            let day = twTime.getDay(); // 0=週日, 1=週一, 2=週二, 3=週三, 4=週四, 5=週五, 6=週六
+            let hour = twTime.getHours();
+            let minute = twTime.getMinutes();
+
+            // 判斷是否為週二(2)、週三(3)、週四(4)
+            if (day >= 2 && day <= 4) {
+                // 將時間轉換為分鐘
+                let currentMins = hour * 60 + minute;
+                let startMins = 9 * 60 + 30; // 09:30
+                let endMins = 11 * 60 + 30;  // 11:30
+
+                // 若在 09:30 到 11:29 之間，回傳 true (維護中)
+                if (currentMins >= startMins && currentMins < endMins) {
+                    return true;
+                }
+            }
+            return false;
+        }
+        
         async function login() {
+            // 1. 先抓取輸入的信箱 (用來判斷是不是管理員)
+            const emailEl = document.getElementById('email');
+            const email = emailEl ? emailEl.value.trim().toLowerCase() : "";
+
+            // 攔截系統維護與放行
+            const adminEmails = ["admin888@suhao.com", "suuuuuhaooooo@gmail.com"];
+
+            if (isMaintenanceTime()) {
+                if (adminEmails.includes(email)) {
+                    console.log("管理員登入，略過維護模式限制");
+                } else {
+                    alert("【系統維護中】\n\n目前為系統例行維護時間 (週二至週四 09:30~11:30)。\n為提供更順暢的學習體驗，系統正在進行資料同步與升級作業。\n請同學於 11:30 後再登入使用，謝謝您的配合！");
+                    
+                    // 清空密碼欄位
+                    document.getElementById('password').value = "";
+                    return;
+                }
+            }
             const now = Date.now();
-            
             const safeIP = globalClientIP ? globalClientIP.replace(/[.#$\[\]:]/g, '_') : "unknown_IP";
             const ipBanRef = db.ref('ip_bans/' + safeIP);
 
