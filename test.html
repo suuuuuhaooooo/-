@@ -537,8 +537,8 @@
                     const originalQ = exam.questions.find(q => q.question === detail.originalQuestion) || {};
                     const currentExp = originalQ.exp || originalQ.explanation || detail.explanation || "無解析資料";
                     const statusHtml = detail.isCorrect 
-                        ? `<span class="review-correct">✔ 答對了！</span>` 
-                        : `<span class="review-wrong">✘ 答錯了 (你的答案：${detail.userPick})</span>`;
+                        ? `<span class="review-correct">√ 答對了！</span>` 
+                        : `<span class="review-wrong">x 答錯了 (你的答案：${detail.userPick})</span>`;
 
                     reviewContainer.innerHTML += `
                         <div class="review-card">
@@ -673,8 +673,8 @@
                     
                     detailedResults.forEach((detail, index) => {
                         const statusHtml = detail.isCorrect 
-                            ? `<span class="review-correct">✔ 答對了！</span>` 
-                            : `<span class="review-wrong">✘ 答錯了 (你的答案：${detail.userPick})</span>`;
+                            ? `<span class="review-correct">√ 答對了！</span>` 
+                            : `<span class="review-wrong">x 答錯了 (你的答案：${detail.userPick})</span>`;
 
                         reviewContainer.innerHTML += `
                             <div class="review-card">
