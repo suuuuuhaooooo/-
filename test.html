@@ -387,9 +387,11 @@
                     completedRecords = snap.val() || {}; 
                     
                     // 3. GAS 12秒超時防呆
+                    const idToken = await user.getIdToken(true); // 取得憑證
+
                     const fetchPromise = Promise.all([
                         fetch(SCRIPT_URL + "?token=SuHaoClassroom2026_SecureKey"),
-                        fetch(SCRIPT_URL + "?token=SuHaoClassroom2026_SecureKey&action=getExams")
+                        fetch(SCRIPT_URL + "?action=getExams&idToken=" + idToken) 
                     ]);
                     const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('GAS_TIMEOUT')), 12000));
                     
@@ -533,7 +535,7 @@
             if (record && record.details) {
                 record.details.forEach((detail, index) => {
                     const originalQ = exam.questions.find(q => q.question === detail.originalQuestion) || {};
-                    const currentExp = originalQ.exp || originalQ.explanation || "無解析資料";
+                    const currentExp = originalQ.exp || originalQ.explanation || detail.explanation || "無解析資料";
                     const statusHtml = detail.isCorrect 
                         ? `<span class="review-correct">✔ 答對了！</span>` 
                         : `<span class="review-wrong">✘ 答錯了 (你的答案：${detail.userPick})</span>`;
@@ -787,7 +789,7 @@
                         if (!detail.isCorrect) {
                             hasErrors = true; errorCount++;
                             const originalQ = examInfo ? examInfo.questions.find(q => q.question === detail.originalQuestion) : null;
-                            const currentExp = originalQ ? (originalQ.exp || originalQ.explanation) : "無解析資料";
+                            const currentExp = originalQ ? (originalQ.exp || originalQ.explanation) : (detail.explanation || "無解析資料");
 
                             container.innerHTML += `
                                 <div class="clean-card">
