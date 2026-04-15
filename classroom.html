@@ -238,7 +238,9 @@
         .marquee-content {
             display: inline-block;
             padding-left: 100%;
-            animation: marquee 35s linear infinite;
+            animation-name: marquee;
+            animation-timing-function: linear;
+            animation-iteration-count: infinite;
             font-weight: 700;
             letter-spacing: 1px;
         }
@@ -1154,22 +1156,33 @@
                     document.getElementById('login-ip').innerText = "IP: " + data.ip; 
                 })
                 .catch(err => console.log("獲取 IP 失敗", err));
-
             // 2. 獲取系統公告
             fetch(SCRIPT_URL + "?token=SuHaoClassroom2026_SecureKey&action=getSystemNotice")
                 .then(res => res.json())
                 .then(data => {
                     const marqueeEl = document.getElementById('login-marquee');
                     if (data.success && data.notice && data.notice.trim() !== "") {
-                        marqueeEl.innerHTML = "" + data.notice;
+                        marqueeEl.innerHTML = data.notice;
                     } else {
                         // 如果沒有設定公告，就顯示預設的歡迎詞
-                        marqueeEl.innerHTML = "系統例行維護時間為每週二至週四上午 09:30 - 11:30。";
+                        marqueeEl.innerHTML = "[例行維護] 系統例行維護時間為每週二至週四上午 09:30 - 11:30。";
                     }
+                    setTimeout(() => {
+                        const speed = 60;
+                        
+                        // 計算「容器寬度」與「文字實際寬度」
+                        const containerWidth = marqueeEl.parentElement.offsetWidth;
+                        const textWidth = marqueeEl.offsetWidth;
+                        
+                        // 總移動距離 = 容器寬度 (從最右邊進來) + 文字寬度 (整段走完出去)
+                        const totalDistance = containerWidth + textWidth;
+                        
+                        // 物理公式：時間 (秒) = 距離 / 速度
+                        const duration = totalDistance / speed;
+                        
+                        marqueeEl.style.animationDuration = duration + "s";
+                    }, 50);
                 })
-                .catch(err => {
-                    document.getElementById('login-marquee').innerHTML = "歡迎來到蘇昊雲端教室！";
-                });
         };
 
         function showView(viewId, navEl) {
