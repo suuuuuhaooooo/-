@@ -391,7 +391,7 @@
 
                     const fetchPromise = Promise.all([
                         fetch(SCRIPT_URL + "?token=SuHaoClassroom2026_SecureKey"),
-                        fetch(SCRIPT_URL + "?action=getExams&idToken=" + idToken) 
+                        fetch(SCRIPT_URL + "?token=SuHaoClassroom2026_SecureKey&action=getExams&idToken=" + idToken)
                     ]);
                     const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('GAS_TIMEOUT')), 12000));
                     
