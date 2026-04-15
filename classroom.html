@@ -239,6 +239,7 @@
         }
         .marquee-content {
             display: inline-block;
+            opacity: 0;
             animation-timing-function: linear;
             animation-iteration-count: infinite;
             font-weight: 700;
@@ -894,9 +895,8 @@
         // --- 修正後的次數統計與彈窗 ---
         function runLoginAnalysis(uid, noticeText, studentName) {
             return new Promise((resolve) => {
-                let isFinished = false; // 補上狀態鎖宣告
+                let isFinished = false;
 
-                // 補上 3 秒保險絲宣告
                 const fallbackTimer = setTimeout(() => {
                     if (isFinished) return;
                     isFinished = true;
@@ -1163,15 +1163,19 @@
                 .then(res => res.json())
                 .then(data => {
                     const marqueeEl = document.getElementById('login-marquee');
+
+                    marqueeEl.style.opacity = "0";
+
                     if (data.success && data.notice && data.notice.trim() !== "") {
                         marqueeEl.innerHTML = data.notice;
                     } else {
-                        // 如果沒有設定公告，就顯示預設的歡迎詞
-                        marqueeEl.innerHTML = "[例行維護] 系統例行維護時間為每週二至週四上午 09:30 - 11:30。";
+                        marqueeEl.innerHTML = "【例行維護】系統例行維護時間為每週二至週四上午 09:30 - 11:30。";
                     }
+
                     setTimeout(() => {
                         const speed = 60; 
                         
+                        // 量文字的真實寬度
                         const containerWidth = marqueeEl.parentElement.offsetWidth;
                         const textWidth = marqueeEl.offsetWidth;
                         
@@ -1181,7 +1185,10 @@
                         const duration = totalDistance / speed;
                         marqueeEl.style.animationDuration = duration + "s";
                         marqueeEl.style.animationName = "marquee";
-
+                        
+                        marqueeEl.style.transition = "opacity 0.3s ease";
+                        marqueeEl.style.opacity = "1";
+                        
                         const marqueeContainer = document.querySelector('.marquee-container');
                         
                         const pauseMarquee = () => { marqueeEl.style.animationPlayState = 'paused'; };
@@ -1191,9 +1198,12 @@
                         marqueeContainer.addEventListener('touchend', playMarquee);
                         marqueeContainer.addEventListener('touchcancel', playMarquee);
                         
-                    }, 50);
+                    }, 50); 
                 })
-        };
+                .catch(err => {
+                    const marqueeEl = document.getElementById('login-marquee');
+                    marqueeEl.innerHTML = "歡迎來到蘇昊雲端教室！";
+                });
 
         function showView(viewId, navEl) {
             if (viewId !== 'scanner-view') {
