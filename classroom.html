@@ -235,10 +235,10 @@
             z-index: 1001;
             box-shadow: 0 8px 20px rgba(0,0,0,0.15);
             backdrop-filter: blur(4px);
+            text-align: center;
         }
         .marquee-content {
             display: inline-block;
-            padding-left: 100%;
             animation-timing-function: linear;
             animation-iteration-count: infinite;
             font-weight: 700;
@@ -1169,10 +1169,15 @@
                         // 如果沒有設定公告，就顯示預設的歡迎詞
                         marqueeEl.innerHTML = "[例行維護] 系統例行維護時間為每週二至週四上午 09:30 - 11:30。";
                     }
+                    // 🌟 自動配速引擎：確保不管字多字少，移動速度都固定
                     setTimeout(() => {
                         const speed = 60; 
+                        
                         const containerWidth = marqueeEl.parentElement.offsetWidth;
                         const textWidth = marqueeEl.offsetWidth;
+                        
+                        marqueeEl.style.paddingLeft = "100%";
+                        
                         const totalDistance = containerWidth + textWidth;
                         const duration = totalDistance / speed;
                         marqueeEl.style.animationDuration = duration + "s";
