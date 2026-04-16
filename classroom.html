@@ -585,38 +585,6 @@
             </div>
         </div>
     </div>
-    <div id="system-player-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); backdrop-filter: blur(8px); z-index: 20000; justify-content: center; align-items: center; flex-direction: column;">
-        <div id="video-wrapper-box" style="width: 90%; max-width: 1000px; position: relative; display: flex; flex-direction: column;">
-            
-            <div class="video-ui-header" style="display: flex; justify-content: space-between; align-items: center; color: white; margin-bottom: 12px; padding: 10px 0;">
-                <div style="display: flex; align-items: center; gap: 10px;">
-                    <span style="background: var(--primary); padding: 4px 10px; border-radius: 4px; font-size: 12px; font-weight: bold; letter-spacing: 1px;">影音中心</span>
-                    <span id="playing-video-title" style="font-weight: bold; font-size: 18px; letter-spacing: 1px;">影片載入中...</span>
-                </div>
-                <div style="display: flex; align-items: center; gap: 15px;">
-                    <div onclick="toggleStageFullScreen()" style="cursor: pointer; display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: bold; opacity: 0.8; background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.3); padding: 5px 10px; border-radius: 4px; transition: 0.2s;" onmouseover="this.style.opacity='1'; this.style.background='rgba(255,255,255,0.25)';" onmouseout="this.style.opacity='0.8'; this.style.background='rgba(255,255,255,0.15)';">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
-                            <path fill-rule="evenodd" d="M1.5 1a.5.5 0 0 0-.5.5v4a.5.5 0 0 1-1 0v-4A1.5 1.5 0 0 1 1.5 0h4a.5.5 0 0 1 0 1H1.5zM10 .5a.5.5 0 0 1 .5-.5h4A1.5 1.5 0 0 1 16 1.5v4a.5.5 0 0 1-1 0v-4a.5.5 0 0 0-.5-.5h-4a.5.5 0 0 1-.5-.5zM.5 10a.5.5 0 0 1 .5.5v4a.5.5 0 0 0 .5.5h4a.5.5 0 0 1 0 1h-4A1.5 1.5 0 0 1 0 14.5v-4a.5.5 0 0 1 .5-.5zm15 0a.5.5 0 0 1 .5.5v4a1.5 1.5 0 0 1-1.5 1.5h-4a.5.5 0 0 1 0-1h4a.5.5 0 0 0 .5-.5v-4a.5.5 0 0 1 .5-.5z"/>
-                        </svg>
-                        <span id="fs-btn-text">全螢幕</span>
-                    </div>
-                    <span onclick="closeSystemPlayer()" style="cursor: pointer; font-size: 32px; opacity: 0.7; transition: 0.2s;" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.7'">&times;</span>
-                </div>
-            </div>
-            
-            <div id="player-stage" style="position: relative; width: 100%; padding-top: 56.25%; background: #0b0b0b; border-radius: 8px; overflow: hidden; box-shadow: 0 20px 50px rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.1);">
-                <iframe id="system-player-iframe" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none;" allow="autoplay; fullscreen"></iframe>
-                <div id="iframe-shield" style="position: absolute; top: 0; right: 0; width: 80px; height: 60px; background: transparent; z-index: 10; cursor: default;" title="已鎖定於系統內播放"></div>
-                <video id="system-player-video" playsinline disablePictureInPicture controlsList="nodownload nofullscreen" oncontextmenu="return false;" style="display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 2; object-fit: contain;"></video>
-                <div id="video-watermark" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 2147483647; pointer-events: none;"></div>
-            </div>
-            
-        </div>
-        <div id="player-warning-text" class="video-ui-footer" style="text-align: center; color: #888; font-size: 12px; margin-top: 15px; letter-spacing: 1px;">
-            ※ 為保障智慧財產權，影片已鎖定於系統內播放。請勿使用側錄軟體。
-        </div>
-    </div>
-    </div>
     <div id="copyright-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); backdrop-filter: blur(5px); z-index: 10010; justify-content: center; align-items: center;">
         <div style="background: white; padding: 30px; border-radius: 8px; width: 85%; max-width: 450px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); border-top: 6px solid #8e9775; position: relative; max-height: 85vh; overflow-y: auto;">
             <h2 style="color: #4a5238; margin-top: 0; font-size: 20px; margin-bottom: 15px; border-bottom: 1px solid #eee; padding-bottom: 10px; display: flex; align-items: center; gap: 8px;">
