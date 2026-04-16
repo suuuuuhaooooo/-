@@ -170,7 +170,13 @@
             .sidebar-footer > div:nth-child(3) > div:nth-child(1) { margin-bottom: 5px !important; } 
             .sidebar-footer > div:nth-child(3) > div:nth-child(2) { margin-bottom: 5px !important; gap: 10px; }
             #login-ip { width: 100%; margin-top: 4px; }
-            
+            /* =========================================
+               系統影音防護：強制隱藏原生全螢幕按鈕 
+               ========================================= */
+            video::-webkit-media-controls-fullscreen-button,
+            video::-webkit-media-controls-enclosure[data-fullscreen] {
+                display: none !important;
+            }
             /* 主要內容區塊 */
             .main-content { padding: 20px 15px; }
             .video-grid { grid-template-columns: 1fr; gap: 12px; }
@@ -584,8 +590,14 @@
                     <span style="background: var(--primary); padding: 4px 10px; border-radius: 4px; font-size: 12px; font-weight: bold; letter-spacing: 1px;">影音中心</span>
                     <span id="playing-video-title" style="font-weight: bold; font-size: 18px; letter-spacing: 1px;">影片載入中...</span>
                 </div>
-                <div style="display: flex; align-items: center; gap: 20px;">
-                    <span onclick="toggleStageFullScreen()" style="cursor: pointer; font-size: 14px; opacity: 0.8; border: 1px solid white; padding: 2px 8px; border-radius: 4px;">全螢幕視窗</span>
+                <div style="display: flex; align-items: center; gap: 15px;">
+                    <div onclick="toggleStageFullScreen()" style="cursor: pointer; display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: bold; opacity: 0.8; background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.3); padding: 5px 10px; border-radius: 4px; transition: 0.2s;" onmouseover="this.style.opacity='1'; this.style.background='rgba(255,255,255,0.25)';" onmouseout="this.style.opacity='0.8'; this.style.background='rgba(255,255,255,0.15)';">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
+                            <path fill-rule="evenodd" d="M1.5 1a.5.5 0 0 0-.5.5v4a.5.5 0 0 1-1 0v-4A1.5 1.5 0 0 1 1.5 0h4a.5.5 0 0 1 0 1H1.5zM10 .5a.5.5 0 0 1 .5-.5h4A1.5 1.5 0 0 1 16 1.5v4a.5.5 0 0 1-1 0v-4a.5.5 0 0 0-.5-.5h-4a.5.5 0 0 1-.5-.5zM.5 10a.5.5 0 0 1 .5.5v4a.5.5 0 0 0 .5.5h4a.5.5 0 0 1 0 1h-4A1.5 1.5 0 0 1 0 14.5v-4a.5.5 0 0 1 .5-.5zm15 0a.5.5 0 0 1 .5.5v4a1.5 1.5 0 0 1-1.5 1.5h-4a.5.5 0 0 1 0-1h4a.5.5 0 0 0 .5-.5v-4a.5.5 0 0 1 .5-.5z"/>
+                        </svg>
+                        全螢幕
+                    </div>
+                    
                     <span onclick="closeSystemPlayer()" style="cursor: pointer; font-size: 32px; opacity: 0.7; transition: 0.2s;" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.7'">&times;</span>
                 </div>
                 <span onclick="closeSystemPlayer()" style="cursor: pointer; font-size: 32px; opacity: 0.7; transition: 0.2s;" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.7'">&times;</span>
@@ -594,7 +606,7 @@
             <div id="player-stage" style="position: relative; width: 100%; padding-top: 56.25%; background: #0b0b0b; border-radius: 8px; overflow: hidden; box-shadow: 0 20px 50px rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.1);">
                     <iframe id="system-player-iframe" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none;" allow="autoplay; fullscreen"></iframe>
                     <div id="iframe-shield" style="position: absolute; top: 0; right: 0; width: 80px; height: 60px; background: transparent; z-index: 10; cursor: default;" title="已鎖定於系統內播放"></div>
-                    <video id="system-player-video" playsinline controlsList="nodownload" oncontextmenu="return false;" style="display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 2; object-fit: contain;"></video>
+                    <video id="system-player-video" playsinline controlsList="nodownload nofullscreen" oncontextmenu="return false;" style="display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 2; object-fit: contain;"></video>
                         
                         <div id="video-watermark" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 2147483647; pointer-events: none;"></div>
                 
