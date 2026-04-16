@@ -1366,9 +1366,8 @@
                                 let targetUrl = id.startsWith("http") ? id : `https://drive.google.com/file/d/${id}/preview`;
                                 let isFolder = id.includes("folders") || id.includes("drive.google.com/drive");
                                 let hintText = isFolder ? "點擊開啟影音資料夾" : "點擊啟動劇院模式播放";
-                                let titleStr = (vNames[i] || ''+(i+1)).trim();
+                                let titleStr = (vNames[i] || '單元 '+(i+1)).trim();
                                 
-                                // 如果是資料夾就另開，如果是影片就打開系統劇院
                                 let clickAction = isFolder 
                                     ? `window.open('${targetUrl}', '_blank')` 
                                     : `openSystemPlayer('${targetUrl}', '${titleStr}')`;
