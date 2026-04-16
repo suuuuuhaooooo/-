@@ -614,7 +614,6 @@
     </div>
     <div id="system-player-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); backdrop-filter: blur(8px); z-index: 20000; justify-content: center; align-items: center; flex-direction: column;">
         <div id="video-wrapper-box" style="width: 90%; max-width: 1000px; position: relative; display: flex; flex-direction: column;">
-            <div id="video-watermark" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 2147483647; pointer-events: none;"></div>
             <div class="video-ui-header" style="display: flex; justify-content: space-between; align-items: center; color: white; margin-bottom: 12px; padding: 10px 0; gap: 10px;">
                 <div style="display: flex; align-items: center; gap: 10px; overflow: hidden; flex: 1;">
                     <span style="background: var(--primary); padding: 4px 10px; border-radius: 4px; font-size: 12px; font-weight: bold; letter-spacing: 1px; flex-shrink: 0; white-space: nowrap;">影音中心</span>
@@ -636,6 +635,7 @@
                 <iframe id="system-player-iframe" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none;" allow="autoplay; fullscreen"></iframe>
                 <div id="iframe-shield" style="position: absolute; top: 0; right: 0; width: 80px; height: 60px; background: transparent; z-index: 10; cursor: default;" title="已鎖定於系統內播放"></div>
                 <video id="system-player-video" playsinline disablePictureInPicture controlsList="nodownload nofullscreen" oncontextmenu="return false;" style="display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 2; object-fit: contain;"></video>
+                <div id="video-watermark" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 2147483647; pointer-events: none;"></div>
             </div>
             
         </div>
@@ -2041,6 +2041,29 @@
                     isVideoPlaying = false;
                     resetIdleTimer();
                 };
+                let checkCount = 0;
+                const aspectTimer = setInterval(function() {
+                    if (videoEl.videoWidth > 0 && videoEl.videoHeight > 0) {
+                        const stageEl = document.getElementById('player-stage');
+                        stageEl.style.paddingTop = "0";
+                        stageEl.style.aspectRatio = videoEl.videoWidth + " / " + videoEl.videoHeight;
+                        
+                        console.log("【系統除錯】成功抓取真實比例:", videoEl.videoWidth, "x", videoEl.videoHeight);
+                        clearInterval(aspectTimer);
+                    }
+                    
+                    checkCount++;
+                    if (checkCount > 100) {
+                        clearInterval(aspectTimer);
+                    }
+                }, 100);
+                
+                videoEl.addEventListener('playing', function() {
+                    if (videoEl.videoWidth > 0 && videoEl.videoHeight > 0) {
+                        const stageEl = document.getElementById('player-stage');
+                        stageEl.style.aspectRatio = videoEl.videoWidth + " / " + videoEl.videoHeight;
+                    }
+                });
                 videoEl.addEventListener('resize', function() {
                     if (videoEl.videoWidth && videoEl.videoHeight) {
                         const stageEl = document.getElementById('player-stage');
@@ -2078,8 +2101,8 @@
             
             function jumpWatermark() {
                 // 隨機座標
-                const randomX = Math.floor(Math.random() * 85) + 8;
-                const randomY = Math.floor(Math.random() * 85) + 8;
+                const randomX = Math.floor(Math.random() * 60) + 5;
+                const randomY = Math.floor(Math.random() * 75) + 5;
                 const timeStr = new Date().toLocaleTimeString();
 
                 watermarkBox.innerHTML = `
