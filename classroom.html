@@ -612,7 +612,38 @@
             </div>
         </div>
     </div>
-
+    <div id="system-player-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); backdrop-filter: blur(8px); z-index: 20000; justify-content: center; align-items: center; flex-direction: column;">
+        <div id="video-wrapper-box" style="width: 90%; max-width: 1000px; position: relative; display: flex; flex-direction: column;">
+            
+            <div class="video-ui-header" style="display: flex; justify-content: space-between; align-items: center; color: white; margin-bottom: 12px; padding: 10px 0;">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <span style="background: var(--primary); padding: 4px 10px; border-radius: 4px; font-size: 12px; font-weight: bold; letter-spacing: 1px;">影音中心</span>
+                    <span id="playing-video-title" style="font-weight: bold; font-size: 18px; letter-spacing: 1px;">影片載入中...</span>
+                </div>
+                
+                <div style="display: flex; align-items: center; gap: 15px;">
+                    <div onclick="toggleStageFullScreen()" style="cursor: pointer; display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: bold; opacity: 0.8; background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.3); padding: 5px 10px; border-radius: 4px; transition: 0.2s;" onmouseover="this.style.opacity='1'; this.style.background='rgba(255,255,255,0.25)';" onmouseout="this.style.opacity='0.8'; this.style.background='rgba(255,255,255,0.15)';">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
+                            <path fill-rule="evenodd" d="M1.5 1a.5.5 0 0 0-.5.5v4a.5.5 0 0 1-1 0v-4A1.5 1.5 0 0 1 1.5 0h4a.5.5 0 0 1 0 1H1.5zM10 .5a.5.5 0 0 1 .5-.5h4A1.5 1.5 0 0 1 16 1.5v4a.5.5 0 0 1-1 0v-4a.5.5 0 0 0-.5-.5h-4a.5.5 0 0 1-.5-.5zM.5 10a.5.5 0 0 1 .5.5v4a.5.5 0 0 0 .5.5h4a.5.5 0 0 1 0 1h-4A1.5 1.5 0 0 1 0 14.5v-4a.5.5 0 0 1 .5-.5zm15 0a.5.5 0 0 1 .5.5v4a1.5 1.5 0 0 1-1.5 1.5h-4a.5.5 0 0 1 0-1h4a.5.5 0 0 0 .5-.5v-4a.5.5 0 0 1 .5-.5z"/>
+                        </svg>
+                        <span id="fs-btn-text">全螢幕</span>
+                    </div>
+                    <span onclick="closeSystemPlayer()" style="cursor: pointer; font-size: 32px; opacity: 0.7; transition: 0.2s;" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.7'">&times;</span>
+                </div>
+            </div>
+            
+            <div id="player-stage" style="position: relative; width: 100%; padding-top: 56.25%; background: #0b0b0b; border-radius: 8px; overflow: hidden; box-shadow: 0 20px 50px rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.1);">
+                <iframe id="system-player-iframe" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none;" allow="autoplay; fullscreen"></iframe>
+                <div id="iframe-shield" style="position: absolute; top: 0; right: 0; width: 80px; height: 60px; background: transparent; z-index: 10; cursor: default;" title="已鎖定於系統內播放"></div>
+                <video id="system-player-video" playsinline disablePictureInPicture controlsList="nodownload nofullscreen" oncontextmenu="return false;" style="display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 2; object-fit: contain;"></video>
+                <div id="video-watermark" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 2147483647; pointer-events: none;"></div>
+            </div>
+            
+        </div>
+        <div id="player-warning-text" class="video-ui-footer" style="text-align: center; color: #888; font-size: 12px; margin-top: 15px; letter-spacing: 1px;">
+            ※ 為保障智慧財產權，影片已鎖定於系統內播放。請勿使用側錄軟體。
+        </div>
+    </div>
     <div style="position: fixed; bottom: 8px; width: 100%; text-align: center; font-size: 10px; color: #bbb; z-index: 100; pointer-events: none; letter-spacing: 1px; font-family: Arial, sans-serif;">
         &copy; 2026 蘇昊數理 Su-Hao Math/Science. All Rights Reserved.
     </div>
@@ -1967,12 +1998,13 @@
 
         function onScanFailure(error) {}
         // =========================================
-        // 播放器控制項
+        // 播放器控制項與防護邏輯
         // =========================================
         let watermarkTimer;
+        let videoUiTimer; // UI 隱藏計時器
 
         function openSystemPlayer(url, title) {
-            isWatchingVideo = true;
+            isVideoPlaying = true;
             clearTimeout(idleTimer);
             
             document.getElementById('playing-video-title').innerText = title;
@@ -1985,21 +2017,18 @@
                 iframeEl.style.display = 'none';
                 shieldEl.style.display = 'none'; 
                 videoEl.style.display = 'block';
-                videoEl.controls = true; // HLS 模式下開啟控制列
+                videoEl.controls = true; 
                 videoEl.onplay = function() {
-                    isVideoPlaying = true; // 影片開始播，開啟免死金牌
+                    isVideoPlaying = true; 
                     clearTimeout(idleTimer);
-                    console.log("影片播放中，暫停閒置倒數");
                 };
                 videoEl.onpause = function() {
-                    isVideoPlaying = false; // 影片暫停，收回免死金牌
-                    resetIdleTimer(); // 重新開始 3 分鐘倒數
-                    console.log("影片暫停，重新開始 3 分鐘閒置計時");
+                    isVideoPlaying = false; 
+                    resetIdleTimer(); 
                 };
                 videoEl.onended = function() {
                     isVideoPlaying = false;
                     resetIdleTimer();
-                    console.log("影片播完了，重新開始閒置計時");
                 };
                 
                 if (Hls.isSupported()) {
@@ -2026,7 +2055,6 @@
             const sIp = typeof globalClientIP !== 'undefined' && globalClientIP ? globalClientIP : "未知IP";
             
             function jumpWatermark() {
-                // 隨機座標
                 const randomX = Math.floor(Math.random() * 70) + 10;
                 const randomY = Math.floor(Math.random() * 70) + 10;
                 const timeStr = new Date().toLocaleTimeString();
@@ -2048,7 +2076,6 @@
         }
 
         function closeSystemPlayer() {
-            // 停止計時器與清理畫面
             clearInterval(watermarkTimer);
             document.getElementById('video-watermark').innerHTML = "";
             
@@ -2062,7 +2089,6 @@
             isVideoPlaying = false;
             resetIdleTimer();
         }
-        let videoUiTimer; 
 
         function toggleStageFullScreen() {
             const wrapper = document.getElementById('video-wrapper-box');
@@ -2080,19 +2106,19 @@
             const footer = document.querySelector('.video-ui-footer');
             const wrapper = document.getElementById('video-wrapper-box');
 
-            header.classList.remove('ui-hidden');
-            footer.classList.remove('ui-hidden');
-            wrapper.classList.remove('hide-cursor');
-            header.style.transform = "translateY(0)";
+            if(header) header.classList.remove('ui-hidden');
+            if(footer) footer.classList.remove('ui-hidden');
+            if(wrapper) wrapper.classList.remove('hide-cursor');
+            if(header) header.style.transform = "translateY(0)";
 
             clearTimeout(videoUiTimer);
 
             if (document.fullscreenElement) {
                 videoUiTimer = setTimeout(() => {
-                    header.classList.add('ui-hidden');
-                    footer.classList.add('ui-hidden');
-                    wrapper.classList.add('hide-cursor');
-                    header.style.transform = "translateY(-10px)"; 
+                    if(header) header.classList.add('ui-hidden');
+                    if(footer) footer.classList.add('ui-hidden');
+                    if(wrapper) wrapper.classList.add('hide-cursor');
+                    if(header) header.style.transform = "translateY(-10px)"; 
                 }, 3000); 
             }
         }
@@ -2101,15 +2127,17 @@
             const fsText = document.getElementById('fs-btn-text');
             const wrapper = document.getElementById('video-wrapper-box');
             const stage = document.getElementById('player-stage');
+            const warningText = document.getElementById('player-warning-text');
             
             if (document.fullscreenElement) {
-                fsText.innerText = "退出全螢幕";
+                if(fsText) fsText.innerText = "退出全螢幕";
+                if(warningText) warningText.style.display = "none";
                 
                 wrapper.style.background = "#000";
                 wrapper.style.width = "100vw";
                 wrapper.style.maxWidth = "none";
                 wrapper.style.height = "100vh";
-                wrapper.style.padding = "10px 40px 40px 40px";
+                wrapper.style.padding = "20px";
                 wrapper.style.boxSizing = "border-box";
                 
                 stage.style.paddingTop = "0";
@@ -2118,7 +2146,8 @@
                 wrapper.addEventListener('mousemove', resetUiIdleTimer);
                 resetUiIdleTimer(); 
             } else {
-                fsText.innerText = "全螢幕";
+                if(fsText) fsText.innerText = "全螢幕";
+                if(warningText) warningText.style.display = "block";
                 
                 wrapper.style.background = "transparent";
                 wrapper.style.width = "90%";
@@ -2131,10 +2160,14 @@
 
                 wrapper.removeEventListener('mousemove', resetUiIdleTimer);
                 clearTimeout(videoUiTimer);
-                document.querySelector('.video-ui-header').classList.remove('ui-hidden');
-                document.querySelector('.video-ui-footer').classList.remove('ui-hidden');
+                const header = document.querySelector('.video-ui-header');
+                const footer = document.querySelector('.video-ui-footer');
+                if(header) {
+                    header.classList.remove('ui-hidden');
+                    header.style.transform = "translateY(0)";
+                }
+                if(footer) footer.classList.remove('ui-hidden');
                 wrapper.classList.remove('hide-cursor');
-                document.querySelector('.video-ui-header').style.transform = "translateY(0)";
             }
         });
     </script>
