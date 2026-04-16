@@ -581,16 +581,21 @@
         <div style="width: 90%; max-width: 1000px; position: relative;">
             <div style="display: flex; justify-content: space-between; align-items: center; color: white; margin-bottom: 12px;">
                 <div style="display: flex; align-items: center; gap: 10px;">
-                    <span style="background: var(--primary); padding: 4px 10px; border-radius: 4px; font-size: 12px; font-weight: bold; letter-spacing: 1px;">蘇昊雲端影音</span>
+                    <span style="background: var(--primary); padding: 4px 10px; border-radius: 4px; font-size: 12px; font-weight: bold; letter-spacing: 1px;">影音中心</span>
                     <span id="playing-video-title" style="font-weight: bold; font-size: 18px; letter-spacing: 1px;">影片載入中...</span>
                 </div>
                 <span onclick="closeSystemPlayer()" style="cursor: pointer; font-size: 32px; opacity: 0.7; transition: 0.2s;" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.7'">&times;</span>
             </div>
-            <div style="position: relative; width: 100%; padding-top: 56.25%; background: #0b0b0b; border-radius: 8px; overflow: hidden; box-shadow: 0 20px 50px rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.1);">
-                <iframe id="system-player-iframe" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none;" allow="autoplay; fullscreen"></iframe>
-                <div id="iframe-shield" style="position: absolute; top: 0; right: 0; width: 80px; height: 60px; background: transparent; z-index: 10; cursor: default;" title="已鎖定於系統內播放"></div>
-                <video id="system-player-video" controls playsinline controlsList="nodownload" oncontextmenu="return false;" style="display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 2; object-fit: contain;"></video>
-                <div id="video-watermark" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 15; pointer-events: none; opacity: 0.6;"></div>
+            
+            <div id="player-stage" style="position: relative; width: 100%; padding-top: 56.25%; background: #0b0b0b; border-radius: 8px; overflow: hidden; box-shadow: 0 20px 50px rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.1);">
+                    <iframe id="system-player-iframe" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none;" allow="autoplay; fullscreen"></iframe>
+                    <div id="iframe-shield" style="position: absolute; top: 0; right: 0; width: 80px; height: 60px; background: transparent; z-index: 10; cursor: default;" title="已鎖定於系統內播放"></div>
+                    <video id="system-player-video" playsinline controlsList="nodownload" oncontextmenu="return false;" style="display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 2; object-fit: contain;"></video>
+                        
+                        <div id="video-watermark" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 2147483647; pointer-events: none;"></div>
+                
+                    </div>
+                </div>
             </div>
             <div style="text-align: center; color: #888; font-size: 12px; margin-top: 15px; letter-spacing: 1px;">
                 ※ 為保障智慧財產權，影片已鎖定於系統內播放。請勿使用側錄軟體。
@@ -752,11 +757,11 @@
 
         // 閒置機制
         let idleTimer;
-        let isWatchingVideo = false;
+        let isVideoPlaying = false;
 
         function resetIdleTimer() {
             clearTimeout(idleTimer);
-            if (auth.currentUser && !isWatchingVideo) {
+            if (auth.currentUser && !isVideoPlaying) {
                 idleTimer = setTimeout(() => { 
                     alert("由於您已長時間未操作，系統已自動將您安全登出。"); 
                     logout(); 
@@ -1981,78 +1986,118 @@
         // =========================================
         // 播放器控制項
         // =========================================
+        let watermarkTimer;
+
         function openSystemPlayer(url, title) {
             isWatchingVideo = true;
             clearTimeout(idleTimer);
             
             document.getElementById('playing-video-title').innerText = title;
-            
             const iframeEl = document.getElementById('system-player-iframe');
             const videoEl = document.getElementById('system-player-video');
             const shieldEl = document.getElementById('iframe-shield');
+            const watermarkBox = document.getElementById('video-watermark');
             
-            // 判斷是否為 Cloudflare R2 的 .m3u8 格式
             if (url.endsWith('.m3u8')) {
                 iframeEl.style.display = 'none';
                 shieldEl.style.display = 'none'; 
                 videoEl.style.display = 'block';
+                videoEl.controls = true; // HLS 模式下開啟控制列
+                videoEl.onplay = function() {
+                    isVideoPlaying = true; // 影片開始播，開啟免死金牌
+                    clearTimeout(idleTimer);
+                    console.log("影片播放中，暫停閒置倒數");
+                };
+                videoEl.onpause = function() {
+                    isVideoPlaying = false; // 影片暫停，收回免死金牌
+                    resetIdleTimer(); // 重新開始 3 分鐘倒數
+                    console.log("影片暫停，重新開始 3 分鐘閒置計時");
+                };
+                videoEl.onended = function() {
+                    isVideoPlaying = false;
+                    resetIdleTimer();
+                    console.log("影片播完了，重新開始閒置計時");
+                };
                 
                 if (Hls.isSupported()) {
                     if (window.hlsInstance) window.hlsInstance.destroy(); 
                     window.hlsInstance = new Hls();
                     window.hlsInstance.loadSource(url);
                     window.hlsInstance.attachMedia(videoEl);
-                    window.hlsInstance.on(Hls.Events.MANIFEST_PARSED, function() {
-                        videoEl.play().catch(e => console.log("自動播放被阻擋", e));
-                    });
-                } else if (videoEl.canPlayType('application/vnd.apple.mpegurl')) {
-                    videoEl.src = url;
-                    videoEl.addEventListener('loadedmetadata', function() {
-                        videoEl.play();
+                    window.hlsInstance.on(Hls.Events.MANIFEST_PARSED, () => {
+                        videoEl.play().catch(e => {
+                            isVideoPlaying = false;
+                            resetIdleTimer();
+                        });
                     });
                 }
             } else {
                 videoEl.style.display = 'none';
-                if (window.hlsInstance) window.hlsInstance.destroy();
-                videoEl.pause();
-                
                 iframeEl.style.display = 'block';
                 shieldEl.style.display = 'block';
                 iframeEl.src = url;
             }
 
-            // 動態浮水印
+            // 跳動浮水印
             const sName = localStorage.getItem('studentName') || "未知學員";
             const sIp = typeof globalClientIP !== 'undefined' && globalClientIP ? globalClientIP : "未知IP";
-            const timestamp = new Date().toLocaleString('zh-TW'); 
             
-            const svgContent = `<svg xmlns="http://www.w3.org/2000/svg" width="350" height="250">
-                <g transform="rotate(-25, 175, 125)">
-                    <text x="50%" y="40%" dominant-baseline="middle" text-anchor="middle" fill="rgba(255,255,255,0.15)" font-size="22" font-family="sans-serif" font-weight="bold">${sName}</text>
-                    <text x="50%" y="55%" dominant-baseline="middle" text-anchor="middle" fill="rgba(255,255,255,0.15)" font-size="14" font-family="monospace">${sIp}</text>
-                    <text x="50%" y="70%" dominant-baseline="middle" text-anchor="middle" fill="rgba(255,255,255,0.1)" font-size="10" font-family="sans-serif">${timestamp}</text>
-                </g>
-            </svg>`;
-            
-            const encodedSvg = "url('data:image/svg+xml;base64," + window.btoa(unescape(encodeURIComponent(svgContent))) + "')";
-            document.getElementById('video-watermark').style.backgroundImage = encodedSvg;
+            function jumpWatermark() {
+                // 隨機座標
+                const randomX = Math.floor(Math.random() * 70) + 10;
+                const randomY = Math.floor(Math.random() * 70) + 10;
+                const timeStr = new Date().toLocaleTimeString();
+
+                watermarkBox.innerHTML = `
+                    <div style="position: absolute; left: ${randomX}%; top: ${randomY}%; transform: rotate(-15deg); color: rgba(255,255,255,0.4); text-align: center; font-family: sans-serif; pointer-events: none; transition: none;">
+                        <div style="font-weight: bold; font-size: 20px; text-shadow: 1px 1px 2px rgba(0,0,0,0.5);">${sName}</div>
+                        <div style="font-size: 12px; opacity: 0.8;">${sIp}</div>
+                        <div style="font-size: 10px; opacity: 0.6;">${timeStr}</div>
+                    </div>
+                `;
+            }
+
+            jumpWatermark();
+            clearInterval(watermarkTimer);
+            watermarkTimer = setInterval(jumpWatermark, 7000);
 
             document.getElementById('system-player-modal').style.display = 'flex';
         }
 
         function closeSystemPlayer() {
+            // 停止計時器與清理畫面
+            clearInterval(watermarkTimer);
+            document.getElementById('video-watermark').innerHTML = "";
+            
             const iframeEl = document.getElementById('system-player-iframe');
             const videoEl = document.getElementById('system-player-video');
-            
             iframeEl.src = "";
             videoEl.pause();
-            videoEl.removeAttribute('src');
             if (window.hlsInstance) window.hlsInstance.destroy();
 
             document.getElementById('system-player-modal').style.display = 'none';
-
-            isWatchingVideo = false;
+            isVideoPlaying = false;
             resetIdleTimer();
+        }
+        document.addEventListener('fullscreenchange', () => {
+            const stage = document.getElementById('player-stage');
+            const watermark = document.getElementById('video-watermark');
+            
+            if (document.fullscreenElement) {
+                if (document.fullscreenElement.tagName === 'VIDEO') {
+                }
+            }
+        });
+
+        function toggleStageFullScreen() {
+            const stage = document.getElementById('player-stage');
+            if (!document.fullscreenElement) {
+                stage.requestFullscreen().catch(err => {
+                    alert(`無法切換全螢幕: ${err.message}`);
+                });
+            } else {
+                document.exitFullscreen();
+            }
         }
     </script>
 </body>
