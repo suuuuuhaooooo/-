@@ -614,9 +614,8 @@
     </div>
     <div id="system-player-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); backdrop-filter: blur(8px); z-index: 20000; justify-content: center; align-items: center; flex-direction: column;">
         <div id="video-wrapper-box" style="width: 90%; max-width: 1000px; position: relative; display: flex; flex-direction: column;">
-            
+            <div id="video-watermark" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 2147483647; pointer-events: none;"></div>
             <div class="video-ui-header" style="display: flex; justify-content: space-between; align-items: center; color: white; margin-bottom: 12px; padding: 10px 0; gap: 10px;">
-                
                 <div style="display: flex; align-items: center; gap: 10px; overflow: hidden; flex: 1;">
                     <span style="background: var(--primary); padding: 4px 10px; border-radius: 4px; font-size: 12px; font-weight: bold; letter-spacing: 1px; flex-shrink: 0; white-space: nowrap;">影音中心</span>
                     <span id="playing-video-title" style="font-weight: bold; font-size: 16px; letter-spacing: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">影片載入中...</span>
@@ -637,7 +636,6 @@
                 <iframe id="system-player-iframe" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none;" allow="autoplay; fullscreen"></iframe>
                 <div id="iframe-shield" style="position: absolute; top: 0; right: 0; width: 80px; height: 60px; background: transparent; z-index: 10; cursor: default;" title="已鎖定於系統內播放"></div>
                 <video id="system-player-video" playsinline disablePictureInPicture controlsList="nodownload nofullscreen" oncontextmenu="return false;" style="display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 2; object-fit: contain;"></video>
-                <div id="video-watermark" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 2147483647; pointer-events: none;"></div>
             </div>
             
         </div>
@@ -2080,8 +2078,8 @@
             
             function jumpWatermark() {
                 // 隨機座標
-                const randomX = Math.floor(Math.random() * 70) + 10;
-                const randomY = Math.floor(Math.random() * 70) + 10;
+                const randomX = Math.floor(Math.random() * 95) + 5;
+                const randomY = Math.floor(Math.random() * 95) + 5;
                 const timeStr = new Date().toLocaleTimeString();
 
                 watermarkBox.innerHTML = `
@@ -2215,6 +2213,7 @@
                 if(footer) footer.classList.remove('ui-hidden');
                 wrapper.classList.remove('hide-cursor');
             }
+            if (typeof jumpWatermark === 'function') jumpWatermark();
         });
     </script>
 </body>
