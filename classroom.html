@@ -2004,7 +2004,7 @@
         let videoUiTimer; // UI 隱藏計時器
 
         function openSystemPlayer(url, title) {
-            isVideoPlaying = true;
+            isVideoPlaying = true; 
             clearTimeout(idleTimer);
             
             document.getElementById('playing-video-title').innerText = title;
@@ -2018,6 +2018,18 @@
                 shieldEl.style.display = 'none'; 
                 videoEl.style.display = 'block';
                 videoEl.controls = true; 
+
+                videoEl.onfullscreenchange = () => {
+                    if (document.fullscreenElement === videoEl) {
+                        document.exitFullscreen().then(() => toggleStageFullScreen());
+                    }
+                };
+                // 針對蘋果 iOS/Safari 的專屬攔截
+                videoEl.onwebkitbeginfullscreen = (e) => {
+                    e.preventDefault();
+                    toggleStageFullScreen();
+                };
+
                 videoEl.onplay = function() {
                     isVideoPlaying = true; 
                     clearTimeout(idleTimer);
@@ -2076,6 +2088,14 @@
         }
 
         function closeSystemPlayer() {
+            if (document.fullscreenElement || document.webkitFullscreenElement) {
+                if (document.exitFullscreen) {
+                    document.exitFullscreen().catch(e => console.log("退出全螢幕失敗:", e));
+                } else if (document.webkitExitFullscreen) {
+                    document.webkitExitFullscreen();
+                }
+            }
+
             clearInterval(watermarkTimer);
             document.getElementById('video-watermark').innerHTML = "";
             
