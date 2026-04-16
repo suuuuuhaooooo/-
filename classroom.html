@@ -584,6 +584,10 @@
                     <span style="background: var(--primary); padding: 4px 10px; border-radius: 4px; font-size: 12px; font-weight: bold; letter-spacing: 1px;">影音中心</span>
                     <span id="playing-video-title" style="font-weight: bold; font-size: 18px; letter-spacing: 1px;">影片載入中...</span>
                 </div>
+                <div style="display: flex; align-items: center; gap: 20px;">
+                    <span onclick="toggleStageFullScreen()" style="cursor: pointer; font-size: 14px; opacity: 0.8; border: 1px solid white; padding: 2px 8px; border-radius: 4px;">全螢幕視窗</span>
+                    <span onclick="closeSystemPlayer()" style="cursor: pointer; font-size: 32px; opacity: 0.7; transition: 0.2s;" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.7'">&times;</span>
+                </div>
                 <span onclick="closeSystemPlayer()" style="cursor: pointer; font-size: 32px; opacity: 0.7; transition: 0.2s;" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.7'">&times;</span>
             </div>
             
@@ -2050,9 +2054,9 @@
 
                 watermarkBox.innerHTML = `
                     <div style="position: absolute; left: ${randomX}%; top: ${randomY}%; transform: rotate(-15deg); color: rgba(255,255,255,0.4); text-align: center; font-family: sans-serif; pointer-events: none; transition: none;">
-                        <div style="font-weight: bold; font-size: 20px; text-shadow: 1px 1px 2px rgba(0,0,0,0.5);">${sName}</div>
-                        <div style="font-size: 12px; opacity: 0.8;">${sIp}</div>
-                        <div style="font-size: 10px; opacity: 0.6;">${timeStr}</div>
+                        <div style="font-weight: bold; font-size: 30px; text-shadow: 1px 1px 2px rgba(0,0,0,0.5);">${sName}</div>
+                        <div style="font-size: 22px; opacity: 0.8;">${sIp}</div>
+                        <div style="font-size: 20px; opacity: 0.6;">${timeStr}</div>
                     </div>
                 `;
             }
@@ -2093,7 +2097,7 @@
             const stage = document.getElementById('player-stage');
             if (!document.fullscreenElement) {
                 stage.requestFullscreen().catch(err => {
-                    alert(`無法切換全螢幕: ${err.message}`);
+                    alert(`您的瀏覽器不支援此全螢幕模式: ${err.message}`);
                 });
             } else {
                 document.exitFullscreen();
