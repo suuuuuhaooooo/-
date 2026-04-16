@@ -19,6 +19,7 @@
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-database-compat.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <script src="https://unpkg.com/html5-qrcode"></script>
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;700&display=swap');
         :root { --primary: #8e9775; --dark: #5b6348; --bg: #f8f8f6; --white: #ffffff; }
@@ -576,6 +577,26 @@
             </div>
         </div>
     </div>
+    <div id="system-player-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); backdrop-filter: blur(8px); z-index: 20000; justify-content: center; align-items: center; flex-direction: column;">
+        <div style="width: 90%; max-width: 1000px; position: relative;">
+            <div style="display: flex; justify-content: space-between; align-items: center; color: white; margin-bottom: 12px;">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <span style="background: var(--primary); padding: 4px 10px; border-radius: 4px; font-size: 12px; font-weight: bold; letter-spacing: 1px;">蘇昊雲端影音</span>
+                    <span id="playing-video-title" style="font-weight: bold; font-size: 18px; letter-spacing: 1px;">影片載入中...</span>
+                </div>
+                <span onclick="closeSystemPlayer()" style="cursor: pointer; font-size: 32px; opacity: 0.7; transition: 0.2s;" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.7'">&times;</span>
+            </div>
+            <div style="position: relative; width: 100%; padding-top: 56.25%; background: #0b0b0b; border-radius: 8px; overflow: hidden; box-shadow: 0 20px 50px rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.1);">
+                <iframe id="system-player-iframe" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none;" allow="autoplay; fullscreen"></iframe>
+                <div id="iframe-shield" style="position: absolute; top: 0; right: 0; width: 80px; height: 60px; background: transparent; z-index: 10; cursor: default;" title="已鎖定於系統內播放"></div>
+                <video id="system-player-video" controls playsinline controlsList="nodownload" oncontextmenu="return false;" style="display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 2; object-fit: contain;"></video>
+                <div id="video-watermark" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 15; pointer-events: none; opacity: 0.6;"></div>
+            </div>
+            <div style="text-align: center; color: #888; font-size: 12px; margin-top: 15px; letter-spacing: 1px;">
+                ※ 為保障智慧財產權，影片已鎖定於系統內播放。請勿使用側錄軟體。
+            </div>
+        </div>
+    </div>
     <div id="copyright-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); backdrop-filter: blur(5px); z-index: 10010; justify-content: center; align-items: center;">
         <div style="background: white; padding: 30px; border-radius: 8px; width: 85%; max-width: 450px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); border-top: 6px solid #8e9775; position: relative; max-height: 85vh; overflow-y: auto;">
             <h2 style="color: #4a5238; margin-top: 0; font-size: 20px; margin-bottom: 15px; border-bottom: 1px solid #eee; padding-bottom: 10px; display: flex; align-items: center; gap: 8px;">
@@ -731,9 +752,11 @@
 
         // 閒置機制
         let idleTimer;
+        let isWatchingVideo = false;
+
         function resetIdleTimer() {
             clearTimeout(idleTimer);
-            if (auth.currentUser) {
+            if (auth.currentUser && !isWatchingVideo) {
                 idleTimer = setTimeout(() => { 
                     alert("由於您已長時間未操作，系統已自動將您安全登出。"); 
                     logout(); 
@@ -1340,14 +1363,19 @@
                             
                             document.getElementById('video-grid').innerHTML = vIds.map((rawId, i) => {
                                 let id = rawId.trim();
-                                let targetUrl = id.startsWith("http") ? id : `https://drive.google.com/file/d/${id}/view`;
-                                let hintText = (id.includes("folders") || id.includes("drive.google.com/drive")) 
-                                               ? "點擊開啟影音資料夾" 
-                                               : "點擊另開分頁播放影片";
+                                let targetUrl = id.startsWith("http") ? id : `https://drive.google.com/file/d/${id}/preview`;
+                                let isFolder = id.includes("folders") || id.includes("drive.google.com/drive");
+                                let hintText = isFolder ? "點擊開啟影音資料夾" : "點擊啟動劇院模式播放";
+                                let titleStr = (vNames[i] || ''+(i+1)).trim();
+                                
+                                // 如果是資料夾就另開，如果是影片就打開系統劇院
+                                let clickAction = isFolder 
+                                    ? `window.open('${targetUrl}', '_blank')` 
+                                    : `openSystemPlayer('${targetUrl}', '${titleStr}')`;
                                 
                                 return `
-                                <div class="video-card" onclick="window.open('${targetUrl}', '_blank')">
-                                    <div style="color: var(--primary); font-weight: 700; font-size: 15px; margin-bottom: 5px;">${(vNames[i] || '單元 '+(i+1)).trim()}</div>
+                                <div class="video-card" onclick="${clickAction}">
+                                    <div style="color: var(--primary); font-weight: 700; font-size: 15px; margin-bottom: 5px;">${titleStr}</div>
                                     <div style="font-size: 12px; color: #999;">${hintText}</div>
                                 </div>`;
                             }).join('');
@@ -1951,6 +1979,82 @@
         }
 
         function onScanFailure(error) {}
+        // =========================================
+        // 播放器控制項
+        // =========================================
+        function openSystemPlayer(url, title) {
+            isWatchingVideo = true;
+            clearTimeout(idleTimer);
+            
+            document.getElementById('playing-video-title').innerText = title;
+            
+            const iframeEl = document.getElementById('system-player-iframe');
+            const videoEl = document.getElementById('system-player-video');
+            const shieldEl = document.getElementById('iframe-shield');
+            
+            // 判斷是否為 Cloudflare R2 的 .m3u8 格式
+            if (url.endsWith('.m3u8')) {
+                iframeEl.style.display = 'none';
+                shieldEl.style.display = 'none'; 
+                videoEl.style.display = 'block';
+                
+                if (Hls.isSupported()) {
+                    if (window.hlsInstance) window.hlsInstance.destroy(); 
+                    window.hlsInstance = new Hls();
+                    window.hlsInstance.loadSource(url);
+                    window.hlsInstance.attachMedia(videoEl);
+                    window.hlsInstance.on(Hls.Events.MANIFEST_PARSED, function() {
+                        videoEl.play().catch(e => console.log("自動播放被阻擋", e));
+                    });
+                } else if (videoEl.canPlayType('application/vnd.apple.mpegurl')) {
+                    videoEl.src = url;
+                    videoEl.addEventListener('loadedmetadata', function() {
+                        videoEl.play();
+                    });
+                }
+            } else {
+                videoEl.style.display = 'none';
+                if (window.hlsInstance) window.hlsInstance.destroy();
+                videoEl.pause();
+                
+                iframeEl.style.display = 'block';
+                shieldEl.style.display = 'block';
+                iframeEl.src = url;
+            }
+
+            // 動態浮水印
+            const sName = localStorage.getItem('studentName') || "未知學員";
+            const sIp = typeof globalClientIP !== 'undefined' && globalClientIP ? globalClientIP : "未知IP";
+            const timestamp = new Date().toLocaleString('zh-TW'); 
+            
+            const svgContent = `<svg xmlns="http://www.w3.org/2000/svg" width="350" height="250">
+                <g transform="rotate(-25, 175, 125)">
+                    <text x="50%" y="40%" dominant-baseline="middle" text-anchor="middle" fill="rgba(255,255,255,0.15)" font-size="22" font-family="sans-serif" font-weight="bold">${sName}</text>
+                    <text x="50%" y="55%" dominant-baseline="middle" text-anchor="middle" fill="rgba(255,255,255,0.15)" font-size="14" font-family="monospace">${sIp}</text>
+                    <text x="50%" y="70%" dominant-baseline="middle" text-anchor="middle" fill="rgba(255,255,255,0.1)" font-size="10" font-family="sans-serif">${timestamp}</text>
+                </g>
+            </svg>`;
+            
+            const encodedSvg = "url('data:image/svg+xml;base64," + window.btoa(unescape(encodeURIComponent(svgContent))) + "')";
+            document.getElementById('video-watermark').style.backgroundImage = encodedSvg;
+
+            document.getElementById('system-player-modal').style.display = 'flex';
+        }
+
+        function closeSystemPlayer() {
+            const iframeEl = document.getElementById('system-player-iframe');
+            const videoEl = document.getElementById('system-player-video');
+            
+            iframeEl.src = "";
+            videoEl.pause();
+            videoEl.removeAttribute('src');
+            if (window.hlsInstance) window.hlsInstance.destroy();
+
+            document.getElementById('system-player-modal').style.display = 'none';
+
+            isWatchingVideo = false;
+            resetIdleTimer();
+        }
     </script>
 </body>
 </html>
