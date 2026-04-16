@@ -615,20 +615,21 @@
     <div id="system-player-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); backdrop-filter: blur(8px); z-index: 20000; justify-content: center; align-items: center; flex-direction: column;">
         <div id="video-wrapper-box" style="width: 90%; max-width: 1000px; position: relative; display: flex; flex-direction: column;">
             
-            <div class="video-ui-header" style="display: flex; justify-content: space-between; align-items: center; color: white; margin-bottom: 12px; padding: 10px 0;">
-                <div style="display: flex; align-items: center; gap: 10px;">
-                    <span style="background: var(--primary); padding: 4px 10px; border-radius: 4px; font-size: 12px; font-weight: bold; letter-spacing: 1px;">影音中心</span>
-                    <span id="playing-video-title" style="font-weight: bold; font-size: 18px; letter-spacing: 1px;">影片載入中...</span>
+            <div class="video-ui-header" style="display: flex; justify-content: space-between; align-items: center; color: white; margin-bottom: 12px; padding: 10px 0; gap: 10px;">
+                
+                <div style="display: flex; align-items: center; gap: 10px; overflow: hidden; flex: 1;">
+                    <span style="background: var(--primary); padding: 4px 10px; border-radius: 4px; font-size: 12px; font-weight: bold; letter-spacing: 1px; flex-shrink: 0; white-space: nowrap;">影音中心</span>
+                    <span id="playing-video-title" style="font-weight: bold; font-size: 16px; letter-spacing: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">影片載入中...</span>
                 </div>
                 
-                <div style="display: flex; align-items: center; gap: 15px;">
-                    <div onclick="toggleStageFullScreen()" style="cursor: pointer; display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: bold; opacity: 0.8; background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.3); padding: 5px 10px; border-radius: 4px; transition: 0.2s;" onmouseover="this.style.opacity='1'; this.style.background='rgba(255,255,255,0.25)';" onmouseout="this.style.opacity='0.8'; this.style.background='rgba(255,255,255,0.15)';">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
+                <div style="display: flex; align-items: center; gap: 15px; flex-shrink: 0;">
+                    <div onclick="toggleStageFullScreen()" style="cursor: pointer; display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: bold; opacity: 0.8; background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.3); padding: 5px 10px; border-radius: 4px; transition: 0.2s; white-space: nowrap; flex-shrink: 0;" onmouseover="this.style.opacity='1'; this.style.background='rgba(255,255,255,0.25)';" onmouseout="this.style.opacity='0.8'; this.style.background='rgba(255,255,255,0.15)';">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16" style="flex-shrink: 0;">
                             <path fill-rule="evenodd" d="M1.5 1a.5.5 0 0 0-.5.5v4a.5.5 0 0 1-1 0v-4A1.5 1.5 0 0 1 1.5 0h4a.5.5 0 0 1 0 1H1.5zM10 .5a.5.5 0 0 1 .5-.5h4A1.5 1.5 0 0 1 16 1.5v4a.5.5 0 0 1-1 0v-4a.5.5 0 0 0-.5-.5h-4a.5.5 0 0 1-.5-.5zM.5 10a.5.5 0 0 1 .5.5v4a.5.5 0 0 0 .5.5h4a.5.5 0 0 1 0 1h-4A1.5 1.5 0 0 1 0 14.5v-4a.5.5 0 0 1 .5-.5zm15 0a.5.5 0 0 1 .5.5v4a1.5 1.5 0 0 1-1.5 1.5h-4a.5.5 0 0 1 0-1h4a.5.5 0 0 0 .5-.5v-4a.5.5 0 0 1 .5-.5z"/>
                         </svg>
-                        <span id="fs-btn-text">全螢幕</span>
+                        <span id="fs-btn-text" style="white-space: nowrap;">全螢幕</span>
                     </div>
-                    <span onclick="closeSystemPlayer()" style="cursor: pointer; font-size: 32px; opacity: 0.7; transition: 0.2s;" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.7'">&times;</span>
+                    <span onclick="closeSystemPlayer()" style="cursor: pointer; font-size: 32px; opacity: 0.7; transition: 0.2s; flex-shrink: 0; line-height: 1;" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.7'">&times;</span>
                 </div>
             </div>
             
@@ -640,7 +641,7 @@
             </div>
             
         </div>
-        <div id="player-warning-text" class="video-ui-footer" style="text-align: center; color: #888; font-size: 12px; margin-top: 15px; letter-spacing: 1px;">
+        <div id="player-warning-text" class="video-ui-footer" style="text-align: center; color: #888; font-size: 12px; margin-top: 15px; letter-spacing: 1px; word-break: keep-all;">
             ※ 為保障智慧財產權，影片已鎖定於系統內播放。請勿使用側錄軟體。
         </div>
     </div>
@@ -2067,15 +2068,16 @@
             const sIp = typeof globalClientIP !== 'undefined' && globalClientIP ? globalClientIP : "未知IP";
             
             function jumpWatermark() {
+                // 隨機座標
                 const randomX = Math.floor(Math.random() * 70) + 10;
                 const randomY = Math.floor(Math.random() * 70) + 10;
                 const timeStr = new Date().toLocaleTimeString();
 
                 watermarkBox.innerHTML = `
-                    <div style="position: absolute; left: ${randomX}%; top: ${randomY}%; transform: rotate(-15deg); color: rgba(255,255,255,0.4); text-align: center; font-family: sans-serif; pointer-events: none; transition: none;">
-                        <div style="font-weight: bold; font-size: 30px; text-shadow: 1px 1px 2px rgba(0,0,0,0.5);">${sName}</div>
-                        <div style="font-size: 22px; opacity: 0.8;">${sIp}</div>
-                        <div style="font-size: 20px; opacity: 0.6;">${timeStr}</div>
+                    <div style="position: absolute; left: ${randomX}%; top: ${randomY}%; transform: rotate(-15deg); color: rgba(255,255,255,0.4); text-align: center; font-family: sans-serif; pointer-events: none; transition: none; white-space: nowrap;">
+                        <div style="font-weight: bold; font-size: max(16px, 3vw); text-shadow: 1px 1px 2px rgba(0,0,0,0.5);">${sName}</div>
+                        <div style="font-size: max(12px, 1.8vw); opacity: 0.8; margin-top: 2px;">${sIp}</div>
+                        <div style="font-size: max(9px, 1.2vw); opacity: 0.6; margin-top: 2px;">${timeStr}</div>
                     </div>
                 `;
             }
