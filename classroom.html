@@ -263,6 +263,11 @@
             100% { transform: translate(-100%, 0); }
         }
         #login-ui { padding-top: 40px; }
+        #system-player-video {
+            transition: transform 0.3s ease;
+            max-width: 100%;
+            max-height: 100%;
+        }
     </style>
 </head>
 <body>
@@ -2002,7 +2007,7 @@
         let watermarkTimer;
         let videoUiTimer; // UI 隱藏計時器
 
-        function openSystemPlayer(url, title) {
+        function openSystemPlayer(url, title, rotation = 0) {
             isVideoPlaying = true; 
             clearTimeout(idleTimer);
             
@@ -2041,22 +2046,42 @@
                     isVideoPlaying = false;
                     resetIdleTimer();
                 };
-                let checkCount = 0;
-                const aspectTimer = setInterval(function() {
+                function adjustVideoLayout() {
                     if (videoEl.videoWidth > 0 && videoEl.videoHeight > 0) {
                         const stageEl = document.getElementById('player-stage');
                         stageEl.style.paddingTop = "0";
-                        stageEl.style.aspectRatio = videoEl.videoWidth + " / " + videoEl.videoHeight;
-                        
-                        console.log("【系統除錯】成功抓取真實比例:", videoEl.videoWidth, "x", videoEl.videoHeight);
+
+                        // 判斷是否為 90度 或 -90度 (長寬對調)
+                        if (rotation === 90 || rotation === -90 || rotation === 270) {
+                            // 外框的長寬比例對調 (例如 16:9 變成 9:16)
+                            stageEl.style.aspectRatio = videoEl.videoHeight + " / " + videoEl.videoWidth;
+                            
+                            // 幾何補償
+                            const scaleFactor = videoEl.videoWidth / videoEl.videoHeight;
+                            videoEl.style.transform = `rotate(${rotation}deg) scale(${scaleFactor})`;
+                            
+                        } else {
+                            // 正常 0 度或 180 度
+                            stageEl.style.aspectRatio = videoEl.videoWidth + " / " + videoEl.videoHeight;
+                            videoEl.style.transform = `rotate(${rotation}deg) scale(1)`;
+                        }
+                    }
+                }
+
+                // 輪詢偵測 (對付串流的延遲載入)
+                let checkCount = 0;
+                const aspectTimer = setInterval(function() {
+                    if (videoEl.videoWidth > 0 && videoEl.videoHeight > 0) {
+                        adjustVideoLayout();
+                        console.log("【系統除錯】影片真實比例:", videoEl.videoWidth, "x", videoEl.videoHeight, "| 旋轉角度:", rotation);
                         clearInterval(aspectTimer);
                     }
-                    
                     checkCount++;
-                    if (checkCount > 100) {
-                        clearInterval(aspectTimer);
-                    }
+                    if (checkCount > 100) clearInterval(aspectTimer);
                 }, 100);
+                
+                videoEl.addEventListener('playing', adjustVideoLayout);
+                videoEl.addEventListener('resize', adjustVideoLayout);
                 
                 videoEl.addEventListener('playing', function() {
                     if (videoEl.videoWidth > 0 && videoEl.videoHeight > 0) {
