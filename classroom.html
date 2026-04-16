@@ -2043,13 +2043,17 @@
                     isVideoPlaying = false;
                     resetIdleTimer();
                 };
-                videoEl.onloadedmetadata = function() {
+                videoEl.addEventListener('resize', function() {
                     if (videoEl.videoWidth && videoEl.videoHeight) {
                         const stageEl = document.getElementById('player-stage');
-                        stageEl.style.paddingTop = "0";
+
+                        stageEl.style.paddingTop = "0"; 
+
                         stageEl.style.aspectRatio = videoEl.videoWidth + " / " + videoEl.videoHeight;
+                        
+                        console.log("【系統除錯】影片真實解析度已抓取:", videoEl.videoWidth, "x", videoEl.videoHeight);
                     }
-                };
+                });
                 
                 if (Hls.isSupported()) {
                     if (window.hlsInstance) window.hlsInstance.destroy(); 
@@ -2166,12 +2170,18 @@
                 wrapper.style.width = "100vw";
                 wrapper.style.maxWidth = "none";
                 wrapper.style.height = "100vh";
-                wrapper.style.padding = "20px";
+                // 1. 拔掉外圍的 20px 邊界，讓畫面撐滿
+                wrapper.style.padding = "0"; 
                 wrapper.style.boxSizing = "border-box";
                 
+                // 2. 解除 75vh 的高度封印
+                stage.style.maxHeight = "none"; 
+                // 3. 拔掉圓角與邊框，像 Netflix 一樣貼齊螢幕邊緣
+                stage.style.borderRadius = "0"; 
+                stage.style.border = "none";    
                 stage.style.paddingTop = "0";
                 stage.style.flexGrow = "1";
-
+        
                 wrapper.addEventListener('mousemove', resetUiIdleTimer);
                 resetUiIdleTimer(); 
             } else {
@@ -2184,11 +2194,16 @@
                 wrapper.style.height = "auto";
                 wrapper.style.padding = "0";
                 
+                // 退出全螢幕時，恢復原本的視窗裝甲設定
+                stage.style.maxHeight = "75vh"; 
+                stage.style.borderRadius = "8px";
+                stage.style.border = "1px solid rgba(255,255,255,0.1)";
                 stage.style.paddingTop = "0";
+                
                 const vEl = document.getElementById('system-player-video');
                 stage.style.aspectRatio = (vEl.videoWidth && vEl.videoHeight) ? (vEl.videoWidth + " / " + vEl.videoHeight) : "16 / 9";
                 stage.style.flexGrow = "0";
-
+        
                 wrapper.removeEventListener('mousemove', resetUiIdleTimer);
                 clearTimeout(videoUiTimer);
                 const header = document.querySelector('.video-ui-header');
