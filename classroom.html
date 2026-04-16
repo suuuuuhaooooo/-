@@ -171,24 +171,25 @@
             .sidebar-footer > div:nth-child(3) > div:nth-child(2) { margin-bottom: 5px !important; gap: 10px; }
             #login-ip { width: 100%; margin-top: 4px; }
             /* =========================================
-               系統影音防護：強制隱藏原生全螢幕按鈕 
+               系統影音防護與 UI 動畫
                ========================================= */
             video::-webkit-media-controls-fullscreen-button,
-            video::-webkit-media-controls-enclosure[data-fullscreen] {
+            video::-webkit-media-controls-enclosure[data-fullscreen],
+            video::-webkit-media-controls-picture-in-picture-button {
                 display: none !important;
             }
-            /* 主要內容區塊 */
-            .main-content { padding: 20px 15px; }
-            .video-grid { grid-template-columns: 1fr; gap: 12px; }
-            .resource-card { flex-direction: column; align-items: flex-start; gap: 12px; }
-            .resource-card .download-btn { align-self: flex-end; }
-            .profile-grid {
-                grid-template-columns: 1fr !important;
+    
+            .video-ui-header, .video-ui-footer {
+                transition: opacity 0.5s ease, transform 0.5s ease;
+                opacity: 1;
             }
-            .profile-grid > div {
-                grid-column: span 1 !important;
+            .ui-hidden {
+                opacity: 0 !important;
+                pointer-events: none; 
             }
-        }
+            .hide-cursor {
+                cursor: none !important;
+            }
         /* 學生端：點數變動即時特效 */
         /* 1. 加點：放大、變金黃色、發光 */
         @keyframes point-add {
@@ -584,8 +585,9 @@
         </div>
     </div>
     <div id="system-player-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); backdrop-filter: blur(8px); z-index: 20000; justify-content: center; align-items: center; flex-direction: column;">
-        <div style="width: 90%; max-width: 1000px; position: relative;">
-            <div style="display: flex; justify-content: space-between; align-items: center; color: white; margin-bottom: 12px;">
+        <div id="video-wrapper-box" style="width: 90%; max-width: 1000px; position: relative; display: flex; flex-direction: column;">
+            
+            <div class="video-ui-header" style="display: flex; justify-content: space-between; align-items: center; color: white; margin-bottom: 12px; padding: 10px 0;">
                 <div style="display: flex; align-items: center; gap: 10px;">
                     <span style="background: var(--primary); padding: 4px 10px; border-radius: 4px; font-size: 12px; font-weight: bold; letter-spacing: 1px;">影音中心</span>
                     <span id="playing-video-title" style="font-weight: bold; font-size: 18px; letter-spacing: 1px;">影片載入中...</span>
@@ -595,27 +597,22 @@
                         <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
                             <path fill-rule="evenodd" d="M1.5 1a.5.5 0 0 0-.5.5v4a.5.5 0 0 1-1 0v-4A1.5 1.5 0 0 1 1.5 0h4a.5.5 0 0 1 0 1H1.5zM10 .5a.5.5 0 0 1 .5-.5h4A1.5 1.5 0 0 1 16 1.5v4a.5.5 0 0 1-1 0v-4a.5.5 0 0 0-.5-.5h-4a.5.5 0 0 1-.5-.5zM.5 10a.5.5 0 0 1 .5.5v4a.5.5 0 0 0 .5.5h4a.5.5 0 0 1 0 1h-4A1.5 1.5 0 0 1 0 14.5v-4a.5.5 0 0 1 .5-.5zm15 0a.5.5 0 0 1 .5.5v4a1.5 1.5 0 0 1-1.5 1.5h-4a.5.5 0 0 1 0-1h4a.5.5 0 0 0 .5-.5v-4a.5.5 0 0 1 .5-.5z"/>
                         </svg>
-                        全螢幕
+                        <span id="fs-btn-text">全螢幕</span>
                     </div>
-                    
                     <span onclick="closeSystemPlayer()" style="cursor: pointer; font-size: 32px; opacity: 0.7; transition: 0.2s;" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.7'">&times;</span>
                 </div>
-                <span onclick="closeSystemPlayer()" style="cursor: pointer; font-size: 32px; opacity: 0.7; transition: 0.2s;" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.7'">&times;</span>
             </div>
             
             <div id="player-stage" style="position: relative; width: 100%; padding-top: 56.25%; background: #0b0b0b; border-radius: 8px; overflow: hidden; box-shadow: 0 20px 50px rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.1);">
-                    <iframe id="system-player-iframe" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none;" allow="autoplay; fullscreen"></iframe>
-                    <div id="iframe-shield" style="position: absolute; top: 0; right: 0; width: 80px; height: 60px; background: transparent; z-index: 10; cursor: default;" title="已鎖定於系統內播放"></div>
-                    <video id="system-player-video" playsinline controlsList="nodownload nofullscreen" oncontextmenu="return false;" style="display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 2; object-fit: contain;"></video>
-                        
-                        <div id="video-watermark" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 2147483647; pointer-events: none;"></div>
-                
-                    </div>
-                </div>
+                <iframe id="system-player-iframe" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none;" allow="autoplay; fullscreen"></iframe>
+                <div id="iframe-shield" style="position: absolute; top: 0; right: 0; width: 80px; height: 60px; background: transparent; z-index: 10; cursor: default;" title="已鎖定於系統內播放"></div>
+                <video id="system-player-video" playsinline disablePictureInPicture controlsList="nodownload nofullscreen" oncontextmenu="return false;" style="display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 2; object-fit: contain;"></video>
+                <div id="video-watermark" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 2147483647; pointer-events: none;"></div>
             </div>
-            <div style="text-align: center; color: #888; font-size: 12px; margin-top: 15px; letter-spacing: 1px;">
-                ※ 為保障智慧財產權，影片已鎖定於系統內播放。請勿使用側錄軟體。
-            </div>
+            
+        </div>
+        <div id="player-warning-text" class="video-ui-footer" style="text-align: center; color: #888; font-size: 12px; margin-top: 15px; letter-spacing: 1px;">
+            ※ 為保障智慧財產權，影片已鎖定於系統內播放。請勿使用側錄軟體。
         </div>
     </div>
     <div id="copyright-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); backdrop-filter: blur(5px); z-index: 10010; justify-content: center; align-items: center;">
@@ -2095,26 +2092,81 @@
             isVideoPlaying = false;
             resetIdleTimer();
         }
-        document.addEventListener('fullscreenchange', () => {
-            const stage = document.getElementById('player-stage');
-            const watermark = document.getElementById('video-watermark');
-            
-            if (document.fullscreenElement) {
-                if (document.fullscreenElement.tagName === 'VIDEO') {
-                }
-            }
-        });
+        let videoUiTimer; 
 
         function toggleStageFullScreen() {
-            const stage = document.getElementById('player-stage');
+            const wrapper = document.getElementById('video-wrapper-box');
             if (!document.fullscreenElement) {
-                stage.requestFullscreen().catch(err => {
+                wrapper.requestFullscreen().catch(err => {
                     alert(`您的瀏覽器不支援此全螢幕模式: ${err.message}`);
                 });
             } else {
                 document.exitFullscreen();
             }
         }
+
+        function resetUiIdleTimer() {
+            const header = document.querySelector('.video-ui-header');
+            const footer = document.querySelector('.video-ui-footer');
+            const wrapper = document.getElementById('video-wrapper-box');
+
+            header.classList.remove('ui-hidden');
+            footer.classList.remove('ui-hidden');
+            wrapper.classList.remove('hide-cursor');
+            header.style.transform = "translateY(0)";
+
+            clearTimeout(videoUiTimer);
+
+            if (document.fullscreenElement) {
+                videoUiTimer = setTimeout(() => {
+                    header.classList.add('ui-hidden');
+                    footer.classList.add('ui-hidden');
+                    wrapper.classList.add('hide-cursor');
+                    header.style.transform = "translateY(-10px)"; 
+                }, 3000); 
+            }
+        }
+
+        document.addEventListener('fullscreenchange', () => {
+            const fsText = document.getElementById('fs-btn-text');
+            const wrapper = document.getElementById('video-wrapper-box');
+            const stage = document.getElementById('player-stage');
+            
+            if (document.fullscreenElement) {
+                fsText.innerText = "退出全螢幕";
+                
+                wrapper.style.background = "#000";
+                wrapper.style.width = "100vw";
+                wrapper.style.maxWidth = "none";
+                wrapper.style.height = "100vh";
+                wrapper.style.padding = "10px 40px 40px 40px";
+                wrapper.style.boxSizing = "border-box";
+                
+                stage.style.paddingTop = "0";
+                stage.style.flexGrow = "1";
+
+                wrapper.addEventListener('mousemove', resetUiIdleTimer);
+                resetUiIdleTimer(); 
+            } else {
+                fsText.innerText = "全螢幕";
+                
+                wrapper.style.background = "transparent";
+                wrapper.style.width = "90%";
+                wrapper.style.maxWidth = "1000px";
+                wrapper.style.height = "auto";
+                wrapper.style.padding = "0";
+                
+                stage.style.paddingTop = "56.25%";
+                stage.style.flexGrow = "0";
+
+                wrapper.removeEventListener('mousemove', resetUiIdleTimer);
+                clearTimeout(videoUiTimer);
+                document.querySelector('.video-ui-header').classList.remove('ui-hidden');
+                document.querySelector('.video-ui-footer').classList.remove('ui-hidden');
+                wrapper.classList.remove('hide-cursor');
+                document.querySelector('.video-ui-header').style.transform = "translateY(0)";
+            }
+        });
     </script>
 </body>
 </html>
