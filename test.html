@@ -499,7 +499,8 @@
         });
 
         window.addEventListener('beforeunload', function (e) {
-            if (document.getElementById('test-ui').style.display === 'block' && !isAutoLoggingOut) {
+            const testUi = document.getElementById('test-ui');
+            if (testUi && testUi.style.display === 'block' && !isAutoLoggingOut) {
                 e.preventDefault(); e.returnValue = ''; return '';
             }
         });
