@@ -700,10 +700,16 @@
                     document.getElementById('result-title').innerText = "測驗結算";
                     
                     const finalScore = result.score;
-                    const detailedResults = result.details; // 拿回帶有解答與解析的完整陣列
+                    const detailedResults = result.details;
+                    let shuffledDetails = new Array(currentExam.questions.length);
+                    for (let i = 0; i < currentExam.questions.length; i++) {
+                        let origIdx = currentExam.questions[i].originalIndex;
+                        // 根據作答時的對應位置，把後端的批改明細抓回來放好
+                        shuffledDetails[i] = detailedResults[origIdx];
+                    }
 
                     // 將正式成績與錯題寫入 Firebase 供歷史查詢
-                    const recordData = { score: finalScore, date: new Date().toISOString(), details: detailedResults };
+                    const recordData = { score: finalScore, date: new Date().toISOString(), details: shuffledDetails };
                     completedRecords[currentExam.id] = recordData;
                     db.ref('exam_records/' + currentUserUid + '/' + currentExam.id).set(recordData);
 
@@ -722,11 +728,11 @@
                     const reviewContainer = document.getElementById('review-container');
                     reviewContainer.innerHTML = "";
                     
-                    detailedResults.forEach((detail, index) => {
+                    shuffledDetails.forEach((detail, index) => {
                         const statusHtml = detail.isCorrect 
                             ? `<span class="review-correct">√ 答對了！</span>` 
                             : `<span class="review-wrong">x 答錯了 (你的答案：${detail.userPick})</span>`;
-
+                    
                         reviewContainer.innerHTML += `
                             <div class="review-card">
                                 <div class="review-q">Q${index + 1}. ${detail.originalQuestion}</div>
@@ -734,7 +740,7 @@
                                 <div class="review-ans">${statusHtml}</div>
                                 <div class="review-exp"><strong>解析：</strong><br>${detail.explanation}</div>
                             </div>`;
-                    }); 
+                    });
 
                     if (window.MathJax) { setTimeout(() => { MathJax.typesetPromise([reviewContainer]); }, 100); }
                 } else {
