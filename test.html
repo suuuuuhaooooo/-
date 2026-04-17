@@ -87,7 +87,8 @@
             font-weight: 700; 
             letter-spacing: 2px; 
             animation: pulse-text 1.5s infinite ease-in-out;
-            text-align: center;
+            width: 250px;
+            text-align: left;
             padding: 0 20px;
         }
         @keyframes pulse-text { 0% { opacity: 0.4; } 50% { opacity: 1; } 100% { opacity: 0.4; } }
@@ -208,7 +209,7 @@
             <div></div>
             <div></div>
         </div>
-        <div class="loading-text">系統確認授權中</div>
+        <div class="loading-text">【1/2】系統確認授權中</div>
     </div>
 
     <div id="exam-list-ui" class="container-ui">
@@ -461,7 +462,7 @@
                 try {
                     const loadingEl = document.querySelector('.loading-text');
                     if (loadingEl) {
-                        loadingEl.innerText = "授權成功，正在從資料庫載入試務資料...";
+                        loadingEl.innerText = "【1/2】授權成功，正在從資料庫載入試務資料...";
                     }
                     const snap = await db.ref('exam_records/' + currentUserUid).once('value');
                     completedRecords = snap.val() || {}; 
