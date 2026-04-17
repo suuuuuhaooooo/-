@@ -200,7 +200,7 @@
             <div></div>
             <div></div>
         </div>
-        <div class="loading-text">系統確認授權中，載入測驗</div>
+        <div class="loading-text">系統確認授權中</div>
     </div>
 
     <div id="exam-list-ui" class="container-ui">
@@ -451,6 +451,7 @@
                 });
 
                 try {
+                    document.getElementById('loading-msg').innerText = "授權成功，正在從資料庫載入試務資料...";
                     const snap = await db.ref('exam_records/' + currentUserUid).once('value');
                     completedRecords = snap.val() || {}; 
                     
