@@ -451,7 +451,10 @@
                 });
 
                 try {
-                    document.getElementById('loading-msg').innerText = "授權成功，正在從資料庫載入試務資料...";
+                    const loadingEl = document.querySelector('.loading-text');
+                    if (loadingEl) {
+                        loadingEl.innerText = "授權成功，正在從資料庫載入試務資料...";
+                    }
                     const snap = await db.ref('exam_records/' + currentUserUid).once('value');
                     completedRecords = snap.val() || {}; 
                     
