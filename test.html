@@ -539,6 +539,9 @@
             if (!isConfirmed) return;
             const originalExam = studentPersonalExams.find(e => e.id === examId);
             currentExam = JSON.parse(JSON.stringify(originalExam)); 
+            currentExam.questions.forEach((q, index) => {
+                q.originalIndex = index;
+            });
             currentExam.questions = shuffleQuestions(currentExam.questions);
             currentQuestionIndex = 0;
             userAnswers = new Array(currentExam.questions.length).fill(null);
@@ -663,6 +666,12 @@
                 const timeSpentSec = Math.floor((Date.now() - examStartTime) / 1000);
                 const timeSpentStr = Math.floor(timeSpentSec / 60) + "分" + (timeSpentSec % 60) + "秒";
                 const studentName = localStorage.getItem('studentName') || "雲端同學";
+                let orderedAnswers = new Array(currentExam.questions.length).fill(null);
+                for (let i = 0; i < currentExam.questions.length; i++) {
+                    // 根據剛才偷藏的 originalIndex，把答案放回正確的格子裡
+                    let origIdx = currentExam.questions[i].originalIndex;
+                    orderedAnswers[origIdx] = userAnswers[i];
+                }
 
                 const formData = new URLSearchParams();
                 formData.append("token", "SuHaoClassroom2026_SecureKey");
