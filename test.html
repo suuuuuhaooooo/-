@@ -463,7 +463,7 @@
                 try {
                     const loadingEl = document.querySelector('.loading-text');
                     if (loadingEl) {
-                        loadingEl.innerText = "【1/2】授權成功，正在從資料庫載入試務資料...";
+                        loadingEl.innerText = "【2/2】授權成功，正在載入試務資料...";
                     }
                     const snap = await db.ref('exam_records/' + currentUserUid).once('value');
                     completedRecords = snap.val() || {}; 
