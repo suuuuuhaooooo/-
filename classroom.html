@@ -785,29 +785,34 @@
         let idleTimer;
         let isVideoPlaying = false;
         let lastActivityTime = Date.now();
+        let isLoggingOut = false;
 
         function resetIdleTimer() {
+            if (isLoggingOut) return;
             lastActivityTime = Date.now();
             clearTimeout(idleTimer);
             if (auth.currentUser && !isVideoPlaying) {
                 idleTimer = setTimeout(() => { 
+                    if (isLoggingOut) return;
+                    isLoggingOut = true;
                     alert("由於您已長時間未操作，系統已自動將您安全登出。"); 
                     logout(); 
                 }, 180000); 
             }
         }
         window.onmousemove = window.onkeypress = window.ontouchstart = window.onclick = resetIdleTimer;
+        
         document.addEventListener("visibilitychange", function() {
-            // 當網頁從背景被「喚醒」切回前景時
-            if (document.visibilityState === 'visible') {
+
+            if (document.visibilityState === 'visible' && !isLoggingOut) {
                 const timeAway = Date.now() - lastActivityTime;
-                
-                // 如果目前有登入、沒有在播影片，且離開時間超過 3 分鐘 (180000 毫秒)
+
                 if (auth.currentUser && !isVideoPlaying && timeAway > 180000) {
+                    isLoggingOut = true;
+                    clearTimeout(idleTimer);
                     alert("由於您離開教室畫面過久，系統已自動將您安全登出。");
                     logout();
                 } else {
-                    // 如果沒有超時，就當作是一次新活動，重新計時
                     resetIdleTimer();
                 }
             }
