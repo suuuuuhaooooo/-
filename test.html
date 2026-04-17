@@ -680,7 +680,7 @@
                 formData.append("examId", currentExam.id);
                 formData.append("name", studentName);
                 formData.append("timeSpent", timeSpentStr);
-                formData.append("userAnswers", JSON.stringify(userAnswers));
+                formData.append("userAnswers", JSON.stringify(orderedAnswers));
 
                 // 4. 發送給 GAS 批改 (移除 no-cors 以讀取回傳的分數與解析)
                 const response = await fetch(SCRIPT_URL, { 
