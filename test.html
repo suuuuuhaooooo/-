@@ -270,7 +270,10 @@
                 <button class="main-btn" style="margin: 0; padding: 6px 15px; font-size: 13px; letter-spacing: 0;" onclick="startFlashcardReview()">錯題抽卡</button>
             </div>
         </div>
-        <div id="flashcard-ui" class="container-ui">
+        
+        <div id="error-book-summary" style="margin-bottom: 15px; font-size: 13px; color: #888; text-align: right;"></div>
+        <div id="error-book-container"></div>
+    </div> <div id="flashcard-ui" class="container-ui">
         <span class="back-btn" onclick="showDashboard()">← 結束抽卡，返回學習分析</span>
         <h2 style="border-left-color: #e67e22;">錯題抽卡</h2>
         
@@ -289,10 +292,7 @@
             <button id="fc-next-btn" class="main-btn" style="display: none; background: #e67e22;" onclick="nextFlashcard()">下一張錯題卡</button>
         </div>
     </div>
-        
-        <div id="error-book-summary" style="margin-bottom: 15px; font-size: 13px; color: #888; text-align: right;"></div>
-        <div id="error-book-container"></div>
-    </div>
+
     <div style="position: fixed; bottom: 8px; width: 100%; text-align: center; font-size: 10px; color: #bbb; z-index: 100; pointer-events: none; letter-spacing: 1px; font-family: Arial, sans-serif;">
         &copy; 2026 蘇昊數理 Su-Hao Math/Science. All Rights Reserved.
     </div>
