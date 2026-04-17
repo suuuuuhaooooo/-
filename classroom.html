@@ -56,7 +56,15 @@
         .loading-dots div:nth-child(3) { animation-delay: 0.3s; }
         @keyframes bounce { from { transform: translateY(0); opacity: 0.6; } to { transform: translateY(-10px); opacity: 1; } }
         
-        .loading-text { font-size: 14px; color: var(--dark); font-weight: 700; letter-spacing: 2px; animation: pulse-text 1.5s infinite ease-in-out; }
+        .loading-text { 
+            font-size: 14px; 
+            color: var(--dark); 
+            font-weight: 700; 
+            letter-spacing: 2px; 
+            animation: pulse-text 1.5s infinite ease-in-out;
+            width: 250px; 
+            text-align: left; 
+        }
         @keyframes pulse-text { 0% { opacity: 0.4; } 50% { opacity: 1; } 100% { opacity: 0.4; } }
 
         /* 登入介面 */
