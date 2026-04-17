@@ -344,34 +344,58 @@
         let timerInterval = null; 
         let timeRemaining = 0;    
 
-        // 閒置登出機制
+        // ==========================================
+        // 閒置登出與切換畫面防弊機制
+        // ==========================================
         let idleTimer;
         let isAutoLoggingOut = false; 
-
+        let testLastActivityTime = Date.now();
+        
         function logout() {
+            if (isAutoLoggingOut) return;
             isAutoLoggingOut = true; 
             const user = auth.currentUser;
             if (user) { db.ref('presence/' + user.uid).remove(); }
             auth.signOut().then(() => {
                 localStorage.clear();
-                sessionStorage.clear(); // 確保登出後解除記憶體鎖
+                sessionStorage.clear();
                 window.location.replace("classroom.html");
             });
         }
-
+        
         function resetIdleTimer() {
+            testLastActivityTime = Date.now();
             clearTimeout(idleTimer);
+            
             if (auth.currentUser) {
                 idleTimer = setTimeout(() => {
                     if (isExamActive) {
                         return;
                     }
-                    alert("【系統通知】\n\n由於您已長時間未操作，系統已自動將您安全登出。");
+                    alert("由於您已長時間未操作，系統已自動將您安全登出。");
                     logout();
                 }, 180000);
             }
         }
         window.onmousemove = window.onkeypress = window.ontouchstart = window.onclick = resetIdleTimer;
+        document.addEventListener("visibilitychange", function() {
+            if (document.visibilityState === 'visible') {
+                const timeAway = Date.now() - testLastActivityTime;
+
+                if (auth.currentUser && timeAway > 180000) {
+                    
+                    if (isExamActive) {
+                        alert("偵測到您在考試期間離開試場畫面過久！\n系統已強制終止您的測驗並將您安全登出。");
+                        logout();
+                    } else {
+                        alert("由於您已長時間未操作，系統已自動將您安全登出。");
+                        logout();
+                    }
+                } else {
+                    resetIdleTimer();
+                }
+            }
+        });
 
         // 權限驗證與資料載入
         auth.onAuthStateChanged(async (user) => {
