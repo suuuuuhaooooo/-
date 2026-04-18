@@ -2454,38 +2454,39 @@
           modal.scrollTop = 0;
         
           try {
+            // 確保 Firebase Storage 已就緒
             const storage = firebase.storage();
             let fileRef;
         
-            // --- 自動解析邏輯 ---
+            // --- 強化版解析邏輯 ---
             if (gsPath.startsWith('gs://')) {
-              // 移除 gs:// 網址開頭，只保留路徑
-              const fullPath = gsPath.replace('gs://su-hao-classroom.firebasestorage.app/', '');
-              // 使用 decodeURIComponent 防止中文檔名亂碼導致路徑錯誤
-              fileRef = storage.ref().child(decodeURIComponent(fullPath));
-            } else if (gsPath.startsWith('http')) {
-              // 如果老師不小心填了 https 網址，也讓它能跑（相容模式）
-              fileRef = storage.refFromURL(gsPath);
+                // 精準截取路徑：從第 3 個斜槓後開始切 (跳過 gs:// bucket-name /)
+                // 例如: gs://xxx.appspot.com/folder/file.pdf -> folder/file.pdf
+                const pathParts = gsPath.replace('gs://', '').split('/');
+                pathParts.shift(); // 移除第一個元素 (即 bucket 名稱)
+                const purePath = pathParts.join('/'); 
+                fileRef = storage.ref().child(decodeURIComponent(purePath));
             } else {
-              // 如果老師只填了檔名
-              fileRef = storage.ref().child(decodeURIComponent(gsPath));
+                // 如果只填檔名
+                fileRef = storage.ref().child(decodeURIComponent(gsPath));
             }
         
-            // 取得資料
+            // 1. 取得 Blob 資料 (這一步最容易因為 CORS 或權限失敗)
             const blob = await fileRef.getBlob();
             const objectUrl = URL.createObjectURL(blob); 
         
-            // 渲染 PDF
+            // 2. 載入 PDF
             const loadingTask = pdfjsLib.getDocument(objectUrl);
             const pdf = await loadingTask.promise;
             container.innerHTML = ''; 
         
             for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
               const page = await pdf.getPage(pageNum);
-              const windowWidth = window.innerWidth * 0.9;
+              // 自動滿版縮放
+              const windowWidth = window.innerWidth * 0.95;
               const unscaledViewport = page.getViewport({ scale: 1 });
               const scale = windowWidth / unscaledViewport.width;
-              const viewport = page.getViewport({ scale: Math.min(scale, 1.8) });
+              const viewport = page.getViewport({ scale: Math.min(scale, 1.5) });
         
               const canvas = document.createElement('canvas');
               const ctx = canvas.getContext('2d');
@@ -2498,14 +2499,14 @@
               container.appendChild(canvas);
             }
         
+            // 釋放記憶體
             URL.revokeObjectURL(objectUrl);
             startWatermark(studentName);
         
           } catch (error) {
-            console.error("全系統除錯訊息:", error);
-            // 這次我們直接把 error 物件轉成字串，防止 undefined 出現
-            const errorMsg = error.message || JSON.stringify(error) || "未知錯誤";
-            container.innerHTML = `<h2 style="color:#ff4757; margin-top:30vh;">授權驗證失敗<br><span style="font-size:14px; color:#aaa;">原因: ${errorMsg}</span></h2>`;
+            console.error("【系統報錯】", error);
+            let errorDetail = error.message || "請檢查網域授權與 CORS 設定";
+            container.innerHTML = `<h2 style="color:#ff4757; margin-top:30vh;">授權驗證失敗<br><span style="font-size:14px; color:#aaa;">原因: ${errorDetail}</span></h2>`;
           }
         }
         
