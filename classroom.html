@@ -862,6 +862,16 @@
             appId: "1:764168135846:web:f2923a5f4952fa1ca64067",
             databaseURL: "https://su-hao-classroom-default-rtdb.firebaseio.com/"
         };
+        const firebaseConfig = {
+            apiKey: "AIzaSyALkTnkYY3JZLCTyajahpi4IZKmFX9USdw",
+            authDomain: "su-hao-classroom.firebaseapp.com",
+            projectId: "su-hao-classroom",
+            // 關鍵修正：確保這裡寫的是您 Firebase Storage 頁面左上角顯示的那個網址
+            storageBucket: "su-hao-classroom.firebasestorage.app", 
+            messagingSenderId: "764168135846",
+            appId: "1:764168135846:web:f2923a5f4952fa1ca64067",
+            databaseURL: "https://su-hao-classroom-default-rtdb.firebaseio.com/"
+        };
         firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth();
         const db = firebase.database();
@@ -2450,8 +2460,7 @@
           const container = document.getElementById('pdf-render-area');
           
           if (!gsPath || gsPath === "undefined") {
-              alert("檔案路徑無效，請聯繫管理員檢查 Google Sheet 欄位。");
-              return;
+              alert("檔案路徑無效。"); return;
           }
         
           container.innerHTML = '<h2 style="color:#8e9775; margin-top:30vh; animation: pulse-text 1.5s infinite ease-in-out;">安全憑證驗證中...</h2>';
@@ -2459,36 +2468,28 @@
           modal.scrollTop = 0;
         
           try {
-            // 1. 等待 Firebase Auth 載入完成（解決授權失敗的核心）
-            const user = firebase.auth().currentUser;
-            if (!user) {
-                throw new Error("偵測不到登入狀態，請嘗試重新整理頁面。");
-            }
+            // 1. 指定儲存桶名稱
+            const storage = firebase.storage("gs://su-hao-classroom.firebasestorage.app");
+            
+            // 2. 處理路徑
+            let purePath = gsPath;
+            if (gsPath.includes('.appspot.com/')) purePath = gsPath.split('.appspot.com/')[1];
+            if (gsPath.includes('.firebasestorage.app/')) purePath = gsPath.split('.firebasestorage.app/')[1];
+            
+            const fileRef = storage.ref().child(decodeURIComponent(purePath));
         
-            const storage = firebase.storage();
-            let fileRef;
-        
-            // 2. 解析 gs:// 或實體路徑
-            if (gsPath.startsWith('gs://')) {
-                const bucketUrl = 'gs://su-hao-classroom.firebasestorage.app/';
-                const purePath = gsPath.replace(bucketUrl, '');
-                fileRef = storage.ref().child(decodeURIComponent(purePath));
-            } else {
-                fileRef = storage.ref().child(decodeURIComponent(gsPath));
-            }
-        
-            // 3. 提貨 (取得實體 Blob)
+            // 3. Blob
             const blob = await fileRef.getBlob();
             const objectUrl = URL.createObjectURL(blob); 
         
-            // 4. 渲染
+            // 4. 渲染 PDF
             const loadingTask = pdfjsLib.getDocument(objectUrl);
             const pdf = await loadingTask.promise;
             container.innerHTML = ''; 
         
             for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
               const page = await pdf.getPage(pageNum);
-              const viewport = page.getViewport({ scale: (window.innerWidth * 0.95) / page.getViewport({scale:1}).width });
+              const viewport = page.getViewport({ scale: (window.innerWidth * 0.9) / page.getViewport({scale:1}).width });
         
               const canvas = document.createElement('canvas');
               const ctx = canvas.getContext('2d');
@@ -2496,7 +2497,8 @@
               canvas.width = viewport.width;
               canvas.className = 'pdf-page';
               
-              await page.render({ canvasContext: ctx, viewport: viewport }).promise;
+              const renderTask = page.render({ canvasContext: ctx, viewport: viewport });
+              await renderTask.promise;
               container.appendChild(canvas);
             }
         
@@ -2504,8 +2506,8 @@
             startWatermark(studentName);
         
           } catch (error) {
-            console.error("Debug Info:", error);
-            container.innerHTML = `<h2 style="color:#ff4757; margin-top:30vh;">安全驗證失敗<br><span style="font-size:14px; color:#aaa;">原因: ${error.message}</span></h2>`;
+            console.error("Firebase Storage Error:", error);
+            container.innerHTML = `<h2 style="color:#ff4757; margin-top:30vh;">驗證失敗<br><span style="font-size:14px; color:#aaa;">錯誤訊號: ${error.code}</span></h2>`;
           }
         }
         
