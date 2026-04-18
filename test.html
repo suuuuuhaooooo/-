@@ -389,8 +389,6 @@
         let testLastActivityTime = Date.now();
         
         function logout() {
-            if (isAutoLoggingOut) return;
-            isAutoLoggingOut = true; 
             const user = auth.currentUser;
             if (user) { db.ref('presence/' + user.uid).remove(); }
             auth.signOut().then(() => {
@@ -401,33 +399,36 @@
         }
         
         function resetIdleTimer() {
+            if (isAutoLoggingOut) return;
             testLastActivityTime = Date.now();
             clearTimeout(idleTimer);
             
             if (auth.currentUser) {
                 idleTimer = setTimeout(() => {
-                    if (isExamActive) {
-                        return;
-                    }
+                    if (isExamActive || isAutoLoggingOut) return;
+                    
+                    isAutoLoggingOut = true;
                     alert("由於您已長時間未操作，系統已自動將您安全登出。");
                     logout();
                 }, 180000);
             }
         }
         window.onmousemove = window.onkeypress = window.ontouchstart = window.onclick = resetIdleTimer;
+        
         document.addEventListener("visibilitychange", function() {
-            if (document.visibilityState === 'visible') {
+            if (document.visibilityState === 'visible' && !isAutoLoggingOut) {
                 const timeAway = Date.now() - testLastActivityTime;
 
                 if (auth.currentUser && timeAway > 180000) {
+                    isAutoLoggingOut = true;
+                    clearTimeout(idleTimer);
                     
                     if (isExamActive) {
                         alert("偵測到您在考試期間離開試場畫面過久！\n系統已強制終止您的測驗並將您安全登出。");
-                        logout();
                     } else {
                         alert("由於您已長時間未操作，系統已自動將您安全登出。");
-                        logout();
                     }
+                    logout();
                 } else {
                     resetIdleTimer();
                 }
@@ -952,8 +953,8 @@
                                     examTitle: examInfo.title,
                                     question: originalQ.question,
                                     options: originalQ.options,
-                                    correctAnswer: originalQ.correctAnswer, // 正確選項的索引 (0,1,2,3)
-                                    explanation: originalQ.exp || originalQ.explanation || detail.explanation || "無解析資料"
+                                    correctAnswer: correctIdx, // 正確選項的索引 (0,1,2,3)
+                                    explanation: detail.explanation || originalQ.exp || originalQ.explanation || "無解析資料"
                                 });
                             }
                         }
