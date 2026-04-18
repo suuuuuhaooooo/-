@@ -87,45 +87,44 @@
               display: block; 
             }
         
-          /* 跳動浮水印樣式 */
-        .watermark {
-            position: fixed;
-            pointer-events: none;
-            z-index: 100000;
-            white-space: nowrap;
-            text-align: center;
-        }
-        
-        .wm-content {
-            transform: rotate(-15deg);
-        }
-        
-        .wm-name {
-            color: rgba(255, 255, 255, 0.45);
-            font-weight: bold;
-            font-size: min(50px, 40vw);
-            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
-        }
-        
-        .wm-ip, .wm-time {
-            color: rgba(136, 136, 136, 0.4);
-            font-size: min(30px, 20vw);
-            margin-top: 2px;
-            font-family: Arial, sans-serif;
-        }
-        @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;700&display=swap');
-        :root { --primary: #8e9775; --dark: #5b6348; --bg: #f8f8f6; --white: #ffffff; }
-        
-        body { 
-            font-family: "Noto Serif TC", serif; 
-            background-color: var(--bg); 
-            margin: 0; 
-            color: #333; 
-            height: 100vh; 
-            overflow: hidden; 
-            user-select: none; 
-            -webkit-user-select: none;
-        }
+            /* 跳動浮水印樣式 */
+            .watermark {
+                position: fixed;
+                pointer-events: none;
+                z-index: 100000;
+                white-space: nowrap;
+                text-align: center;
+            }
+            
+            .wm-content {
+                transform: rotate(-15deg);
+            }
+            
+            .wm-name {
+                color: rgba(255, 255, 255, 0.45);
+                font-weight: bold;
+                font-size: min(50px, 40vw);
+                text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+            }
+            
+            .wm-ip, .wm-time {
+                color: rgba(136, 136, 136, 0.4);
+                font-size: min(30px, 20vw);
+                margin-top: 2px;
+                font-family: Arial, sans-serif;
+            }
+
+            @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;700&display=swap');
+            
+            :root { --primary: #8e9775; --dark: #5b6348; --bg: #f8f8f6; --white: #ffffff; }
+            
+            body { 
+                font-family: "Noto Serif TC", serif; 
+                background-color: var(--bg); 
+                margin: 0; padding: 20px; color: #333; 
+                user-select: none; -webkit-user-select: none;
+                overscroll-behavior-y: none;
+            }
         
         /* 統一動畫 UI 樣式 */
         #loading-screen { 
