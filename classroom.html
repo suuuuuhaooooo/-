@@ -2455,33 +2455,60 @@
               alert("檔案路徑無效。"); return;
           }
         
-          container.innerHTML = '<h2 style="color:#8e9775; margin-top:30vh; animation: pulse-text 1.5s infinite ease-in-out;">安全憑證驗證中...</h2>';
+          container.innerHTML = '<h2 style="color:#8e9775; margin-top:30vh; animation: pulse-text 1.5s infinite ease-in-out;">安全憑證驗證與下載中...</h2>';
           modal.style.display = 'block';
           modal.scrollTop = 0;
         
           try {
-            // 1. 指定儲存桶名稱
-            const storage = firebase.storage();
-            
-            // 2. 處理路徑
+            // 1. 確認登入狀態
+            const user = firebase.auth().currentUser;
+            if (!user) throw new Error("尚未登入，系統拒絕授權。");
+            const idToken = await user.getIdToken();
+        
+            // 2. 清理檔名
             let purePath = gsPath;
             if (gsPath.includes('.appspot.com/')) purePath = gsPath.split('.appspot.com/')[1];
             if (gsPath.includes('.firebasestorage.app/')) purePath = gsPath.split('.firebasestorage.app/')[1];
-            
-            const fileRef = storage.ref().child(decodeURIComponent(purePath));
+            if (gsPath.startsWith('gs://')) {
+                const pathParts = gsPath.replace('gs://', '').split('/');
+                pathParts.shift(); 
+                purePath = pathParts.join('/');
+            }
+            purePath = decodeURIComponent(purePath);
         
-            // 3. Blob
-            const blob = await fileRef.getBlob();
+            // 3. REST API
+            const bucket = "su-hao-classroom.firebasestorage.app";
+            const encodedPath = encodeURIComponent(purePath);
+            const restUrl = `https://firebasestorage.googleapis.com/v0/b/${bucket}/o/${encodedPath}?alt=media`;
+        
+            const response = await fetch(restUrl, {
+                method: 'GET',
+                headers: {
+                    'Authorization': 'Bearer ' + idToken
+                }
+            });
+        
+            if (!response.ok) {
+                if (response.status === 403) throw new Error("權限不足：Firebase Rules 拒絕存取。");
+                if (response.status === 404) throw new Error("找不到檔案：請確認 Excel 的檔名與 Firebase 資料庫完全一致。");
+                throw new Error(`下載失敗 (代碼: ${response.status})`);
+            }
+        
+            // 4. 將資料轉成瀏覽器記憶體區塊 (Blob)
+            const blob = await response.blob();
             const objectUrl = URL.createObjectURL(blob); 
         
-            // 4. 渲染 PDF
+            // 5. 渲染 PDF
             const loadingTask = pdfjsLib.getDocument(objectUrl);
             const pdf = await loadingTask.promise;
             container.innerHTML = ''; 
         
             for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
               const page = await pdf.getPage(pageNum);
-              const viewport = page.getViewport({ scale: (window.innerWidth * 0.9) / page.getViewport({scale:1}).width });
+              const windowWidth = window.innerWidth * 0.9;
+              const unscaledViewport = page.getViewport({ scale: 1 });
+              const scale = windowWidth / unscaledViewport.width;
+              const viewport = page.getViewport({ scale: Math.min(scale, 1.8) }); // 最大放大 1.8 倍
         
               const canvas = document.createElement('canvas');
               const ctx = canvas.getContext('2d');
@@ -2489,17 +2516,17 @@
               canvas.width = viewport.width;
               canvas.className = 'pdf-page';
               
-              const renderTask = page.render({ canvasContext: ctx, viewport: viewport });
-              await renderTask.promise;
+              await page.render({ canvasContext: ctx, viewport: viewport }).promise;
               container.appendChild(canvas);
             }
         
+            // 6. 渲染完畢後，立刻銷毀記憶體連結，不留痕跡！
             URL.revokeObjectURL(objectUrl);
             startWatermark(studentName);
         
           } catch (error) {
-            console.error("Firebase Storage Error:", error);
-            container.innerHTML = `<h2 style="color:#ff4757; margin-top:30vh;">驗證失敗<br><span style="font-size:14px; color:#aaa;">錯誤訊號: ${error.code}</span></h2>`;
+            console.error("安全讀取失敗:", error);
+            container.innerHTML = `<h2 style="color:#ff4757; margin-top:30vh;">驗證失敗<br><span style="font-size:14px; color:#aaa;">原因: ${error.message}</span></h2>`;
           }
         }
         
