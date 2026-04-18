@@ -391,7 +391,7 @@
         function logout() {
             const user = auth.currentUser;
             if (user) { db.ref('presence/' + user.uid).remove(); }
-            auth.signOut().then(() => {
+            auth.signOut().finally(() => {
                 localStorage.clear();
                 sessionStorage.clear();
                 window.location.replace("classroom.html");
@@ -408,8 +408,16 @@
                     if (isExamActive || isAutoLoggingOut) return;
                     
                     isAutoLoggingOut = true;
-                    alert("由於您已長時間未操作，系統已自動將您安全登出。");
-                    logout();
+
+                    const user = auth.currentUser;
+                    if(user) db.ref('presence/' + user.uid).remove();
+                    
+                    auth.signOut().finally(() => {
+                        localStorage.clear();
+                        sessionStorage.clear();
+                        alert("由於您已長時間未操作，系統已自動將您安全登出。");
+                        window.location.replace("classroom.html");
+                    });
                 }, 180000);
             }
         }
@@ -422,13 +430,21 @@
                 if (auth.currentUser && timeAway > 180000) {
                     isAutoLoggingOut = true;
                     clearTimeout(idleTimer);
+
+                    const user = auth.currentUser;
+                    if(user) db.ref('presence/' + user.uid).remove();
                     
-                    if (isExamActive) {
-                        alert("偵測到您在考試期間離開試場畫面過久！\n系統已強制終止您的測驗並將您安全登出。");
-                    } else {
-                        alert("由於您已長時間未操作，系統已自動將您安全登出。");
-                    }
-                    logout();
+                    auth.signOut().finally(() => {
+                        localStorage.clear();
+                        sessionStorage.clear();
+
+                        if (isExamActive) {
+                            alert("偵測到您在考試期間離開試場畫面過久！\n系統已強制終止您的測驗並將您安全登出。");
+                        } else {
+                            alert("由於您離開試務中心畫面過久，系統已自動將您安全登出。");
+                        }
+                        window.location.replace("classroom.html");
+                    });
                 } else {
                     resetIdleTimer();
                 }
