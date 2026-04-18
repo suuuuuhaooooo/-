@@ -38,7 +38,7 @@
             #pdf-modal {
               display: none; 
               position: fixed; 
-              t: 0; 
+              top: 0; 
               left: 0; 
               width: 100%; 
               height: 100%; 
@@ -857,22 +857,14 @@
             apiKey: "AIzaSyALkTnkYY3JZLCTyajahpi4IZKmFX9USdw",
             authDomain: "su-hao-classroom.firebaseapp.com",
             projectId: "su-hao-classroom",
-            storageBucket: "su-hao-classroom.firebasestorage.app",
-            messagingSenderId: "764168135846",
-            appId: "1:764168135846:web:f2923a5f4952fa1ca64067",
-            databaseURL: "https://su-hao-classroom-default-rtdb.firebaseio.com/"
-        };
-        const firebaseConfig = {
-            apiKey: "AIzaSyALkTnkYY3JZLCTyajahpi4IZKmFX9USdw",
-            authDomain: "su-hao-classroom.firebaseapp.com",
-            projectId: "su-hao-classroom",
-            // 關鍵修正：確保這裡寫的是您 Firebase Storage 頁面左上角顯示的那個網址
             storageBucket: "su-hao-classroom.firebasestorage.app", 
             messagingSenderId: "764168135846",
             appId: "1:764168135846:web:f2923a5f4952fa1ca64067",
             databaseURL: "https://su-hao-classroom-default-rtdb.firebaseio.com/"
         };
-        firebase.initializeApp(firebaseConfig);
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+        }
         const auth = firebase.auth();
         const db = firebase.database();
         const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwxFfufe0b7eJpDxSmLgnbVvlq1itLvoD6ZCpvDJKtJg7ChcWn7lpf9LgZqQ4ZsThJiXQ/exec";
