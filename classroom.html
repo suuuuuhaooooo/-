@@ -2455,6 +2455,7 @@
         
           try {
             // 1. gs:// 路徑建立檔案參照
+            const storage = firebase.storage();
             const fileRef = firebase.storage().refFromURL(gsPath);
         
             // 2. 原始資料 (Blob)
