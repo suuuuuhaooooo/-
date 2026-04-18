@@ -698,7 +698,9 @@
             // 1. 顯示批改中的動畫遮罩
             document.getElementById('test-ui').style.display = 'none';
             document.getElementById('loading-screen').style.display = 'flex';
-            document.querySelector('#loading-screen .loading-text').innerText = "雲端批改中，請稍候...";
+            const loadTextEl = document.querySelector('#loading-screen .loading-text');
+            loadTextEl.style.textAlign = "center";
+            loadTextEl.innerText = "雲端批改中，請稍候...";
 
             try {
                 // 2. 向 Firebase 申請高強度 JWT 憑證
@@ -711,6 +713,7 @@
                 const studentName = localStorage.getItem('studentName') || "雲端同學";
                 let orderedAnswers = new Array(currentExam.questions.length).fill(null);
                 let shuffledIndices = [];
+                let studentRealViewLog = `\n\n=== 學生當下作答順序 ===\n`;
                 for (let i = 0; i < currentExam.questions.length; i++) {
                     let origIdx = currentExam.questions[i].originalIndex;
                     orderedAnswers[origIdx] = userAnswers[i];
@@ -725,6 +728,8 @@
                 formData.append("name", studentName);
                 formData.append("timeSpent", timeSpentStr);
                 formData.append("userAnswers", JSON.stringify(orderedAnswers));
+                formData.append("studentLog", studentRealViewLog);
+                formData.append("shuffledOrder", JSON.stringify(shuffledIndices));
 
                 // 4. 發送給 GAS 批改 (移除 no-cors 以讀取回傳的分數與解析)
                 const response = await fetch(SCRIPT_URL, { 
@@ -890,7 +895,7 @@
                         if (!detail.isCorrect) {
                             hasErrors = true; errorCount++;
                             const originalQ = examInfo ? examInfo.questions.find(q => q.question === detail.originalQuestion) : null;
-                            const currentExp = originalQ ? (originalQ.exp || originalQ.explanation) : (detail.explanation || "無解析資料");
+                            const currentExp = (originalQ && (originalQ.exp || originalQ.explanation)) || detail.explanation || "無解析資料";
 
                             container.innerHTML += `
                                 <div class="clean-card">
@@ -939,6 +944,10 @@
                             // 去原始題庫把「選項」跟「正確解答索引」挖出來
                             const originalQ = examInfo.questions.find(q => q.question === detail.originalQuestion);
                             if (originalQ) {
+                                let correctIdx = originalQ.correctAnswer;
+                                if (correctIdx === undefined || correctIdx === null) {
+                                    correctIdx = originalQ.options.indexOf(detail.correctAnswer);
+                                }
                                 flashcardQueue.push({
                                     examTitle: examInfo.title,
                                     question: originalQ.question,
