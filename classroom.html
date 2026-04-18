@@ -1558,17 +1558,17 @@
                                     return `
                                     <div class="video-card" onclick="window.open('${safeUrl}', '_blank')" style="border-left: 5px solid var(--primary);">
                                         <div style="color: var(--primary); font-weight: 700; font-size: 15px; margin-bottom: 5px;">
-                                            <span style="font-size:10px; background:#eef1ec; padding:2px 5px; border-radius:3px; margin-right:5px;"></span>${cleanName}
+                                            <span style="font-size:10px; background:#eef1ec; padding:2px 5px; border-radius:3px; margin-right:5px;">可下載</span>${cleanName}
                                         </div>
-                                        <div style="font-size: 12px; color: #999;">點擊開啟或下載 PDF 檔案</div>
+                                        <div style="font-size: 12px; color: #999;">點擊開啟檔案</div>
                                     </div>`;
                                 } else {
                                     return `
                                     <div class="video-card" onclick="openSystemPDF('${safeUrl}', '${my.name}')" style="border-left: 5px solid #d35400;">
                                         <div style="color: #d35400; font-weight: 700; font-size: 15px; margin-bottom: 5px;">
-                                            <span style="font-size:10px; background:#fdedec; padding:2px 5px; border-radius:3px; margin-right:5px;"></span>${docName}
+                                            <span style="font-size:10px; background:#fdedec; padding:2px 5px; border-radius:3px; margin-right:5px;">僅供參閱</span>${docName}
                                         </div>
-                                        <div style="font-size: 12px; color: #999;">點擊開啟 PDF 檔案</div>
+                                        <div style="font-size: 12px; color: #999;">點擊開啟檔案</div>
                                     </div>`;
                                 }
                             }).join('');
