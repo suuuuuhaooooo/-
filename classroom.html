@@ -118,12 +118,15 @@
             :root { --primary: #8e9775; --dark: #5b6348; --bg: #f8f8f6; --white: #ffffff; }
             
             body { 
-                font-family: "Noto Serif TC", serif; 
-                background-color: var(--bg); 
-                margin: 0; padding: 20px; color: #333; 
-                user-select: none; -webkit-user-select: none;
-                overscroll-behavior-y: none;
-            }
+            font-family: "Noto Serif TC", serif; 
+            background-color: var(--bg); 
+            margin: 0; 
+            color: #333; 
+            height: 100vh; 
+            overflow: hidden; 
+            user-select: none; 
+            -webkit-user-select: none;
+        }
         
         /* 統一動畫 UI 樣式 */
         #loading-screen { 
