@@ -20,7 +20,45 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <script src="https://unpkg.com/html5-qrcode"></script>
     <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
     <style>
+        /* 禁用全畫面選取與右鍵 */
+          .noselect {
+            -webkit-touch-callout: none; -webkit-user-select: none;
+            -khtml-user-select: none; -moz-user-select: none;
+            -ms-user-select: none; user-select: none;
+          }
+        
+          /* PDF 防盜視窗背景 */
+          #pdf-modal {
+            display: none; position: fixed; top: 0; left: 0; 
+            width: 100vw; height: 100vh; background: rgba(15, 15, 15, 0.95); 
+            z-index: 9999; overflow: auto; text-align: center;
+          }
+        
+          /* 關閉按鈕 */
+          #pdf-modal .close-btn {
+            position: fixed; top: 20px; right: 20px; color: white; 
+            font-size: 18px; cursor: pointer; z-index: 10000; 
+            background: #ff4757; padding: 10px 20px; border-radius: 8px;
+            font-weight: bold; transition: 0.3s;
+          }
+          #pdf-modal .close-btn:hover { background: #ff6b81; }
+        
+          /* PDF 畫布容器 */
+          #pdf-container { position: relative; display: inline-block; margin-top: 60px; }
+          .pdf-page { margin-bottom: 20px; box-shadow: 0 0 20px rgba(0,0,0,0.8); max-width: 95vw; }
+        
+          /* 跳動浮水印樣式 */
+          .watermark {
+            position: fixed;
+            color: rgba(255, 165, 0, 0.35);
+            font-size: 28px; font-weight: bold; letter-spacing: 2px;
+            pointer-events: none; 
+            z-index: 10000; white-space: nowrap; 
+            transition: all 0.8s ease-out;
+            transform: rotate(-25deg);
+          }
         @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;700&display=swap');
         :root { --primary: #8e9775; --dark: #5b6348; --bg: #f8f8f6; --white: #ffffff; }
         
@@ -277,6 +315,7 @@
             max-height: 100%;
         }
     </style>
+    
 </head>
 <body>
     <div id="loading-screen" style="display: none;">
@@ -702,6 +741,11 @@
                 <button id="scanner-pwd-submit" style="flex: 1; padding: 12px; border: none; border-radius: 4px; background: #8e9775; color: white; font-weight: bold; cursor: pointer; transition: 0.2s;">確認</button>
             </div>
         </div>
+    </div>
+    <div id="pdf-modal" class="noselect" oncontextmenu="return false;">
+      <div class="close-btn" onclick="closePDF()">關閉講義</div>
+      <div id="watermark" class="watermark"></div>
+      <div id="pdf-container"></div>
     </div>
     <script>
         // 控制手機版漢堡選單開關
@@ -1462,11 +1506,26 @@
                         const pdfBox = document.getElementById('pdf-container');
                         if (dLinks.length > 0) {
                             const dNames = my.docNames ? my.docNames.toString().split(',') : [];
-                            pdfBox.innerHTML = dLinks.map((url, i) => `
-                                <div class="resource-card">
-                                    <div><span class="pdf-tag">PDF</span> ${(dNames[i] || '講義 '+(i+1)).trim()}</div>
-                                    <a href="${url.trim()}" target="_blank" class="download-btn">開啟教材</a>
-                                </div>`).join('');
+                            pdfBox.innerHTML = dLinks.map((url, i) => {
+                                let docName = (dNames[i] || '講義 ' + (i + 1)).trim();
+                                let safeUrl = url.trim();
+                        
+                                // 判斷是否為開放下載的教材
+                                if (docName.includes("[可下載]")) {
+                                    let cleanName = docName.replace("[可下載]", "").trim();
+                                    return `
+                                    <div class="resource-card">
+                                        <div><span class="pdf-tag">PDF</span> ${cleanName}</div>
+                                        <a href="${safeUrl}" target="_blank" class="download-btn">開啟教材</a>
+                                    </div>`;
+                                } else {
+                                    return `
+                                    <div class="resource-card" style="border-left: 3px solid #d35400;">
+                                        <div><span class="pdf-tag" style="background:#fdedec; color:#d35400;">機密</span> ${docName}</div>
+                                        <a onclick="openSystemPDF('${safeUrl}', '${my.name}')" class="download-btn" style="cursor: pointer; color: #d35400; border-color: #d35400;">系統內閱讀</a>
+                                    </div>`;
+                                }
+                            }).join('');
                         } else {
                             pdfBox.innerHTML = '<div class="no-data-msg">目前暫無教材。</div>';
                         }
@@ -2315,6 +2374,77 @@
             }
             if (typeof jumpWatermark === 'function') jumpWatermark();
         });
+        // 設定 PDF.js 的 Worker 路徑
+        const pdfjsLib = window['pdfjs-dist/build/pdf'];
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
+        
+        let watermarkInterval; // 記錄浮水印計時器
+        
+        // 啟動系統內建 PDF 閱讀器
+        async function openSystemPDF(pdfUrl, studentName) {
+          const modal = document.getElementById('pdf-modal');
+          const container = document.getElementById('pdf-container');
+          container.innerHTML = '<h2 style="color:#00a8ff; margin-top:20vh;">讀取機密檔案中，請稍候...</h2>';
+          modal.style.display = 'block';
+        
+          try {
+            // 載入 PDF 檔案
+            const loadingTask = pdfjsLib.getDocument(pdfUrl);
+            const pdf = await loadingTask.promise;
+            container.innerHTML = ''; // 清除讀取文字
+        
+            // 逐頁將 PDF 轉成圖片畫在 Canvas 上
+            for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
+              const page = await pdf.getPage(pageNum);
+              const scale = 1.5; // 放大倍率確保清晰度
+              const viewport = page.getViewport({ scale: scale });
+        
+              const canvas = document.createElement('canvas');
+              const ctx = canvas.getContext('2d');
+              canvas.height = viewport.height;
+              canvas.width = viewport.width;
+              canvas.className = 'pdf-page';
+        
+              const renderContext = { canvasContext: ctx, viewport: viewport };
+              await page.render(renderContext).promise;
+              container.appendChild(canvas);
+            }
+        
+            // 啟動跳動浮水印
+            startWatermark(studentName);
+        
+          } catch (error) {
+            console.error("PDF載入錯誤:", error);
+            container.innerHTML = '<h2 style="color:#ff4757; margin-top:20vh;">載入失敗，請確認檔案連結或 CORS 設定是否正確。</h2>';
+          }
+        }
+        
+        // 關閉 PDF 閱讀器
+        function closePDF() {
+          document.getElementById('pdf-modal').style.display = 'none';
+          document.getElementById('pdf-container').innerHTML = '';
+          clearInterval(watermarkInterval); // 停止浮水印跳動
+        }
+        
+        // 浮水印跳動邏輯
+        function startWatermark(name) {
+          const wm = document.getElementById('watermark');
+          
+          function moveWatermark() {
+            const date = new Date();
+            const timeString = `${date.getMonth()+1}/${date.getDate()} ${date.getHours()}:${date.getMinutes()}`;
+            wm.innerText = `蘇昊數理 - ${name} - ${timeString}`;
+            
+            // 計算隨機位置，避免超出螢幕邊界
+            const maxX = window.innerWidth - 300;
+            const maxY = window.innerHeight - 100;
+            wm.style.left = Math.max(0, Math.floor(Math.random() * maxX)) + 'px';
+            wm.style.top = Math.max(0, Math.floor(Math.random() * maxY)) + 'px';
+          }
+        
+          moveWatermark();
+          watermarkInterval = setInterval(moveWatermark, 7000); // 每 6 秒瞬間移動一次位置
+        }
     </script>
 </body>
 </html>
