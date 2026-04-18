@@ -38,7 +38,7 @@
             #pdf-modal {
               display: none; 
               position: fixed; 
-              top: 0; 
+              t: 0; 
               left: 0; 
               width: 100%; 
               height: 100%; 
@@ -2455,14 +2455,27 @@
         
           try {
             const storage = firebase.storage();
-            const fullPath = gsPath.replace('gs://su-hao-classroom.firebasestorage.app/', '');
-            
-            const fileRef = storage.ref().child(fullPath);
+            let fileRef;
         
+            // --- 自動解析邏輯 ---
+            if (gsPath.startsWith('gs://')) {
+              // 移除 gs:// 網址開頭，只保留路徑
+              const fullPath = gsPath.replace('gs://su-hao-classroom.firebasestorage.app/', '');
+              // 使用 decodeURIComponent 防止中文檔名亂碼導致路徑錯誤
+              fileRef = storage.ref().child(decodeURIComponent(fullPath));
+            } else if (gsPath.startsWith('http')) {
+              // 如果老師不小心填了 https 網址，也讓它能跑（相容模式）
+              fileRef = storage.refFromURL(gsPath);
+            } else {
+              // 如果老師只填了檔名
+              fileRef = storage.ref().child(decodeURIComponent(gsPath));
+            }
+        
+            // 取得資料
             const blob = await fileRef.getBlob();
             const objectUrl = URL.createObjectURL(blob); 
         
-            // 3. 渲染 PDF (後續代碼維持原樣)
+            // 渲染 PDF
             const loadingTask = pdfjsLib.getDocument(objectUrl);
             const pdf = await loadingTask.promise;
             container.innerHTML = ''; 
@@ -2489,8 +2502,10 @@
             startWatermark(studentName);
         
           } catch (error) {
-            console.error("安全讀取失敗原因:", error);
-            container.innerHTML = `<h2 style="color:#ff4757; margin-top:30vh;">授權驗證失敗<br><span style="font-size:14px;">錯誤碼: ${error.code}</span></h2>`;
+            console.error("全系統除錯訊息:", error);
+            // 這次我們直接把 error 物件轉成字串，防止 undefined 出現
+            const errorMsg = error.message || JSON.stringify(error) || "未知錯誤";
+            container.innerHTML = `<h2 style="color:#ff4757; margin-top:30vh;">授權驗證失敗<br><span style="font-size:14px; color:#aaa;">原因: ${errorMsg}</span></h2>`;
           }
         }
         
