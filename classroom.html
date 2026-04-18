@@ -2520,22 +2520,38 @@
         
             for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
               const page = await pdf.getPage(pageNum);
-              const windowWidth = window.innerWidth * 0.9;
+              
+              const windowWidth = window.innerWidth * 0.95;
               const unscaledViewport = page.getViewport({ scale: 1 });
               const scale = windowWidth / unscaledViewport.width;
-              const viewport = page.getViewport({ scale: Math.min(scale, 1.8) }); // 最大放大 1.8 倍
+              const viewport = page.getViewport({ scale: Math.min(scale, 2.5) }); 
+        
+              const outputScale = window.devicePixelRatio || 1;
         
               const canvas = document.createElement('canvas');
               const ctx = canvas.getContext('2d');
-              canvas.height = viewport.height;
-              canvas.width = viewport.width;
               canvas.className = 'pdf-page';
+        
+              canvas.width = Math.floor(viewport.width * outputScale);
+              canvas.height = Math.floor(viewport.height * outputScale);
+        
+              canvas.style.width = Math.floor(viewport.width) + "px";
+              canvas.style.height = Math.floor(viewport.height) + "px";
+        
+              const transform = outputScale !== 1 
+                  ? [outputScale, 0, 0, outputScale, 0, 0] 
+                  : null;
+        
+              const renderContext = { 
+                  canvasContext: ctx, 
+                  transform: transform,
+                  viewport: viewport 
+              };
               
-              await page.render({ canvasContext: ctx, viewport: viewport }).promise;
+              await page.render(renderContext).promise;
               container.appendChild(canvas);
             }
-        
-            // 6. 渲染完畢後，立刻銷毀記憶體連結，不留痕跡！
+
             URL.revokeObjectURL(objectUrl);
             startWatermark(studentName);
         
