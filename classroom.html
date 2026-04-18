@@ -2449,20 +2449,20 @@
           const modal = document.getElementById('pdf-modal');
           const container = document.getElementById('pdf-render-area');
           
-          container.innerHTML = '<h2 style="color:#8e9775; margin-top:30vh; animation: pulse-text 1.5s infinite ease-in-out;">安全載入中，請稍候...</h2>';
+          container.innerHTML = '<h2 style="color:#8e9775; margin-top:30vh; animation: pulse-text 1.5s infinite ease-in-out;">安全驗證中，請稍候...</h2>';
           modal.style.display = 'block';
           modal.scrollTop = 0;
         
           try {
-            // 1. gs:// 路徑建立檔案參照
             const storage = firebase.storage();
-            const fileRef = firebase.storage().refFromURL(gsPath);
+            const fullPath = gsPath.replace('gs://su-hao-classroom.firebasestorage.app/', '');
+            
+            const fileRef = storage.ref().child(fullPath);
         
-            // 2. 原始資料 (Blob)
             const blob = await fileRef.getBlob();
             const objectUrl = URL.createObjectURL(blob); 
         
-            // 3. 渲染 PDF
+            // 3. 渲染 PDF (後續代碼維持原樣)
             const loadingTask = pdfjsLib.getDocument(objectUrl);
             const pdf = await loadingTask.promise;
             container.innerHTML = ''; 
@@ -2485,14 +2485,12 @@
               container.appendChild(canvas);
             }
         
-            // 4. 渲染完畢
             URL.revokeObjectURL(objectUrl);
-            
             startWatermark(studentName);
         
           } catch (error) {
-            console.error("讀取失敗:", error);
-            container.innerHTML = '<h2 style="color:#ff4757; margin-top:30vh;">授權驗證失敗，請重新登入或檢查權限。</h2>';
+            console.error("安全讀取失敗原因:", error);
+            container.innerHTML = `<h2 style="color:#ff4757; margin-top:30vh;">授權驗證失敗<br><span style="font-size:14px;">錯誤碼: ${error.code}</span></h2>`;
           }
         }
         
