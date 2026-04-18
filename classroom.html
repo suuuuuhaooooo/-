@@ -17,11 +17,11 @@
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-storage-compat.js"></script> 
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <script src="https://unpkg.com/html5-qrcode"></script>
     <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-storage-compat.js"></script>
     <style>
         /* 禁用全畫面選取與右鍵 */
           .noselect {
@@ -2449,44 +2449,46 @@
           const modal = document.getElementById('pdf-modal');
           const container = document.getElementById('pdf-render-area');
           
-          container.innerHTML = '<h2 style="color:#8e9775; margin-top:30vh; animation: pulse-text 1.5s infinite ease-in-out;">安全驗證中，請稍候...</h2>';
+          if (!gsPath || gsPath === "undefined") {
+              alert("檔案路徑無效，請聯繫管理員檢查 Google Sheet 欄位。");
+              return;
+          }
+        
+          container.innerHTML = '<h2 style="color:#8e9775; margin-top:30vh; animation: pulse-text 1.5s infinite ease-in-out;">安全憑證驗證中...</h2>';
           modal.style.display = 'block';
           modal.scrollTop = 0;
         
           try {
-            // 確保 Firebase Storage 已就緒
+            // 1. 等待 Firebase Auth 載入完成（解決授權失敗的核心）
+            const user = firebase.auth().currentUser;
+            if (!user) {
+                throw new Error("偵測不到登入狀態，請嘗試重新整理頁面。");
+            }
+        
             const storage = firebase.storage();
             let fileRef;
         
-            // --- 強化版解析邏輯 ---
+            // 2. 解析 gs:// 或實體路徑
             if (gsPath.startsWith('gs://')) {
-                // 精準截取路徑：從第 3 個斜槓後開始切 (跳過 gs:// bucket-name /)
-                // 例如: gs://xxx.appspot.com/folder/file.pdf -> folder/file.pdf
-                const pathParts = gsPath.replace('gs://', '').split('/');
-                pathParts.shift(); // 移除第一個元素 (即 bucket 名稱)
-                const purePath = pathParts.join('/'); 
+                const bucketUrl = 'gs://su-hao-classroom.firebasestorage.app/';
+                const purePath = gsPath.replace(bucketUrl, '');
                 fileRef = storage.ref().child(decodeURIComponent(purePath));
             } else {
-                // 如果只填檔名
                 fileRef = storage.ref().child(decodeURIComponent(gsPath));
             }
         
-            // 1. 取得 Blob 資料 (這一步最容易因為 CORS 或權限失敗)
+            // 3. 提貨 (取得實體 Blob)
             const blob = await fileRef.getBlob();
             const objectUrl = URL.createObjectURL(blob); 
         
-            // 2. 載入 PDF
+            // 4. 渲染
             const loadingTask = pdfjsLib.getDocument(objectUrl);
             const pdf = await loadingTask.promise;
             container.innerHTML = ''; 
         
             for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
               const page = await pdf.getPage(pageNum);
-              // 自動滿版縮放
-              const windowWidth = window.innerWidth * 0.95;
-              const unscaledViewport = page.getViewport({ scale: 1 });
-              const scale = windowWidth / unscaledViewport.width;
-              const viewport = page.getViewport({ scale: Math.min(scale, 1.5) });
+              const viewport = page.getViewport({ scale: (window.innerWidth * 0.95) / page.getViewport({scale:1}).width });
         
               const canvas = document.createElement('canvas');
               const ctx = canvas.getContext('2d');
@@ -2494,19 +2496,16 @@
               canvas.width = viewport.width;
               canvas.className = 'pdf-page';
               
-              const renderContext = { canvasContext: ctx, viewport: viewport };
-              await page.render(renderContext).promise;
+              await page.render({ canvasContext: ctx, viewport: viewport }).promise;
               container.appendChild(canvas);
             }
         
-            // 釋放記憶體
             URL.revokeObjectURL(objectUrl);
             startWatermark(studentName);
         
           } catch (error) {
-            console.error("【系統報錯】", error);
-            let errorDetail = error.message || "請檢查網域授權與 CORS 設定";
-            container.innerHTML = `<h2 style="color:#ff4757; margin-top:30vh;">授權驗證失敗<br><span style="font-size:14px; color:#aaa;">原因: ${errorDetail}</span></h2>`;
+            console.error("Debug Info:", error);
+            container.innerHTML = `<h2 style="color:#ff4757; margin-top:30vh;">安全驗證失敗<br><span style="font-size:14px; color:#aaa;">原因: ${error.message}</span></h2>`;
           }
         }
         
