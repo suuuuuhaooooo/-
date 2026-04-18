@@ -28,6 +28,10 @@
             -khtml-user-select: none; -moz-user-select: none;
             -ms-user-select: none; user-select: none;
           }
+
+            #pdf-container .video-card::after {
+                content: '閱讀';
+            }
         
             /* PDF 防盜視窗背景 */
             #pdf-modal {
@@ -1537,9 +1541,14 @@
                         // 渲染教材
                         const dLinks = my.docLinks ? my.docLinks.toString().split(',').filter(url => url.trim() !== "") : [];
                         const pdfBox = document.getElementById('pdf-container');
+                        
                         if (dLinks.length > 0) {
                             const dNames = my.docNames ? my.docNames.toString().split(',') : [];
-                            pdfBox.innerHTML = dLinks.map((url, i) => {
+
+                            pdfBox.innerHTML = `<div class="video-grid" id="pdf-grid"></div>`;
+                            const pdfGrid = document.getElementById('pdf-grid');
+                        
+                            pdfGrid.innerHTML = dLinks.map((url, i) => {
                                 let docName = (dNames[i] || '講義 ' + (i + 1)).trim();
                                 let safeUrl = url.trim();
                         
@@ -1547,15 +1556,19 @@
                                 if (docName.includes("[可下載]")) {
                                     let cleanName = docName.replace("[可下載]", "").trim();
                                     return `
-                                    <div class="resource-card">
-                                        <div><span class="pdf-tag">PDF</span> ${cleanName}</div>
-                                        <a href="${safeUrl}" target="_blank" class="download-btn">開啟教材</a>
+                                    <div class="video-card" onclick="window.open('${safeUrl}', '_blank')" style="border-left: 5px solid var(--primary);">
+                                        <div style="color: var(--primary); font-weight: 700; font-size: 15px; margin-bottom: 5px;">
+                                            <span style="font-size:10px; background:#eef1ec; padding:2px 5px; border-radius:3px; margin-right:5px;"></span>${cleanName}
+                                        </div>
+                                        <div style="font-size: 12px; color: #999;">點擊開啟或下載 PDF 檔案</div>
                                     </div>`;
                                 } else {
                                     return `
-                                    <div class="resource-card" style="border-left: 3px solid #d35400;">
-                                        <div><span class="pdf-tag" style="background:#fdedec; color:#d35400;">機密</span> ${docName}</div>
-                                        <a onclick="openSystemPDF('${safeUrl}', '${my.name}')" class="download-btn" style="cursor: pointer; color: #d35400; border-color: #d35400;">系統內閱讀</a>
+                                    <div class="video-card" onclick="openSystemPDF('${safeUrl}', '${my.name}')" style="border-left: 5px solid #d35400;">
+                                        <div style="color: #d35400; font-weight: 700; font-size: 15px; margin-bottom: 5px;">
+                                            <span style="font-size:10px; background:#fdedec; padding:2px 5px; border-radius:3px; margin-right:5px;"></span>${docName}
+                                        </div>
+                                        <div style="font-size: 12px; color: #999;">點擊開啟 PDF 檔案</div>
                                     </div>`;
                                 }
                             }).join('');
