@@ -87,15 +87,32 @@
             }
         
           /* 跳動浮水印樣式 */
-          .watermark {
+        .watermark {
             position: fixed;
-            color: rgba(255, 165, 0, 0.35);
-            font-size: 28px; font-weight: bold; letter-spacing: 2px;
-            pointer-events: none; 
-            z-index: 10000; white-space: nowrap; 
-            transition: all 0.8s ease-out;
-            transform: rotate(-25deg);
-          }
+            pointer-events: none;
+            z-index: 100000;
+            transition: all 0.8s ease-in-out;
+            white-space: nowrap;
+            text-align: center;
+        }
+        
+        .wm-content {
+            transform: rotate(-15deg);
+        }
+        
+        .wm-name {
+            color: rgba(255, 255, 255, 0.45);
+            font-weight: bold;
+            font-size: min(28px, 6vw);
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+        }
+        
+        .wm-ip, .wm-time {
+            color: rgba(136, 136, 136, 0.4);
+            font-size: min(16px, 3.5vw);
+            margin-top: 2px;
+            font-family: Arial, sans-serif;
+        }
         @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;700&display=swap');
         :root { --primary: #8e9775; --dark: #5b6348; --bg: #f8f8f6; --white: #ffffff; }
         
@@ -2432,7 +2449,7 @@
           const container = document.getElementById('pdf-render-area'); // 指向新的 ID
           
           // 顯示讀取中動畫
-          container.innerHTML = '<h2 style="color:#00a8ff; margin-top:30vh;">高清數位渲染中，請稍候...</h2>';
+          container.innerHTML = '<h2 style="color:#8e9775; margin-top:30vh;">檔案準備中，請稍候...</h2>';
           modal.style.display = 'block';
           modal.scrollTop = 0; // 每次開啟回到最上方
         
@@ -2481,21 +2498,37 @@
         // 浮水印跳動邏輯
         function startWatermark(name) {
           const wm = document.getElementById('watermark');
+          const sIp = typeof globalClientIP !== 'undefined' && globalClientIP ? globalClientIP : "未知IP";
           
           function moveWatermark() {
             const date = new Date();
-            const timeString = `${date.getMonth()+1}/${date.getDate()} ${date.getHours()}:${date.getMinutes()}`;
-            wm.innerText = `蘇昊數理 - ${name} - ${timeString}`;
+            const timeString = date.toLocaleTimeString(); // 抓取 24 小時制的現在時間
+        
+            // 注入跟影片播放器一模一樣的三行結構
+            wm.innerHTML = `
+              <div class="wm-content">
+                <div class="wm-name">${name}</div>
+                <div class="wm-ip">${sIp}</div>
+                <div class="wm-time">${timeString}</div>
+              </div>
+            `;
             
-            // 計算隨機位置，避免超出螢幕邊界
-            const maxX = window.innerWidth - 300;
-            const maxY = window.innerHeight - 100;
-            wm.style.left = Math.max(0, Math.floor(Math.random() * maxX)) + 'px';
-            wm.style.top = Math.max(0, Math.floor(Math.random() * maxY)) + 'px';
+            // 計算隨機位置 (限制在螢幕中心區域，避免太靠近邊緣被切掉)
+            const maxX = window.innerWidth - 250;
+            const maxY = window.innerHeight - 150;
+            
+            // 隨機生成 X 與 Y 座標
+            const randomX = Math.max(20, Math.floor(Math.random() * maxX));
+            const randomY = Math.max(80, Math.floor(Math.random() * maxY)); // Y 軸往下留一點空間給按鈕
+            
+            wm.style.left = randomX + 'px';
+            wm.style.top = randomY + 'px';
           }
         
+          // 先執行一次，再啟動定時器
           moveWatermark();
-          watermarkInterval = setInterval(moveWatermark, 7000); // 每 6 秒瞬間移動一次位置
+          if (watermarkInterval) clearInterval(watermarkInterval);
+          watermarkInterval = setInterval(moveWatermark, 7000); // 每 7 秒跳動一次
         }
     </script>
 </body>
