@@ -103,13 +103,13 @@
         .wm-name {
             color: rgba(255, 255, 255, 0.45);
             font-weight: bold;
-            font-size: min(28px, 6vw);
+            font-size: min(35px, 15vw);
             text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
         }
         
         .wm-ip, .wm-time {
             color: rgba(136, 136, 136, 0.4);
-            font-size: min(16px, 3.5vw);
+            font-size: min(20px, 12vw);
             margin-top: 2px;
             font-family: Arial, sans-serif;
         }
@@ -895,23 +895,37 @@
                 idleTimer = setTimeout(() => { 
                     if (isLoggingOut) return;
                     isLoggingOut = true;
-                    alert("由於您已長時間未操作，系統已自動將您安全登出。"); 
-                    logout(); 
+
+                    const user = auth.currentUser;
+                    if(user) db.ref('presence/' + user.uid).remove();
+                    
+                    auth.signOut().finally(() => {
+                        localStorage.clear();
+                        sessionStorage.clear();
+                        alert("由於您已長時間未操作，系統已自動將您安全登出。"); 
+                        location.reload(); 
+                    });
                 }, 180000); 
             }
         }
         window.onmousemove = window.onkeypress = window.ontouchstart = window.onclick = resetIdleTimer;
         
         document.addEventListener("visibilitychange", function() {
-
             if (document.visibilityState === 'visible' && !isLoggingOut) {
                 const timeAway = Date.now() - lastActivityTime;
-
                 if (auth.currentUser && !isVideoPlaying && timeAway > 180000) {
                     isLoggingOut = true;
                     clearTimeout(idleTimer);
-                    alert("由於您離開教室畫面過久，系統已自動將您安全登出。");
-                    logout();
+                    
+                    const user = auth.currentUser;
+                    if(user) db.ref('presence/' + user.uid).remove();
+                    
+                    auth.signOut().finally(() => {
+                        localStorage.clear();
+                        sessionStorage.clear();
+                        alert("由於您離開教室畫面過久，系統已自動將您安全登出。");
+                        location.reload();
+                    });
                 } else {
                     resetIdleTimer();
                 }
