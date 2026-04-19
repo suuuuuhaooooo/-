@@ -2217,7 +2217,10 @@
                 videoEl.style.display = 'block';
                 videoEl.controls = true; 
 
+                // 1. 準備金鑰與雲端資料庫路徑
                 const safeVideoKey = "vid_prog_" + btoa(url).replace(/=/g, '');
+                const user = firebase.auth().currentUser;
+                const progressRef = user ? db.ref('video_progress/' + user.uid + '/' + safeVideoKey) : null;
 
                 videoEl.onfullscreenchange = () => {
                     if (document.fullscreenElement === videoEl) {
@@ -2238,17 +2241,30 @@
                 videoEl.onpause = function() {
                     isVideoPlaying = false; 
                     resetIdleTimer(); 
+                    // 2. 影片暫停或關閉視窗時，強制上傳最終進度到雲端
+                    if(progressRef && videoEl.currentTime > 3) {
+                        progressRef.set({ currentTime: videoEl.currentTime, updated: Date.now() });
+                    }
                 };
                 
                 videoEl.onended = function() {
                     isVideoPlaying = false;
                     resetIdleTimer();
+                    // 3. 影片播放完後，清空雲端與本地進度
                     localStorage.removeItem(safeVideoKey);
+                    if(progressRef) progressRef.remove(); 
                 };
 
+                // 4. 播放中定時存檔機制
+                let lastSaveTime = 0;
                 videoEl.ontimeupdate = function() {
                     if (videoEl.currentTime > 3) {
                         localStorage.setItem(safeVideoKey, videoEl.currentTime);
+
+                        if (progressRef && (Date.now() - lastSaveTime > 5000)) {
+                            progressRef.set({ currentTime: videoEl.currentTime, updated: Date.now() });
+                            lastSaveTime = Date.now();
+                        }
                     }
                 };
 
@@ -2280,6 +2296,31 @@
                 
                 videoEl.addEventListener('playing', adjustVideoLayout);
                 videoEl.addEventListener('resize', adjustVideoLayout);
+                
+                // 5. 統一的讀檔與播放邏輯
+                async function loadAndPlay() {
+                    let startTime = 0;
+                    if (progressRef) {
+                        try {
+                            const snap = await progressRef.once('value');
+                            if (snap.exists() && snap.val().currentTime) {
+                                startTime = snap.val().currentTime;
+                            }
+                        } catch(e) { console.warn("讀取雲端進度失敗", e); }
+                    }
+                    if (!startTime) {
+                        startTime = parseFloat(localStorage.getItem(safeVideoKey)) || 0;
+                    }
+
+                    if (startTime > 0) {
+                        videoEl.currentTime = startTime;
+                    }
+                    
+                    videoEl.play().catch(e => {
+                        isVideoPlaying = false;
+                        resetIdleTimer();
+                    });
+                }
                 // 串流播放器載入邏輯
                 if (Hls.isSupported()) {
                     if (window.hlsInstance) window.hlsInstance.destroy(); 
@@ -2287,25 +2328,13 @@
                     window.hlsInstance.loadSource(url);
                     window.hlsInstance.attachMedia(videoEl);
                     window.hlsInstance.on(Hls.Events.MANIFEST_PARSED, () => {
-                        const savedTime = localStorage.getItem(safeVideoKey);
-                        if (savedTime) {
-                            videoEl.currentTime = parseFloat(savedTime);
-                        }
-
-                        videoEl.play().catch(e => {
-                            isVideoPlaying = false;
-                            resetIdleTimer();
-                        });
+                        loadAndPlay();
                     });
                 } 
                 else if (videoEl.canPlayType('application/vnd.apple.mpegurl')) {
                     videoEl.src = url;
                     videoEl.addEventListener('loadedmetadata', () => {
-                        const savedTime = localStorage.getItem(safeVideoKey);
-                        if (savedTime) {
-                            videoEl.currentTime = parseFloat(savedTime);
-                        }
-                        videoEl.play();
+                        loadAndPlay();
                     });
                 }
             } else {
@@ -2314,7 +2343,6 @@
                 shieldEl.style.display = 'block';
                 iframeEl.src = url;
             }
-
             // 跳動浮水印
             const sName = localStorage.getItem('studentName') || "未知學員";
             const sIp = typeof globalClientIP !== 'undefined' && globalClientIP ? globalClientIP : "未知IP";
