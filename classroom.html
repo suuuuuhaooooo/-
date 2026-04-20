@@ -894,6 +894,7 @@
         function resetIdleTimer() {
             if (isLoggingOut) return;
             lastActivityTime = Date.now();
+            localStorage.setItem('sys_last_act', lastActivityTime.toString()); 
             clearTimeout(idleTimer);
             if (auth.currentUser && !isVideoPlaying) {
                 idleTimer = setTimeout(() => { 
@@ -916,7 +917,9 @@
         
         document.addEventListener("visibilitychange", function() {
             if (document.visibilityState === 'visible' && !isLoggingOut) {
-                const timeAway = Date.now() - lastActivityTime;
+                const savedTime = localStorage.getItem('sys_last_act');
+                const timeAway = savedTime ? (Date.now() - parseInt(savedTime, 10)) : 0;
+                
                 if (auth.currentUser && !isVideoPlaying && timeAway > 180000) {
                     isLoggingOut = true;
                     clearTimeout(idleTimer);
@@ -1420,6 +1423,22 @@
 
         auth.onAuthStateChanged(async (user) => {
             if (user) {
+                const savedTime = localStorage.getItem('sys_last_act');
+                if (savedTime && !isVideoPlaying) {
+                    const timeAway = Date.now() - parseInt(savedTime, 10);
+                    if (timeAway > 180000) {
+                        isLoggingOut = true;
+                        db.ref('presence/' + user.uid).remove();
+                        auth.signOut().then(() => {
+                            localStorage.clear();
+                            sessionStorage.clear();
+                            alert("因系統偵測到您長時間關閉或離開網頁，為保護帳號安全，已自動登出。");
+                            location.reload();
+                        });
+                        return;
+                    }
+                }
+                localStorage.setItem('sys_last_act', Date.now().toString());
                 const adminEmails = ["admin888@suhao.com", "suuuuuhaooooo@gmail.com"];
                 if (adminEmails.includes(user.email.toLowerCase())) {
                     document.getElementById('nav-admin-scanner').style.display = 'block';
