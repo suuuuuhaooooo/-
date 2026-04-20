@@ -1264,7 +1264,9 @@
             sessionStorage.setItem('isFreshLogin', 'true');
 
             // 執行驗證
-            auth.signInWithEmailAndPassword(email, password).then(cred => {
+            auth.setPersistence(firebase.auth.Auth.Persistence.SESSION).then(() => {
+                return auth.signInWithEmailAndPassword(email, password);
+            }).then(cred => {
 
                 localStorage.removeItem('login_fail_count');
                 localStorage.removeItem('login_lock_until');
