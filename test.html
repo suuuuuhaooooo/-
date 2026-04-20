@@ -386,8 +386,7 @@
         // ==========================================
         let idleTimer;
         let isAutoLoggingOut = false; 
-        let testLastActivityTime = Date.now();
-        
+
         function logout() {
             const user = auth.currentUser;
             if (user) { db.ref('presence/' + user.uid).remove(); }
@@ -400,7 +399,7 @@
         
         function resetIdleTimer() {
             if (isAutoLoggingOut) return;
-            testLastActivityTime = Date.now();
+            localStorage.setItem('sys_last_act', Date.now().toString());
             clearTimeout(idleTimer);
             
             if (auth.currentUser) {
@@ -425,7 +424,8 @@
         
         document.addEventListener("visibilitychange", function() {
             if (document.visibilityState === 'visible' && !isAutoLoggingOut) {
-                const timeAway = Date.now() - testLastActivityTime;
+                const savedTime = localStorage.getItem('sys_last_act');
+                const timeAway = savedTime ? (Date.now() - parseInt(savedTime, 10)) : 0;
 
                 if (auth.currentUser && timeAway > 180000) {
                     isAutoLoggingOut = true;
@@ -454,6 +454,22 @@
         // 權限驗證與資料載入
         auth.onAuthStateChanged(async (user) => {
             if (user) {
+                const savedTime = localStorage.getItem('sys_last_act');
+                if (savedTime) {
+                    const timeAway = Date.now() - parseInt(savedTime, 10);
+                    if (timeAway > 180000) {
+                        isAutoLoggingOut = true;
+                        db.ref('presence/' + user.uid).remove();
+                        auth.signOut().then(() => {
+                            localStorage.clear();
+                            sessionStorage.clear();
+                            alert("因系統偵測到您長時間關閉或離開網頁，為保護帳號安全，已自動登出。");
+                            window.location.replace("classroom.html");
+                        });
+                        return;
+                    }
+                }
+                localStorage.setItem('sys_last_act', Date.now().toString());
                 currentUserUid = user.uid;
                 resetIdleTimer();
 
