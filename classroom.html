@@ -441,6 +441,7 @@
                 <div class="nav-group">
                     <a id="nav-video" class="nav-link active" onclick="showView('video-view', this)">影音中心</a>
                     <a id="nav-pdf" class="nav-link" onclick="showView('pdf-view', this)">線上教材</a>
+                    <a id="nav-contact" class="nav-link" onclick="showView('contact-view', this)">電子聯絡簿</a>
                     <a href="test.html" class="nav-link">試務中心</a>
                     <a id="nav-profile" class="nav-link" onclick="showView('tab-profile', this)">個人檔案</a>
                     <a class="nav-link" onclick="openRewardModal()">
@@ -601,6 +602,18 @@
         
             </div>
         </section>
+        <section id="contact-view" class="view-section">
+                <h2 style="font-size: 20px; margin-bottom: 25px; border-left: 5px solid #3498db; padding-left: 15px;">電子聯絡簿</h2>
+                <p style="font-size: 13px; color: #888; margin-bottom: 20px; padding-left: 20px;">檢視各堂課程進度、作業派發、成績追蹤與帳務明細。</p>
+                
+                <div style="background: #fff; border-radius: 8px; border: 1px solid #eee; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.05); width: 100%; height: 75vh; position: relative;">
+                    <div id="contact-loading-msg" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: #888; font-size: 14px; display: flex; flex-direction: column; align-items: center; gap: 10px;">
+                        <div class="loading-dots"><div></div><div></div><div></div></div>
+                        <span>資料同步中...</span>
+                    </div>
+                    <iframe id="contact-iframe" src="" style="width: 100%; height: 100%; border: none; position: relative; z-index: 2; display: none;"></iframe>
+                </div>
+            </section>
         <section id="scanner-view" class="view-section">
                 <h2 style="font-size: 20px; margin-bottom: 25px; border-left: 5px solid #d35400; padding-left: 15px;">學生條碼掃描</h2>
                 
@@ -2197,6 +2210,7 @@
                 btn.disabled = false;
             }
         }
+        
         // =========================================
         // LINE 點擊跳轉函式
         // =========================================
@@ -2657,6 +2671,29 @@
           if (watermarkInterval) clearInterval(watermarkInterval);
           watermarkInterval = setInterval(moveWatermark, 7000); // 每 7 秒跳動一次
         }
+            // ==========================================
+            // 載入電子聯絡簿
+            // ==========================================
+            const contactIframe = document.getElementById('contact-iframe');
+            const contactLoading = document.getElementById('contact-loading-msg');
+            
+            if (data.contactUrl && data.contactUrl.trim() !== "") {
+                let finalUrl = data.contactUrl.trim();
+
+                if (finalUrl.includes('docs.google.com/spreadsheets')) {
+                    finalUrl += (finalUrl.includes('?') ? '&' : '?') + 'rm=minimal';
+                }
+                
+                contactIframe.src = finalUrl;
+
+                setTimeout(() => {
+                    contactIframe.style.display = 'block';
+                    contactLoading.style.display = 'none';
+                }, 1000);
+            } else {
+                contactIframe.style.display = 'none';
+                contactLoading.innerHTML = '<div style="text-align:center;">目前尚未綁定您的專屬聯絡簿。<br><span style="font-size:12px; color:#888;">請聯繫管理員協助設定。</span></div>';
+            }
 //
 //                       _oo0oo_
 //                      o8888888o
