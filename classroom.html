@@ -1648,6 +1648,7 @@
                             pdfBox.innerHTML = '<div class="no-data-msg">目前暫無教材。</div>';
                         }
                         updateProfilePage(my);
+                        initContactBook(my.contactUrl);
                     }
                     // 資料載入完成，關閉動畫
                     document.getElementById('loading-screen').style.display = 'none';
@@ -2671,29 +2672,28 @@
           if (watermarkInterval) clearInterval(watermarkInterval);
           watermarkInterval = setInterval(moveWatermark, 7000); // 每 7 秒跳動一次
         }
-            // ==========================================
-            // 載入電子聯絡簿
-            // ==========================================
-            const contactIframe = document.getElementById('contact-iframe');
-            const contactLoading = document.getElementById('contact-loading-msg');
+
+        function initContactBook(contactUrl) {
+            const iframe = document.getElementById('contact-iframe');
+            const loading = document.getElementById('contact-loading-msg');
             
-            if (data.contactUrl && data.contactUrl.trim() !== "") {
-                let finalUrl = data.contactUrl.trim();
+            if (contactUrl && contactUrl.toString().trim() !== "") {
+                let finalUrl = contactUrl.toString().trim();
 
                 if (finalUrl.includes('docs.google.com/spreadsheets')) {
                     finalUrl += (finalUrl.includes('?') ? '&' : '?') + 'rm=minimal';
                 }
                 
-                contactIframe.src = finalUrl;
+                iframe.src = finalUrl;
 
                 setTimeout(() => {
-                    contactIframe.style.display = 'block';
-                    contactLoading.style.display = 'none';
-                }, 1000);
+                    iframe.style.display = 'block';
+                    loading.style.display = 'none';
+                }, 1200);
             } else {
-                contactIframe.style.display = 'none';
-                contactLoading.innerHTML = '<div style="text-align:center;">目前尚未綁定您的專屬聯絡簿。<br><span style="font-size:12px; color:#888;">請聯繫管理員協助設定。</span></div>';
+                loading.innerHTML = '<p style="color:#aaa;">目前尚未綁定的聯絡簿，請聯繫管理員。</p>';
             }
+        }
 //
 //                       _oo0oo_
 //                      o8888888o
