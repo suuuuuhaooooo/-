@@ -668,7 +668,7 @@
                 const card = document.createElement('div');
                 card.className = 'exam-card';
                 let btnHtml = isDone 
-                    ? `<div style="display: flex; align-items: center;"><span class="status-badge">已得分: ${isDone.score}</span><button class="exam-status-btn btn-review" onclick="viewReview('${exam.id}')">錯題檢討</button></div>`
+                    ? `<div style="display: flex; align-items: center;"><span class="status-badge">得分： ${isDone.score}</span><button class="exam-status-btn btn-review" onclick="viewReview('${exam.id}')">錯題檢討</button></div>`
                     : `<button class="exam-status-btn btn-start" onclick="startExam('${exam.id}')">▶ 開始測驗</button>`;
                 card.innerHTML = `<div class="exam-info"><h3>${exam.title}</h3><p>${exam.desc}</p></div><div>${btnHtml}</div>`;
                 grid.appendChild(card);
