@@ -824,6 +824,63 @@
         function toggleMobileMenu() {
             document.querySelector('.sidebar').classList.toggle('open');
         }
+        // ==========================================
+        // 影音中心分頁邏輯
+        // ==========================================
+        let globalVIds = [];
+        let globalVNames = [];
+        let currentVideoPage = 1;
+        const videosPerPage = 5;
+
+        function renderVideoPage(page) {
+            const videoGrid = document.getElementById('video-grid');
+            const paginationBox = document.getElementById('video-pagination');
+            
+            const totalPages = Math.ceil(globalVIds.length / videosPerPage);
+            if (page < 1) page = 1;
+            if (page > totalPages) page = totalPages;
+            currentVideoPage = page;
+
+            const startIndex = (page - 1) * videosPerPage;
+            const endIndex = startIndex + videosPerPage;
+            const currentVIds = globalVIds.slice(startIndex, endIndex);
+
+            videoGrid.innerHTML = currentVIds.map((rawId, index) => {
+                let actualIndex = startIndex + index; // 為了抓對應的片名
+                let id = rawId.trim();
+                let targetUrl = id.startsWith("http") ? id : `https://drive.google.com/file/d/${id}/preview`;
+                let isFolder = id.includes("folders") || id.includes("drive.google.com/drive");
+                let hintText = isFolder ? "點擊開啟影音資料夾" : "點擊啟動劇院模式播放";
+                let titleStr = (globalVNames[actualIndex] || '單元 ' + (actualIndex + 1)).trim();
+                
+                let clickAction = isFolder 
+                    ? `window.open('${targetUrl}', '_blank')` 
+                    : `openSystemPlayer('${targetUrl}', '${titleStr}')`;
+                
+                return `
+                <div class="video-card" onclick="${clickAction}">
+                    <div style="color: var(--primary); font-weight: 700; font-size: 15px; margin-bottom: 5px;">${titleStr}</div>
+                    <div style="font-size: 12px; color: #999;">${hintText}</div>
+                </div>`;
+            }).join('');
+
+            if (totalPages > 1) {
+                let prevDisabled = currentVideoPage === 1 ? 'opacity: 0.3; pointer-events: none;' : 'cursor: pointer;';
+                let nextDisabled = currentVideoPage === totalPages ? 'opacity: 0.3; pointer-events: none;' : 'cursor: pointer;';
+                
+                paginationBox.innerHTML = `
+                    <div style="display: flex; justify-content: center; align-items: center; gap: 15px; margin-top: 30px;">
+                        <button onclick="renderVideoPage(${currentVideoPage - 1})" style="padding: 10px 20px; border: none; border-radius: 4px; background: #e0e0e0; color: #555; font-weight: bold; transition: 0.2s; ${prevDisabled}">◀ 上一頁</button>
+                        <span style="font-size: 14px; font-weight: bold; color: var(--dark); letter-spacing: 1px;">第 ${currentVideoPage} / ${totalPages} 頁</span>
+                        <button onclick="renderVideoPage(${currentVideoPage + 1})" style="padding: 10px 20px; border: none; border-radius: 4px; background: var(--primary); color: white; font-weight: bold; transition: 0.2s; ${nextDisabled}">下一頁 ▶</button>
+                    </div>
+                `;
+            } else {
+                paginationBox.innerHTML = '';
+            }
+
+            document.querySelector('.main-content').scrollTo({ top: 0, behavior: 'smooth' });
+        }
         // 版權聲明函式
         function showCopyrightModal() {
             return new Promise((resolve) => {
@@ -1583,29 +1640,16 @@
                         }
 
                         // 渲染影片
-                        const vIds = my.vIds ? my.vIds.toString().split(',').filter(id => id.trim() !== "") : [];
+                        globalVIds = my.vIds ? my.vIds.toString().split(',').filter(id => id.trim() !== "") : [];
+                        globalVNames = my.vNames ? my.vNames.toString().split(',') : [];
                         const videoBox = document.getElementById('video-container');
-                        if (vIds.length > 0) {
-                            const vNames = my.vNames ? my.vNames.toString().split(',') : [];
-                            videoBox.innerHTML = `<div id="video-grid" class="video-grid"></div>`;
-                            
-                            document.getElementById('video-grid').innerHTML = vIds.map((rawId, i) => {
-                                let id = rawId.trim();
-                                let targetUrl = id.startsWith("http") ? id : `https://drive.google.com/file/d/${id}/preview`;
-                                let isFolder = id.includes("folders") || id.includes("drive.google.com/drive");
-                                let hintText = isFolder ? "點擊開啟影音資料夾" : "點擊啟動劇院模式播放";
-                                let titleStr = (vNames[i] || '單元 '+(i+1)).trim();
-                                
-                                let clickAction = isFolder 
-                                    ? `window.open('${targetUrl}', '_blank')` 
-                                    : `openSystemPlayer('${targetUrl}', '${titleStr}')`;
-                                
-                                return `
-                                <div class="video-card" onclick="${clickAction}">
-                                    <div style="color: var(--primary); font-weight: 700; font-size: 15px; margin-bottom: 5px;">${titleStr}</div>
-                                    <div style="font-size: 12px; color: #999;">${hintText}</div>
-                                </div>`;
-                            }).join('');
+                        
+                        if (globalVIds.length > 0) {
+                            videoBox.innerHTML = `
+                                <div id="video-grid" class="video-grid"></div>
+                                <div id="video-pagination"></div>
+                            `;
+                            renderVideoPage(1); 
                         } else {
                             videoBox.innerHTML = '<div class="no-data-msg">目前暫無影音內容。</div>';
                         }
