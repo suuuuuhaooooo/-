@@ -825,7 +825,7 @@
             document.querySelector('.sidebar').classList.toggle('open');
         }
         // ==========================================
-        // 影音中心分頁
+        // 影音中心分頁邏輯
         // ==========================================
         let globalVIds = [];
         let globalVNames = [];
@@ -834,7 +834,14 @@
 
         function renderVideoPage(page) {
             const videoGrid = document.getElementById('video-grid');
-            const paginationBox = document.getElementById('video-pagination');
+
+            let paginationBox = document.getElementById('global-video-pagination');
+            if (!paginationBox) {
+                paginationBox = document.createElement('div');
+                paginationBox.id = 'global-video-pagination';
+                document.body.appendChild(paginationBox);
+            }
+            paginationBox.style.display = 'block'; 
             
             const totalPages = Math.ceil(globalVIds.length / videosPerPage);
             if (page < 1) page = 1;
@@ -870,6 +877,12 @@
                 let prevDisabled = currentVideoPage === 1 ? 'opacity: 0.3; pointer-events: none;' : 'cursor: pointer;';
                 let nextDisabled = currentVideoPage === totalPages ? 'opacity: 0.3; pointer-events: none;' : 'cursor: pointer;';
                 
+                let optionsHtml = '';
+                for (let i = 1; i <= totalPages; i++) {
+                    let selected = (i === currentVideoPage) ? 'selected' : '';
+                    optionsHtml += `<option value="${i}" ${selected}>第 ${i} 頁 / 共 ${totalPages} 頁</option>`;
+                }
+                
                 paginationBox.innerHTML = `
                     <div style="
                         position: fixed; 
@@ -878,8 +891,8 @@
                         width: 100%; 
                         display: flex; 
                         justify-content: center; 
-                        z-index: 95; 
-                        pointer-events: none;
+                        z-index: 9999; 
+                        pointer-events: none; 
                     ">
                         <div style="
                             background: rgba(255, 255, 255, 0.95); 
@@ -892,23 +905,44 @@
                             display: flex; 
                             align-items: center; 
                             gap: 15px; 
-                            pointer-events: auto;
+                            pointer-events: auto; 
                         ">
-                            <button onclick="renderVideoPage(${currentVideoPage - 1})" style="padding: 8px 16px; border: none; border-radius: 20px; background: #e0e0e0; color: #555; font-weight: bold; transition: 0.2s; ${prevDisabled}">◀ 上一頁</button>
+                            <button onclick="renderVideoPage(${currentVideoPage - 1})" style="padding: 8px 16px; border: none; border-radius: 20px; background: #e0e0e0; color: #555; font-weight: bold; transition: 0.2s; box-shadow: 0 2px 4px rgba(0,0,0,0.05); ${prevDisabled}">◀ 上一頁</button>
                             
-                            <span style="font-size: 13px; font-weight: bold; color: var(--dark); letter-spacing: 1px;">
-                                第 ${currentVideoPage} / ${totalPages} 頁
-                            </span>
+                            <select onchange="renderVideoPage(parseInt(this.value))" style="
+                                font-size: 13px; 
+                                font-weight: bold; 
+                                color: var(--dark); 
+                                letter-spacing: 1px; 
+                                background: white; 
+                                padding: 8px 30px 8px 15px; 
+                                border-radius: 20px; 
+                                border: 1px solid #eee; 
+                                box-shadow: inset 0 2px 4px rgba(0,0,0,0.02);
+                                cursor: pointer;
+                                outline: none;
+                                appearance: none; 
+                                -webkit-appearance: none;
+                                background-image: url('data:image/svg+xml;utf8,<svg xmlns=\\'http://www.w3.org/2000/svg\\' width=\\'10\\' height=\\'10\\' fill=\\'%235b6348\\' viewBox=\\'0 0 16 16\\'><path d=\\'M7.247 11.14L2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z\\'/></svg>');
+                                background-repeat: no-repeat;
+                                background-position: right 12px center;
+                            ">
+                                ${optionsHtml}
+                            </select>
                             
-                            <button onclick="renderVideoPage(${currentVideoPage + 1})" style="padding: 8px 16px; border: none; border-radius: 20px; background: var(--primary); color: white; font-weight: bold; transition: 0.2s; ${nextDisabled}">下一頁 ▶</button>
+                            <button onclick="renderVideoPage(${currentVideoPage + 1})" style="padding: 8px 16px; border: none; border-radius: 20px; background: var(--primary); color: white; font-weight: bold; transition: 0.2s; box-shadow: 0 2px 4px rgba(0,0,0,0.1); ${nextDisabled}">下一頁 ▶</button>
                         </div>
                     </div>
                 `;
             } else {
                 paginationBox.innerHTML = ''; 
             }
-            
-            document.querySelector('.main-content').scrollTo({ top: 0, behavior: 'smooth' });
+
+            if (window.innerWidth <= 768) {
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            } else {
+                document.querySelector('.main-content').scrollTo({ top: 0, behavior: 'smooth' });
+            }
         }
         // 版權聲明函式
         function showCopyrightModal() {
