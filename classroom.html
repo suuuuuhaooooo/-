@@ -944,6 +944,95 @@
                 document.querySelector('.main-content').scrollTo({ top: 0, behavior: 'smooth' });
             }
         }
+        // ==========================================
+        // 線上教材 (PDF) 分頁邏輯 (全域絕對固定 + 解決跳動版)
+        // ==========================================
+        let globalDLinks = [];
+        let globalDNames = [];
+        let currentPdfPage = 1;
+        const pdfsPerPage = 5;
+
+        function renderPdfPage(page) {
+            const pdfGrid = document.getElementById('pdf-grid');
+            
+            let paginationBox = document.getElementById('global-pdf-pagination');
+            if (!paginationBox) {
+                paginationBox = document.createElement('div');
+                paginationBox.id = 'global-pdf-pagination';
+                document.body.appendChild(paginationBox);
+            }
+            paginationBox.style.display = 'block'; 
+
+            const totalPages = Math.ceil(globalDLinks.length / pdfsPerPage);
+            if (page < 1) page = 1;
+            if (page > totalPages) page = totalPages;
+            currentPdfPage = page;
+
+            const startIndex = (page - 1) * pdfsPerPage;
+            const endIndex = startIndex + pdfsPerPage;
+            const currentDLinks = globalDLinks.slice(startIndex, endIndex);
+
+            if(pdfGrid) pdfGrid.style.paddingBottom = "100px"; 
+
+            pdfGrid.innerHTML = currentDLinks.map((url, index) => {
+                let actualIndex = startIndex + index;
+                let docName = (globalDNames[actualIndex] || '講義 ' + (actualIndex + 1)).trim();
+                let safeUrl = url.trim();
+                let sName = localStorage.getItem('studentName') || '';
+
+                if (docName.includes("[可下載]")) {
+                    let cleanName = docName.replace("[可下載]", "").trim();
+                    return `
+                    <div class="video-card" onclick="window.open('${safeUrl}', '_blank')" style="border-left: 5px solid var(--primary);">
+                        <div style="color: var(--primary); font-weight: 700; font-size: 15px; margin-bottom: 5px;">
+                            <span style="font-size:10px; background:#eef1ec; padding:2px 5px; border-radius:3px; margin-right:5px;">可下載</span>${cleanName}
+                        </div>
+                        <div style="font-size: 12px; color: #999;">點擊開啟檔案</div>
+                    </div>`;
+                } else {
+                    return `
+                    <div class="video-card" onclick="openSystemPDF('${safeUrl}', '${sName}')" style="border-left: 5px solid #d35400;">
+                        <div style="color: #d35400; font-weight: 700; font-size: 15px; margin-bottom: 5px;">
+                            <span style="font-size:10px; background:#fdedec; padding:2px 5px; border-radius:3px; margin-right:5px;">僅供參閱</span>${docName}
+                        </div>
+                        <div style="font-size: 12px; color: #999;">點擊開啟檔案</div>
+                    </div>`;
+                }
+            }).join('');
+
+            if (totalPages > 1) {
+                let prevDisabled = currentPdfPage === 1 ? 'opacity: 0.3; pointer-events: none;' : 'cursor: pointer;';
+                let nextDisabled = currentPdfPage === totalPages ? 'opacity: 0.3; pointer-events: none;' : 'cursor: pointer;';
+                
+                let optionsHtml = '';
+                for (let i = 1; i <= totalPages; i++) {
+                    let selected = (i === currentPdfPage) ? 'selected' : '';
+                    optionsHtml += `<option value="${i}" ${selected}>第 ${i} 頁 / 共 ${totalPages} 頁</option>`;
+                }
+                
+                paginationBox.innerHTML = `
+                    <div style="position: fixed; bottom: 35px; left: 0; width: 100%; display: flex; justify-content: center; z-index: 9999; pointer-events: none;">
+                        <div style="background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); padding: 10px 20px; border-radius: 50px; box-shadow: 0 4px 15px rgba(0,0,0,0.15); border: 1px solid #eaeaea; display: flex; align-items: center; gap: 15px; pointer-events: auto;">
+                            <button onclick="renderPdfPage(${currentPdfPage - 1})" style="padding: 8px 16px; border: none; border-radius: 20px; background: #e0e0e0; color: #555; font-weight: bold; transition: 0.2s; box-shadow: 0 2px 4px rgba(0,0,0,0.05); ${prevDisabled}">◀</button>
+                            
+                            <select onchange="renderPdfPage(parseInt(this.value))" style="font-size: 13px; font-weight: bold; color: var(--dark); letter-spacing: 1px; background: white; padding: 8px 25px 8px 12px; border-radius: 20px; border: 1px solid #eee; outline: none; appearance: none; -webkit-appearance: none; cursor: pointer; background-image: url('data:image/svg+xml;utf8,<svg xmlns=\\'http://www.w3.org/2000/svg\\' width=\\'10\\' height=\\'10\\' fill=\\'%235b6348\\' viewBox=\\'0 0 16 16\\'><path d=\\'M7.247 11.14L2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z\\'/></svg>'); background-repeat: no-repeat; background-position: right 10px center;">
+                                ${optionsHtml}
+                            </select>
+                            
+                            <button onclick="renderPdfPage(${currentPdfPage + 1})" style="padding: 8px 16px; border: none; border-radius: 20px; background: var(--primary); color: white; font-weight: bold; transition: 0.2s; box-shadow: 0 2px 4px rgba(0,0,0,0.1); ${nextDisabled}">▶</button>
+                        </div>
+                    </div>
+                `;
+            } else {
+                paginationBox.innerHTML = ''; 
+            }
+            
+            if (window.innerWidth <= 768) {
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            } else {
+                document.querySelector('.main-content').scrollTo({ top: 0, behavior: 'smooth' });
+            }
+        }
         // 版權聲明函式
         function showCopyrightModal() {
             return new Promise((resolve) => {
@@ -1555,6 +1644,14 @@
             if (window.innerWidth <= 768) {
                 document.querySelector('.sidebar').classList.remove('open');
             }
+            const videoPagination = document.getElementById('global-video-pagination');
+            if (videoPagination) {
+                videoPagination.style.display = (viewId === 'video-view') ? 'block' : 'none';
+            }
+            const pdfPagination = document.getElementById('global-pdf-pagination');
+            if (pdfPagination) {
+                pdfPagination.style.display = (viewId === 'pdf-view') ? 'block' : 'none';
+            }
         }
 
         auth.onAuthStateChanged(async (user) => {
@@ -1718,42 +1815,18 @@
                         }
 
                         // 渲染教材
-                        const dLinks = my.docLinks ? my.docLinks.toString().split(',').filter(url => url.trim() !== "") : [];
+                        globalDLinks = my.docLinks ? my.docLinks.toString().split(',').filter(url => url.trim() !== "") : [];
+                        globalDNames = my.docNames ? my.docNames.toString().split(',') : [];
                         const pdfBox = document.getElementById('pdf-container');
                         
-                        if (dLinks.length > 0) {
-                            const dNames = my.docNames ? my.docNames.toString().split(',') : [];
-
+                        if (globalDLinks.length > 0) {
                             pdfBox.innerHTML = `<div class="video-grid" id="pdf-grid"></div>`;
-                            const pdfGrid = document.getElementById('pdf-grid');
-                        
-                            pdfGrid.innerHTML = dLinks.map((url, i) => {
-                                let docName = (dNames[i] || '講義 ' + (i + 1)).trim();
-                                let safeUrl = url.trim();
-                        
-                                // 判斷是否為開放下載的教材
-                                if (docName.includes("[可下載]")) {
-                                    let cleanName = docName.replace("[可下載]", "").trim();
-                                    return `
-                                    <div class="video-card" onclick="window.open('${safeUrl}', '_blank')" style="border-left: 5px solid var(--primary);">
-                                        <div style="color: var(--primary); font-weight: 700; font-size: 15px; margin-bottom: 5px;">
-                                            <span style="font-size:10px; background:#eef1ec; padding:2px 5px; border-radius:3px; margin-right:5px;">可下載</span>${cleanName}
-                                        </div>
-                                        <div style="font-size: 12px; color: #999;">點擊開啟檔案</div>
-                                    </div>`;
-                                } else {
-                                    return `
-                                    <div class="video-card" onclick="openSystemPDF('${safeUrl}', '${my.name}')" style="border-left: 5px solid #d35400;">
-                                        <div style="color: #d35400; font-weight: 700; font-size: 15px; margin-bottom: 5px;">
-                                            <span style="font-size:10px; background:#fdedec; padding:2px 5px; border-radius:3px; margin-right:5px;">僅供參閱</span>${docName}
-                                        </div>
-                                        <div style="font-size: 12px; color: #999;">點擊開啟檔案</div>
-                                    </div>`;
-                                }
-                            }).join('');
+                            renderPdfPage(1);
                         } else {
                             pdfBox.innerHTML = '<div class="no-data-msg">目前暫無教材。</div>';
                         }
+                        
+                        // 執行個人檔案與聯絡簿初始化
                         updateProfilePage(my);
                         initContactBook(my.contactUrl);
                     }
