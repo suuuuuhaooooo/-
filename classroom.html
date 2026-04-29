@@ -1922,7 +1922,7 @@
             let cachedPoints = localStorage.getItem('my_last_points') || "0";
 
             pointsListener.on('value', (snap) => {
-                const newPoints = snap.val() || 0;
+                const newPoints = parseInt(snap.val() || 0, 10);
                 const ptsEl = document.getElementById('student-points');
                 
                 if (ptsEl) {
@@ -1930,7 +1930,7 @@
                     ptsEl.style.transformOrigin = "center";
 
                     if (isInitialLoad && cachedPoints !== null) {
-                        let oldP = parseInt(cachedPoints);
+                        let oldP = parseInt(cachedPoints, 10);
                         if (newPoints > oldP) {
                             previousPoints = oldP;
                             isInitialLoad = false; 
@@ -1948,17 +1948,25 @@
                             targetClass = 'anim-deduct';
                         }
 
+                        ptsEl.style.color = ""; 
+
                         setTimeout(() => {
                             ptsEl.classList.remove('anim-add', 'anim-deduct', 'anim-reset');
-                            void ptsEl.offsetWidth; // 觸發重繪
-                            if (targetClass) ptsEl.classList.add(targetClass);
+                            void ptsEl.offsetWidth; 
+                            if (targetClass) ptsEl.classList.add(targetClass); 
+
+                            setTimeout(() => {
+                                ptsEl.style.color = "#27ae60";
+                            }, 1000); 
                         }, 50);
+                    } else if (ptsEl.className.indexOf('anim-') === -1) {
+                        ptsEl.style.color = "#27ae60";
                     }
                     
                     // 更新數字與歷史紀錄
                     ptsEl.innerText = newPoints;
                     previousPoints = newPoints;
-                    localStorage.setItem('my_last_points', newPoints);
+                    localStorage.setItem('my_last_points', newPoints.toString());
 
                     setTimeout(() => { isInitialLoad = false; }, 500);
                 }
