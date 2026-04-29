@@ -717,8 +717,10 @@
                 </span>
             </div>
             
-            <div id="pts-container" style="margin-top: 25px; font-size: 16px; color: #5b6348; font-weight: bold;">
-                目前累積：<span id="student-points" style="font-size: 36px; color: #27ae60; margin: 0 5px; display: inline-block;">0</span> 點
+            <div id="pts-wrapper" style="margin-top: 25px;">
+                <div style="font-size: 16px; color: #5b6348; font-weight: bold;">
+                    目前累積：<span id="student-points" style="font-size: 36px; color: #27ae60; margin: 0 5px; display: inline-block;">0</span> 點
+                </div>
             </div>
         </div>
     </div>
@@ -1937,11 +1939,10 @@
 
             pointsListener.on('value', (snap) => {
                 const newPoints = parseInt(snap.val() || 0, 10);
-                const ptsContainer = document.getElementById('pts-container');
+                const wrapper = document.getElementById('pts-wrapper');
                 
-                if (ptsContainer) {
-
-                    if (isInitialLoad && cachedPoints !== null) {
+                if (wrapper) {
+                    if (isInitialLoad) {
                         let oldP = parseInt(cachedPoints, 10);
                         if (newPoints > oldP) {
                             previousPoints = oldP;
@@ -1950,23 +1951,21 @@
                     }
 
                     let animClass = "";
+                    let containerClass = "";
                     if (!isInitialLoad && previousPoints !== null && previousPoints !== newPoints) {
+                        containerClass = "success-pop";
                         if (newPoints === 0 && previousPoints > 0) animClass = "anim-reset";
                         else if (newPoints > previousPoints) animClass = "anim-add";
                         else if (newPoints < previousPoints) animClass = "anim-deduct";
                     }
 
                     setTimeout(() => {
-                        ptsContainer.innerHTML = `目前累積：<span id="student-points" class="${animClass}" style="font-size: 36px; color: #27ae60; margin: 0 5px; display: inline-block; transform-origin: center;">${newPoints}</span> 點`;
-
-                        if (animClass) {
-                            setTimeout(() => {
-                                const el = document.getElementById('student-points');
-                                if (el) el.classList.remove(animClass);
-                            }, 1000);
-                        }
+                        wrapper.innerHTML = `
+                            <div class="${containerClass}" style="font-size: 16px; color: #5b6348; font-weight: bold; line-height: 1.2;">
+                                目前累積：<span id="student-points" class="${animClass}" style="font-size: 42px; color: #27ae60; margin: 0 5px; display: inline-block; transform-origin: center; vertical-align: middle;">${newPoints}</span> 點
+                            </div>`;
                     }, 50);
-                    
+
                     previousPoints = newPoints;
                     localStorage.setItem('my_last_points', newPoints.toString());
                     setTimeout(() => { isInitialLoad = false; }, 500);
