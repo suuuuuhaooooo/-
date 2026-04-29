@@ -874,7 +874,7 @@
                 formData.append("studentLog", studentRealViewLog);
                 formData.append("shuffledOrder", JSON.stringify(shuffledIndices));
 
-                // 4. 發送給 GAS 批改 (移除 no-cors 以讀取回傳的分數與解析)
+                // 4. 發送給 GAS 批改
                 const response = await fetch(SCRIPT_URL, { 
                     method: "POST", 
                     body: formData.toString(),
@@ -892,15 +892,55 @@
                     document.getElementById('result-title').innerText = "測驗結算";
                     
                     const finalScore = result.score;
+                    let autoRewardPoints = 0;
+                    
+                    if (finalScore === 100) {
+                        autoRewardPoints = 30;
+                    } else if (finalScore >= 95) {
+                        autoRewardPoints = 25;
+                    } else if (finalScore >= 90) {
+                        autoRewardPoints = 20;
+                    } else if (finalScore >= 85) {
+                        autoRewardPoints = 15;
+                    } else if (finalScore >= 80) {
+                        autoRewardPoints = 10;
+                    } else if (finalScore >= 70) {
+                        autoRewardPoints = 5;
+                    } else if (finalScore >= 60) {
+                        autoRewardPoints = 2;
+                    }
+
+                    if (autoRewardPoints > 0) {
+                        const rewardFormData = new URLSearchParams();
+                        rewardFormData.append("token", "SuHaoClassroom2026_SecureKey");
+                        rewardFormData.append("action", "claimReward");
+                        rewardFormData.append("idToken", idToken); 
+                        rewardFormData.append("points", autoRewardPoints.toString());
+
+                        // 背景偷偷呼叫 GAS 增加點數，不干擾主畫面
+                        fetch(SCRIPT_URL, {
+                            method: "POST",
+                            body: rewardFormData.toString(),
+                            headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
+                        }).then(res => res.json()).then(rewardData => {
+                            if (rewardData.success) {
+                                // 延遲 0.8 秒，讓學生先看到結算畫面，再跳出驚喜彈窗
+                                setTimeout(() => {
+                                    alert(`本次測驗獲得 ${finalScore} 分\n系統已自動為您發放【 ${autoRewardPoints} 點 】學習獎勵！`);
+                                }, 800);
+                            }
+                        }).catch(e => console.log("自動加點失敗", e));
+                    }
+                    // ==========================================
+
                     const detailedResults = result.details;
                     let shuffledDetails = new Array(currentExam.questions.length);
                     for (let i = 0; i < currentExam.questions.length; i++) {
                         let origIdx = currentExam.questions[i].originalIndex;
-                        // 根據作答時的對應位置，把後端的批改明細抓回來放好
                         shuffledDetails[i] = detailedResults[origIdx];
                     }
 
-                    // 將正式成績與錯題寫入 Firebase 供歷史查詢
+                    // 將正式成績寫入 Firebase
                     const recordData = { score: finalScore, date: new Date().toISOString(), details: shuffledDetails };
                     completedRecords[currentExam.id] = recordData;
                     db.ref('exam_records/' + currentUserUid + '/' + currentExam.id).set(recordData);
@@ -913,10 +953,10 @@
                     } else if (finalScore >= 60) { 
                         scoreEl.style.color = "#d35400"; 
                     } else { 
-                        scoreEl.style.color = "#c0392b"; scoreEl.innerText += " (要再加油複習喔！)";
+                        scoreEl.style.color = "#c0392b"; scoreEl.innerText += " (要再加油複習哦！)";
                     }
 
-                    // 渲染錯題檢討 (使用後端傳回的資料)
+                    // 渲染錯題檢討
                     const reviewContainer = document.getElementById('review-container');
                     reviewContainer.innerHTML = "";
                     
