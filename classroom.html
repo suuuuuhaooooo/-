@@ -315,7 +315,9 @@
             50% { opacity: 0.3; transform: scale(0.5); color: #7f8c8d; }
             100% { opacity: 1; transform: scale(1); color: #27ae60; }
         }
-        
+        #student-points {
+            color: #27ae60;
+        }
         .anim-add { animation: point-add 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275); display: inline-block; }
         .anim-deduct { animation: point-deduct 0.5s ease-in-out; display: inline-block; }
         .anim-reset { animation: point-reset 0.8s ease-in-out; display: inline-block; }
@@ -704,7 +706,7 @@
             </div>
             
             <div style="margin-top: 25px; font-size: 16px; color: #5b6348; font-weight: bold;">
-                目前累積：<span id="student-points" style="font-size: 36px; color: #27ae60; margin: 0 5px; display: inline-block; transform-origin: center;">0</span> 點
+                目前累積：<span id="student-points" style="font-size: 36px; margin: 0 5px; display: inline-block; transform-origin: center;">0</span> 點
             </div>
         </div>
     </div>
@@ -1922,13 +1924,11 @@
             let cachedPoints = localStorage.getItem('my_last_points') || "0";
 
             pointsListener.on('value', (snap) => {
+
                 const newPoints = parseInt(snap.val() || 0, 10);
                 const ptsEl = document.getElementById('student-points');
                 
                 if (ptsEl) {
-                    ptsEl.style.display = "inline-block";
-                    ptsEl.style.transformOrigin = "center";
-
                     if (isInitialLoad && cachedPoints !== null) {
                         let oldP = parseInt(cachedPoints, 10);
                         if (newPoints > oldP) {
@@ -1948,20 +1948,12 @@
                             targetClass = 'anim-deduct';
                         }
 
-                        ptsEl.style.color = ""; 
-
                         setTimeout(() => {
                             ptsEl.classList.remove('anim-add', 'anim-deduct', 'anim-reset');
                             void ptsEl.offsetWidth; 
                             if (targetClass) ptsEl.classList.add(targetClass); 
-
-                            setTimeout(() => {
-                                ptsEl.style.color = "#27ae60";
-                            }, 1000); 
                         }, 50);
-                    } else if (ptsEl.className.indexOf('anim-') === -1) {
-                        ptsEl.style.color = "#27ae60";
-                    }
+                    } 
                     
                     // 更新數字與歷史紀錄
                     ptsEl.innerText = newPoints;
