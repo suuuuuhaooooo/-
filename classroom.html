@@ -1917,20 +1917,28 @@
             // ==========================================
             // 點數監聽與動畫
             // ==========================================
-            let isInitialLoad = true; // 建立初次載入保險絲
+            let isInitialLoad = true; 
             pointsListener = db.ref('rewards/' + user.uid + '/points');
             let previousPoints = null; 
+            let cachedPoints = localStorage.getItem('my_last_points');
 
             pointsListener.on('value', (snap) => {
                 const newPoints = snap.val() || 0;
                 const ptsEl = document.getElementById('student-points');
                 
                 if (ptsEl) {
-                    // 判斷：必須「不是初次載入」且「點數真有變動」才播動畫
+                    if (isInitialLoad && cachedPoints !== null) {
+                        let oldP = parseInt(cachedPoints);
+                        if (newPoints > oldP) {
+                            previousPoints = oldP;
+                            isInitialLoad = false;
+                        }
+                    }
+
                     if (!isInitialLoad && previousPoints !== null && previousPoints !== newPoints) {
                         
                         ptsEl.classList.remove('anim-add', 'anim-deduct', 'anim-reset');
-                        void ptsEl.offsetWidth; // 觸發重繪 (Reflow)
+                        void ptsEl.offsetWidth;
 
                         if (newPoints === 0 && previousPoints > 0) {
                             ptsEl.classList.add('anim-reset');
@@ -1944,6 +1952,7 @@
                     // 更新數字與歷史紀錄
                     ptsEl.innerText = newPoints;
                     previousPoints = newPoints;
+                    localStorage.setItem('my_last_points', newPoints);
 
                     // 延遲 500 毫秒避開快取造成的雙重觸發
                     setTimeout(() => { isInitialLoad = false; }, 500);
@@ -1963,7 +1972,7 @@
             if (box) box.innerHTML = ""; 
             if (timerContainer) timerContainer.style.display = "none";
             
-            // 關閉時順便清除殘留的動畫 class
+            // 關閉時清除殘留的動畫 class
             const ptsEl = document.getElementById('student-points');
             if (ptsEl) {
                 ptsEl.classList.remove('anim-add', 'anim-deduct', 'anim-reset');
