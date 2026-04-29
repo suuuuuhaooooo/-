@@ -892,44 +892,16 @@
                     document.getElementById('result-title').innerText = "測驗結算";
                     
                     const finalScore = result.score;
-                    let autoRewardPoints = 0;
-                    
-                    if (finalScore === 100) {
-                        autoRewardPoints = 30;
-                    } else if (finalScore >= 95) {
-                        autoRewardPoints = 25;
-                    } else if (finalScore >= 90) {
-                        autoRewardPoints = 20;
-                    } else if (finalScore >= 85) {
-                        autoRewardPoints = 15;
-                    } else if (finalScore >= 80) {
-                        autoRewardPoints = 10;
-                    } else if (finalScore >= 70) {
-                        autoRewardPoints = 5;
-                    } else if (finalScore >= 60) {
-                        autoRewardPoints = 2;
-                    }
+                    const earnedPoints = result.earnedPoints || 0; 
 
-                    if (autoRewardPoints > 0) {
-                        const rewardFormData = new URLSearchParams();
-                        rewardFormData.append("token", "SuHaoClassroom2026_SecureKey");
-                        rewardFormData.append("action", "claimReward");
-                        rewardFormData.append("idToken", idToken); 
-                        rewardFormData.append("points", autoRewardPoints.toString());
-
-                        // 背景偷偷呼叫 GAS 增加點數，不干擾主畫面
-                        fetch(SCRIPT_URL, {
-                            method: "POST",
-                            body: rewardFormData.toString(),
-                            headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
-                        }).then(res => res.json()).then(rewardData => {
-                            if (rewardData.success) {
-                                // 延遲 0.8 秒，讓學生先看到結算畫面，再跳出驚喜彈窗
-                                setTimeout(() => {
-                                    alert(`本次測驗獲得 ${finalScore} 分\n系統已自動為您發放【 ${autoRewardPoints} 點 】學習獎勵！`);
-                                }, 800);
-                            }
-                        }).catch(e => console.log("自動加點失敗", e));
+                    // ==========================================
+                    // 遊戲化機制
+                    // ==========================================
+                    if (earnedPoints > 0) {
+                        // 延遲 0.8 秒，先看到結算畫面，再跳出彈窗
+                        setTimeout(() => {
+                            alert(`本次測驗獲得 ${finalScore} 分\n系統已自動為您發放【 ${earnedPoints} 點 】學習獎勵！`);
+                        }, 800);
                     }
                     // ==========================================
 
