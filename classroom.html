@@ -1940,17 +1940,19 @@
 
                     if (!isInitialLoad && previousPoints !== null && previousPoints !== newPoints) {
                         
+                        let targetClass = '';
+                        if (newPoints === 0 && previousPoints > 0) {
+                            targetClass = 'anim-reset';
+                        } else if (newPoints > previousPoints) {
+                            targetClass = 'anim-add';
+                        } else if (newPoints < previousPoints) {
+                            targetClass = 'anim-deduct';
+                        }
+
                         setTimeout(() => {
                             ptsEl.classList.remove('anim-add', 'anim-deduct', 'anim-reset');
-                            void ptsEl.offsetWidth; // 觸發重繪 (Reflow)
-
-                            if (newPoints === 0 && previousPoints > 0) {
-                                ptsEl.classList.add('anim-reset');
-                            } else if (newPoints > previousPoints) {
-                                ptsEl.classList.add('anim-add');  
-                            } else if (newPoints < previousPoints) {
-                                ptsEl.classList.add('anim-deduct'); 
-                            }
+                            void ptsEl.offsetWidth; // 觸發重繪
+                            if (targetClass) ptsEl.classList.add(targetClass);
                         }, 50);
                     }
                     
