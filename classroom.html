@@ -315,8 +315,20 @@
             50% { opacity: 0.3; transform: scale(0.5); color: #7f8c8d; }
             100% { opacity: 1; transform: scale(1); color: #27ae60; }
         }
+        /* 1. 設定基礎顏色，不寫在 HTML 上，權限才不會死鎖 */
         #student-points {
-            color: #27ae60;
+            color: #27ae60 !important; 
+            transition: color 0.3s;
+        }
+
+        /* 2. 當動畫 class 存在時，強制覆蓋基礎顏色 */
+        #student-points.anim-add { 
+            animation: point-add 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; 
+            color: #f1c40f !important; /* 強制變金黃色 */
+        }
+        #student-points.anim-deduct { 
+            animation: point-deduct 0.5s ease-in-out forwards; 
+            color: #e74c3c !important; /* 強制變紅色 */
         }
         .anim-add { animation: point-add 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275); display: inline-block; }
         .anim-deduct { animation: point-deduct 0.5s ease-in-out; display: inline-block; }
@@ -1924,11 +1936,11 @@
             let cachedPoints = localStorage.getItem('my_last_points') || "0";
 
             pointsListener.on('value', (snap) => {
-
                 const newPoints = parseInt(snap.val() || 0, 10);
                 const ptsEl = document.getElementById('student-points');
                 
                 if (ptsEl) {
+
                     if (isInitialLoad && cachedPoints !== null) {
                         let oldP = parseInt(cachedPoints, 10);
                         if (newPoints > oldP) {
@@ -1938,24 +1950,18 @@
                     }
 
                     if (!isInitialLoad && previousPoints !== null && previousPoints !== newPoints) {
-                        
                         let targetClass = '';
-                        if (newPoints === 0 && previousPoints > 0) {
-                            targetClass = 'anim-reset';
-                        } else if (newPoints > previousPoints) {
-                            targetClass = 'anim-add';
-                        } else if (newPoints < previousPoints) {
-                            targetClass = 'anim-deduct';
-                        }
+                        if (newPoints === 0 && previousPoints > 0) targetClass = 'anim-reset';
+                        else if (newPoints > previousPoints) targetClass = 'anim-add';
+                        else if (newPoints < previousPoints) targetClass = 'anim-deduct';
 
                         setTimeout(() => {
                             ptsEl.classList.remove('anim-add', 'anim-deduct', 'anim-reset');
-                            void ptsEl.offsetWidth; 
+                            void ptsEl.offsetWidth; // 強制重繪
                             if (targetClass) ptsEl.classList.add(targetClass); 
                         }, 50);
                     } 
-                    
-                    // 更新數字與歷史紀錄
+
                     ptsEl.innerText = newPoints;
                     previousPoints = newPoints;
                     localStorage.setItem('my_last_points', newPoints.toString());
