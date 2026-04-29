@@ -705,7 +705,7 @@
             </div>
             
             <div style="margin-top: 25px; font-size: 16px; color: #5b6348; font-weight: bold;">
-                目前累積：<span id="student-points" style="font-size: 36px; color: #27ae60; margin: 0 5px;">0</span> 點
+                目前累積：<span id="student-points" style="font-size: 36px; color: #27ae60; margin: 0 5px; display: inline-block; transform-origin: center;">0</span> 點
             </div>
         </div>
     </div>
@@ -1920,33 +1920,38 @@
             let isInitialLoad = true; 
             pointsListener = db.ref('rewards/' + user.uid + '/points');
             let previousPoints = null; 
-            let cachedPoints = localStorage.getItem('my_last_points');
+            let cachedPoints = localStorage.getItem('my_last_points') || "0";
 
             pointsListener.on('value', (snap) => {
                 const newPoints = snap.val() || 0;
                 const ptsEl = document.getElementById('student-points');
                 
                 if (ptsEl) {
+                    ptsEl.style.display = "inline-block";
+                    ptsEl.style.transformOrigin = "center";
+
                     if (isInitialLoad && cachedPoints !== null) {
                         let oldP = parseInt(cachedPoints);
                         if (newPoints > oldP) {
                             previousPoints = oldP;
-                            isInitialLoad = false;
+                            isInitialLoad = false; 
                         }
                     }
 
                     if (!isInitialLoad && previousPoints !== null && previousPoints !== newPoints) {
                         
-                        ptsEl.classList.remove('anim-add', 'anim-deduct', 'anim-reset');
-                        void ptsEl.offsetWidth;
+                        setTimeout(() => {
+                            ptsEl.classList.remove('anim-add', 'anim-deduct', 'anim-reset');
+                            void ptsEl.offsetWidth; // 觸發重繪 (Reflow)
 
-                        if (newPoints === 0 && previousPoints > 0) {
-                            ptsEl.classList.add('anim-reset');
-                        } else if (newPoints > previousPoints) {
-                            ptsEl.classList.add('anim-add');  
-                        } else if (newPoints < previousPoints) {
-                            ptsEl.classList.add('anim-deduct'); 
-                        }
+                            if (newPoints === 0 && previousPoints > 0) {
+                                ptsEl.classList.add('anim-reset');
+                            } else if (newPoints > previousPoints) {
+                                ptsEl.classList.add('anim-add');  
+                            } else if (newPoints < previousPoints) {
+                                ptsEl.classList.add('anim-deduct'); 
+                            }
+                        }, 50);
                     }
                     
                     // 更新數字與歷史紀錄
@@ -1954,7 +1959,6 @@
                     previousPoints = newPoints;
                     localStorage.setItem('my_last_points', newPoints);
 
-                    // 延遲 500 毫秒避開快取造成的雙重觸發
                     setTimeout(() => { isInitialLoad = false; }, 500);
                 }
             });
