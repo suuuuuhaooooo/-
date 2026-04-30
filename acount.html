@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <title>蘇昊教室 | 更改帳號</title>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
+</head>
+<body style="font-family: sans-serif; padding: 50px; text-align: center; background: #f8f8f6;">
+    <h2 style="color: #5b6348;">蘇昊雲端教室 - 更改帳號</h2>
+    <p style="color: #666;">強制修改學生的登入信箱，<br>且完美保留原始 UID 與所有考試、影片、點數紀錄。</p>
+
+    <div style="margin-top: 30px; display: inline-block; text-align: left; background: #fff; padding: 30px; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); border-top: 5px solid #8e9775;">
+        <p style="margin-top:0;">1. 原本的舊帳號：<br><input type="text" id="oldEmail" placeholder="例如: 9ac0ec@suhao.com" style="width: 250px; padding: 8px; margin-top:5px;"></p>
+        <p>2. 學生的登入密碼：<br><input type="password" id="pwd" placeholder="請輸入密碼" style="width: 250px; padding: 8px; margin-top:5px;"></p>
+        <p>3. 指定的新帳號：<br><input type="text" id="newEmail" placeholder="輸入新信箱" style="width: 250px; padding: 8px; margin-top:5px;"></p>
+        
+        <button onclick="changeAccount()" style="margin-top: 15px; width: 100%; padding: 12px; background: #8e9775; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;">確定執行替換</button>
+        <div id="statusMsg" style="color: #d35400; font-weight: bold; margin-top: 15px; text-align:center;"></div>
+    </div>
+
+    <script>
+        // 帶入蘇昊教室的專屬金鑰
+        const firebaseConfig = {
+            apiKey: "AIzaSyALkTnkYY3JZLCTyajahpi4IZKmFX9USdw",
+            authDomain: "su-hao-classroom.firebaseapp.com",
+            projectId: "su-hao-classroom"
+        };
+        firebase.initializeApp(firebaseConfig);
+
+        function changeAccount() {
+            const oldE = document.getElementById('oldEmail').value.trim();
+            const p = document.getElementById('pwd').value;
+            const newE = document.getElementById('newEmail').value.trim();
+            const msg = document.getElementById('statusMsg');
+
+            if (!oldE || !p || !newE) {
+                msg.innerText = "請完整填寫三個欄位！";
+                return;
+            }
+
+            msg.style.color = "#d35400";
+            msg.innerText = "身分驗證並替換中，請稍候...";
+            
+            // 登入舊帳號 -> 強制換上新信箱
+            firebase.auth().signInWithEmailAndPassword(oldE, p)
+                .then((userCredential) => {
+                    return userCredential.user.updateEmail(newE);
+                })
+                .then(() => {
+                    msg.style.color = "#27ae60";
+                    msg.innerHTML = "替換成功！<br>UID 完全保留。請記得去 Google 試算表將該生信箱改為新帳號！";
+                    firebase.auth().signOut(); // 換完自動登出
+                })
+                .catch((error) => {
+                    msg.style.color = "#c0392b";
+                    msg.innerText = "失敗：" + error.message;
+                });
+        }
+    </script>
+</body>
+</html>
