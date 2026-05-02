@@ -875,7 +875,8 @@
         <div style="background: white; padding: 30px; border-radius: 8px; width: 320px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); border-top: 6px solid #8e9775; position: relative;">
             <span onclick="closeChangePwdModal()" style="position: absolute; top: 10px; right: 15px; font-size: 24px; cursor: pointer; color: #aaa;">&times;</span>
             <h2 style="color: #4a5238; margin-top: 0; font-size: 20px; margin-bottom: 5px;">修改登入密碼</h2>
-            <p style="font-size: 12px; color: #888; margin-bottom: 20px; line-height: 1.5;">密碼規則：至少 8 個字元，並包含英文與數字的組合。</p>
+            
+            <p style="font-size: 12px; color: #888; margin-bottom: 20px; line-height: 1.5;">密碼規則：至少 8 個字元，並包含大小寫英文與數字的組合。</p>
             
             <div class="input-group">
                 <input type="password" id="old-pwd-input" placeholder="請輸入『原密碼』" style="padding: 12px; font-size: 14px; background: #fafafa; border: 1px solid #eee; border-radius: 4px; width: 100%; box-sizing: border-box; outline: none; transition: 0.3s;" onfocus="this.style.borderColor='#7a9c81'" onblur="this.style.borderColor='#eee'">
@@ -2456,10 +2457,10 @@
             if (newPwd !== confirmPwd) { alert("兩次輸入的新密碼不一致，請重新確認！"); return; }
             if (oldPwd === newPwd) { alert("新密碼不能與原密碼相同！"); return; }
         
-            // 2. 密碼強度檢查 (至少8碼，需包含英文與數字)
-            const pwdRegex = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,}$/;
+            // 2. 密碼強度檢查
+            const pwdRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/;
             if (!pwdRegex.test(newPwd)) {
-                alert("密碼強度不足！\n請設定至少 8 個字元，並包含英文與數字。");
+                alert("密碼強度不足！\n請設定至少 8 個字元，並包含「大小寫英文」與「數字」。");
                 return;
             }
         
