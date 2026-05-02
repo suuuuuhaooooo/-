@@ -11,7 +11,6 @@
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-database-compat.js"></script>
-    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
     <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     <script>
     window.MathJax = {
@@ -518,7 +517,7 @@
                     completedRecords = snap.val() || {}; 
                     
                     // 3. GAS 12秒超時防呆
-                    const idToken = await user.getIdToken(true); // 取得憑證
+                    const idToken = await user.getIdToken(); // 取得憑證
 
                     const fetchPromise = Promise.all([
                         fetch(SCRIPT_URL + "?token=SuHaoClassroom2026_SecureKey"),
