@@ -403,6 +403,7 @@
         let isAutoLoggingOut = false; 
 
         function logout() {
+            isAutoLoggingOut = true;
             const user = auth.currentUser;
             if (user) { db.ref('presence/' + user.uid).remove(); }
             auth.signOut().finally(() => {
@@ -544,15 +545,17 @@
                     console.error("系統讀取失敗：", e);
                     document.getElementById('loading-screen').style.display = 'none';
                     if (e.message === 'GAS_TIMEOUT') {
-                        alert("【系統通知】\nGoogle 試算表連線超時，無法載入考卷，請稍後再試！");
+                        alert("【系統通知】\nGoogle 資料庫連線超時，無法載入試卷，請稍後再試！");
                     } else {
                         alert("資料庫連線異常，請重新整理頁面。");
                     }
                     window.location.replace("classroom.html");
                 }
             } else {
-                alert("未授權的存取！請先登入系統才能進行測驗。");
-                window.location.replace("classroom.html"); 
+                if (!isAutoLoggingOut) {
+                    alert("未授權的存取！請先登入系統才能進行測驗。");
+                    window.location.replace("classroom.html"); 
+                }
             }
         });
 
