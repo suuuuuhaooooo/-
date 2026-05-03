@@ -160,7 +160,7 @@
         @keyframes pulse-text { 0% { opacity: 0.4; } 50% { opacity: 1; } 100% { opacity: 0.4; } }
 
         /* 登入介面 */
-        #login-ui { display: flex; justify-content: center; align-items: center; height: 100vh; height: 100dvh; background: var(--bg); position: fixed; top: 0; left: 0; width: 100%; z-index: 1000; }
+        #login-ui { display: flex; flex-direction: column; gap: 25px; justify-content: center; align-items: center; height: 100vh; height: 100dvh; background: var(--bg); position: fixed; top: 0; left: 0; width: 100%; z-index: 1000; }
         .login-card { background: white; padding: 40px; border-radius: 4px; box-shadow: 0 15px 35px rgba(0,0,0,0.05); width: 340px; text-align: center; border-top: 6px solid var(--primary); }
         .input-group { position: relative; margin: 10px 0; }
         input { 
@@ -228,7 +228,7 @@
             #classroom-ui { flex-direction: column; height: auto; }
             
             /* 登入卡片寬度優化 */
-            .login-card { width: 85%; padding: 30px 20px; box-sizing: border-box; transform: translateY(-6vh); }
+            .login-card { width: 85%; padding: 30px 20px; box-sizing: border-box; }
 
             /* 導覽列改為頂部固定 */
             .sidebar { width: 100%; padding: 0; position: sticky; top: 0; z-index: 1000; box-shadow: 0 4px 15px rgba(0,0,0,0.04); border-right: none; height: auto; background: white; }
@@ -342,10 +342,7 @@
         .success-pop { animation: popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
         /* 跑馬燈樣式*/
         .marquee-container {
-            position: absolute;
-            top: 40px;
-            left: 50%;
-            transform: translateX(-50%);
+            position: relative;
             width: 420px;
             max-width: 85%;
             box-sizing: border-box;
@@ -378,7 +375,6 @@
             0% { transform: translate(0, 0); }
             100% { transform: translate(-100%, 0); }
         }
-        #login-ui { padding-top: 40px; }
         #system-player-video {
             transition: transform 0.3s ease;
             max-width: 100%;
