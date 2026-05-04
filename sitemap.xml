@@ -1,20 +1,34 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  
   <url>
-    <loc>https://suuuuuhaooooo.github.io/</loc>
+    <loc>https://suuuuuhaooooo.github.io/-/</loc>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
   </url>
   
   <url>
     <loc>https://suuuuuhaooooo.github.io/-/classroom.html</loc>
-    <changefreq>monthly</changefreq>
-    <priority>0.8</priority>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
   </url>
 
   <url>
-    <loc>https://suuuuuhaooooo.github.io/-/changelog.html</loc>
+    <loc>https://suuuuuhaooooo.github.io/-/schedule.html</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  
+  <url>
+    <loc>https://suuuuuhaooooo.github.io/-/FAQ.html</loc>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>
+
+  <url>
+    <loc>https://suuuuuhaooooo.github.io/-/activate.html</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.3</priority>
+  </url>
+
 </urlset>
