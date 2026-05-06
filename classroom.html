@@ -491,12 +491,18 @@
 
         <main class="main-content">
             <section id="video-view" class="view-section active">
-                <h2 style="font-size: 20px; margin-bottom: 5px; border-left: 5px solid var(--primary); padding-left: 15px;">影音課程</h2>
+                <h2 style="font-size: 20px; margin-bottom: 5px; border-left: 5px solid var(--primary); padding-left: 15px; display: flex; justify-content: space-between; align-items: center;">
+                    <span>影音課程</span>
+                    <span id="video-count-badge" style="font-size: 13px; font-weight: bold; background: #eef1ec; color: var(--primary); padding: 4px 12px; border-radius: 20px; letter-spacing: 1px;">共 0 筆</span>
+                </h2>
                 <p style="font-size: 13px; color: #888; margin-bottom: 25px; padding-left: 20px;">點擊按鈕後，系統將另開分頁。屆時請以 Google 帳號支援授權。</p>
                 <div id="video-container"></div>
             </section>
             <section id="pdf-view" class="view-section">
-                <h2 style="font-size: 20px; margin-bottom: 25px; border-left: 5px solid var(--primary); padding-left: 15px;">教材資源</h2>
+                <h2 style="font-size: 20px; margin-bottom: 5px; border-left: 5px solid var(--primary); padding-left: 15px; display: flex; justify-content: space-between; align-items: center;">
+                    <span>教材資源</span>
+                    <span id="pdf-count-badge" style="font-size: 13px; font-weight: bold; background: #fdedec; color: #d35400; padding: 4px 12px; border-radius: 20px; letter-spacing: 1px;">共 0 筆</span>
+                </h2>
                 <p style="font-size: 13px; color: #888; margin-bottom: 25px; padding-left: 20px;">點擊按鈕後，系統將另開分頁。屆時請以 Google 帳號支援授權。</p>
                 <div id="pdf-container"></div>
             </section>
@@ -1899,6 +1905,7 @@
                         // 渲染影片
                         globalVIds = my.vIds ? my.vIds.toString().split(',').filter(id => id.trim() !== "") : [];
                         globalVNames = my.vNames ? my.vNames.toString().split(',') : [];
+                        document.getElementById('video-count-badge').innerText = `共 ${globalVIds.length} 筆`;
                         const videoBox = document.getElementById('video-container');
                         
                         if (globalVIds.length > 0) {
@@ -1914,6 +1921,7 @@
                         // 渲染教材
                         globalDLinks = my.docLinks ? my.docLinks.toString().split(',').filter(url => url.trim() !== "") : [];
                         globalDNames = my.docNames ? my.docNames.toString().split(',') : [];
+                        document.getElementById('pdf-count-badge').innerText = `共 ${globalDLinks.length} 筆`;
                         const pdfBox = document.getElementById('pdf-container');
                         
                         if (globalDLinks.length > 0) {
