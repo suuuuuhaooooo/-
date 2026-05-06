@@ -1054,8 +1054,12 @@
                 paginationBox.id = 'global-pdf-pagination';
                 document.body.appendChild(paginationBox);
             }
-            paginationBox.style.display = 'block'; 
-
+            if (document.getElementById('pdf-view').classList.contains('active')) {
+                paginationBox.style.display = 'block';
+            } else {
+                paginationBox.style.display = 'none';
+            }
+            
             const totalPages = Math.ceil(globalDLinks.length / pdfsPerPage);
             if (page < 1) page = 1;
             if (page > totalPages) page = totalPages;
