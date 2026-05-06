@@ -929,7 +929,12 @@
                 paginationBox.id = 'global-video-pagination';
                 document.body.appendChild(paginationBox);
             }
-            paginationBox.style.display = 'block'; 
+            if (document.getElementById('video-view').classList.contains('active')) {
+                paginationBox.style.display = 'block';
+            } else {
+                paginationBox.style.display = 'none';
+            }
+
             
             const totalPages = Math.ceil(globalVIds.length / videosPerPage);
             if (page < 1) page = 1;
