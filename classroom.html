@@ -292,6 +292,7 @@
             .hide-cursor {
                 cursor: none !important;
             }
+        }
         /* 學生端：點數變動即時特效 */
         /* 1. 加點：放大、變金黃色、發光 */
         @keyframes point-add {
@@ -490,19 +491,12 @@
 
         <main class="main-content">
             <section id="video-view" class="view-section active">
-                <h2 style="font-size: 20px; margin-bottom: 5px; border-left: 5px solid var(--primary); padding-left: 15px; display: flex; justify-content: space-between; align-items: center;">
-                    <span>影音課程</span>
-                    <span id="video-count-badge" style="font-size: 13px; font-weight: bold; background: #eef1ec; color: var(--primary); padding: 4px 12px; border-radius: 20px; letter-spacing: 1px;">共 0 筆</span>
-                </h2>
+                <h2 style="font-size: 20px; margin-bottom: 5px; border-left: 5px solid var(--primary); padding-left: 15px;">影音課程</h2>
                 <p style="font-size: 13px; color: #888; margin-bottom: 25px; padding-left: 20px;">點擊按鈕後，系統將另開分頁。屆時請以 Google 帳號支援授權。</p>
                 <div id="video-container"></div>
             </section>
-            
             <section id="pdf-view" class="view-section">
-                <h2 style="font-size: 20px; margin-bottom: 5px; border-left: 5px solid var(--primary); padding-left: 15px; display: flex; justify-content: space-between; align-items: center;">
-                    <span>教材資源</span>
-                    <span id="pdf-count-badge" style="font-size: 13px; font-weight: bold; background: #fdedec; color: #d35400; padding: 4px 12px; border-radius: 20px; letter-spacing: 1px;">共 0 筆</span>
-                </h2>
+                <h2 style="font-size: 20px; margin-bottom: 25px; border-left: 5px solid var(--primary); padding-left: 15px;">教材資源</h2>
                 <p style="font-size: 13px; color: #888; margin-bottom: 25px; padding-left: 20px;">點擊按鈕後，系統將另開分頁。屆時請以 Google 帳號支援授權。</p>
                 <div id="pdf-container"></div>
             </section>
@@ -935,11 +929,7 @@
                 paginationBox.id = 'global-video-pagination';
                 document.body.appendChild(paginationBox);
             }
-            if (document.getElementById('video-view').classList.contains('active')) {
-                paginationBox.style.display = 'block';
-            } else {
-                paginationBox.style.display = 'none';
-            }
+            paginationBox.style.display = 'block'; 
             
             const totalPages = Math.ceil(globalVIds.length / videosPerPage);
             if (page < 1) page = 1;
@@ -1059,11 +1049,7 @@
                 paginationBox.id = 'global-pdf-pagination';
                 document.body.appendChild(paginationBox);
             }
-            if (document.getElementById('pdf-view').classList.contains('active')) {
-                paginationBox.style.display = 'block';
-            } else {
-                paginationBox.style.display = 'none';
-            }
+            paginationBox.style.display = 'block'; 
 
             const totalPages = Math.ceil(globalDLinks.length / pdfsPerPage);
             if (page < 1) page = 1;
@@ -1115,13 +1101,13 @@
                 paginationBox.innerHTML = `
                     <div style="position: fixed; bottom: 35px; left: 0; width: 100%; display: flex; justify-content: center; z-index: 9999; pointer-events: none;">
                         <div style="background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); padding: 10px 20px; border-radius: 50px; box-shadow: 0 4px 15px rgba(0,0,0,0.15); border: 1px solid #eaeaea; display: flex; align-items: center; gap: 15px; pointer-events: auto;">
-                            <button onclick="renderPdfPage(${currentPdfPage - 1})" style="padding: 8px 16px; border: none; border-radius: 20px; background: #e0e0e0; color: #555; font-weight: bold; transition: 0.2s; box-shadow: 0 2px 4px rgba(0,0,0,0.05); ${prevDisabled}">◀ 上一頁</button>
+                            <button onclick="renderPdfPage(${currentPdfPage - 1})" style="padding: 8px 16px; border: none; border-radius: 20px; background: #e0e0e0; color: #555; font-weight: bold; transition: 0.2s; box-shadow: 0 2px 4px rgba(0,0,0,0.05); ${prevDisabled}">◀</button>
                             
                             <select onchange="renderPdfPage(parseInt(this.value))" style="font-size: 13px; font-weight: bold; color: var(--dark); letter-spacing: 1px; background: white; padding: 8px 25px 8px 12px; border-radius: 20px; border: 1px solid #eee; outline: none; appearance: none; -webkit-appearance: none; cursor: pointer; background-image: url('data:image/svg+xml;utf8,<svg xmlns=\\'http://www.w3.org/2000/svg\\' width=\\'10\\' height=\\'10\\' fill=\\'%235b6348\\' viewBox=\\'0 0 16 16\\'><path d=\\'M7.247 11.14L2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z\\'/></svg>'); background-repeat: no-repeat; background-position: right 10px center;">
                                 ${optionsHtml}
                             </select>
                             
-                            <button onclick="renderPdfPage(${currentPdfPage + 1})" style="padding: 8px 16px; border: none; border-radius: 20px; background: var(--primary); color: white; font-weight: bold; transition: 0.2s; box-shadow: 0 2px 4px rgba(0,0,0,0.1); ${nextDisabled}">下一頁 ▶</button>
+                            <button onclick="renderPdfPage(${currentPdfPage + 1})" style="padding: 8px 16px; border: none; border-radius: 20px; background: var(--primary); color: white; font-weight: bold; transition: 0.2s; box-shadow: 0 2px 4px rgba(0,0,0,0.1); ${nextDisabled}">▶</button>
                         </div>
                     </div>
                 `;
@@ -1904,7 +1890,6 @@
                         // 渲染影片
                         globalVIds = my.vIds ? my.vIds.toString().split(',').filter(id => id.trim() !== "") : [];
                         globalVNames = my.vNames ? my.vNames.toString().split(',') : [];
-                        document.getElementById('video-count-badge').innerText = `共 ${globalVIds.length} 筆`;
                         const videoBox = document.getElementById('video-container');
                         
                         if (globalVIds.length > 0) {
@@ -1920,7 +1905,6 @@
                         // 渲染教材
                         globalDLinks = my.docLinks ? my.docLinks.toString().split(',').filter(url => url.trim() !== "") : [];
                         globalDNames = my.docNames ? my.docNames.toString().split(',') : [];
-                        document.getElementById('pdf-count-badge').innerText = `共 ${globalDLinks.length} 筆`;
                         const pdfBox = document.getElementById('pdf-container');
                         
                         if (globalDLinks.length > 0) {
