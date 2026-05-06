@@ -1118,7 +1118,7 @@
                         <div style="background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); padding: 10px 20px; border-radius: 50px; box-shadow: 0 4px 15px rgba(0,0,0,0.15); border: 1px solid #eaeaea; display: flex; align-items: center; gap: 15px; pointer-events: auto;">
                             <button onclick="renderPdfPage(${currentPdfPage - 1})" style="padding: 8px 16px; border: none; border-radius: 20px; background: #e0e0e0; color: #555; font-weight: bold; transition: 0.2s; box-shadow: 0 2px 4px rgba(0,0,0,0.05); ${prevDisabled}">◀ 上一頁</button>
                             
-                            <select onchange="renderPdfPage(parseInt(this.value))" style="font-size: 13px; font-weight: bold; color: var(--dark); letter-spacing: 1px; background: white; padding: 8px 30px 8px 15px; border-radius: 20px; border: 1px solid #eee; outline: none; appearance: none; -webkit-appearance: none; cursor: pointer; background-image: url('data:image/svg+xml;utf8,<svg xmlns=\\'http://www.w3.org/2000/svg\\' width=\\'10\\' height=\\'10\\' fill=\\'%235b6348\\' viewBox=\\'0 0 16 16\\'><path d=\\'M7.247 11.14L2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z\\'/></svg>'); background-repeat: no-repeat; background-position: right 10px center;">
+                            <select onchange="renderPdfPage(parseInt(this.value))" style="font-size: 13px; font-weight: bold; color: var(--dark); letter-spacing: 1px; background: white; padding: 8px 30px 8px 15px; border-radius: 20px; border: 1px solid #eee; outline: none; appearance: none; -webkit-appearance: none; cursor: pointer; background-image: url('data:image/svg+xml;utf8,<svg xmlns=\\'http://www.w3.org/2000/svg\\' width=\\'10\\' height=\\'10\\' fill=\\'%235b6348\\' viewBox=\\'0 0 16 16\\'><path d=\\'M7.247 11.14L2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z\\'/></svg>'); background-repeat: no-repeat; background-position: right 12px center;">
                                 ${optionsHtml}
                             </select>
                             
@@ -2559,6 +2559,30 @@
                 const user = firebase.auth().currentUser;
                 const progressRef = user ? db.ref('video_progress/' + user.uid + '/' + safeVideoKey) : null;
 
+                let ac_lastTime = 0;
+                let ac_hasSkipped = false;
+                let ac_rewardClaimed = false;
+                videoEl.addEventListener('ratechange', () => {
+                    if (videoEl.playbackRate > 2.5) {
+                        ac_hasSkipped = true;
+                        console.warn("系統警告：偵測到異常播放速率。");
+                    }
+                });
+                videoEl.addEventListener('timeupdate', () => {
+                    if (videoEl.paused) return;
+                    let diff = videoEl.currentTime - ac_lastTime;
+                    if (diff > 3.0) ac_hasSkipped = true; 
+                    if (videoEl.currentTime > ac_lastTime) {
+                        ac_lastTime = videoEl.currentTime;
+                    }
+                });
+
+                videoEl.addEventListener('seeking', () => {
+                    if (videoEl.currentTime > ac_lastTime + 2.0) {
+                        ac_hasSkipped = true;
+                    }
+                });
+
                 videoEl.onfullscreenchange = () => {
                     if (document.fullscreenElement === videoEl) {
                         document.exitFullscreen().then(() => toggleStageFullScreen());
@@ -2578,7 +2602,6 @@
                 videoEl.onpause = function() {
                     isVideoPlaying = false; 
                     resetIdleTimer(); 
-                    // 2. 影片暫停或關閉視窗時，強制上傳最終進度到雲端
                     if(progressRef && videoEl.currentTime > 3) {
                         progressRef.set({ currentTime: videoEl.currentTime, updated: Date.now() });
                     }
@@ -2587,12 +2610,34 @@
                 videoEl.onended = function() {
                     isVideoPlaying = false;
                     resetIdleTimer();
-                    // 3. 影片播放完後，清空雲端與本地進度
+
+                    // ==========================================
+                    // 獎勵發放邏輯
+                    // ==========================================
+                    const isLegitEnding = (videoEl.duration - videoEl.currentTime) < 2.0;
+
+                    if (isLegitEnding && !ac_hasSkipped && !ac_rewardClaimed) {
+                        ac_rewardClaimed = true;
+                        const rewardKey = "rewarded_5pts_" + safeVideoKey; // 該影片的領獎紀錄
+                        
+                        if (!localStorage.getItem(rewardKey)) {
+                            localStorage.setItem(rewardKey, "true");
+                            
+                            // 原生彈窗通知
+                            alert("恭喜！\n您已完整觀看了本影片，系統自動核發 5 點獎勵！");
+                            
+                            // 背景呼叫 GAS 寫入資料庫
+                            if (user) {
+                                const addUrl = `${SCRIPT_URL}?token=SuHaoClassroom2026_SecureKey&action=addVideoPoints&uid=${user.uid}&points=5`;
+                                fetch(addUrl).catch(e => console.log("點數發放異常", e));
+                            }
+                        }
+                    }
+
                     localStorage.removeItem(safeVideoKey);
                     if(progressRef) progressRef.remove(); 
                 };
 
-                // 4. 播放中定時存檔機制
                 let lastSaveTime = 0;
                 videoEl.ontimeupdate = function() {
                     if (videoEl.currentTime > 3) {
@@ -2634,7 +2679,6 @@
                 videoEl.addEventListener('playing', adjustVideoLayout);
                 videoEl.addEventListener('resize', adjustVideoLayout);
                 
-                // 5. 統一的讀檔與播放邏輯
                 async function loadAndPlay() {
                     let startTime = 0;
                     if (progressRef) {
@@ -2649,6 +2693,9 @@
                         startTime = parseFloat(localStorage.getItem(safeVideoKey)) || 0;
                     }
 
+                    // 確保接續播放時，基準時間能對齊
+                    ac_lastTime = startTime;
+
                     if (startTime > 0) {
                         videoEl.currentTime = startTime;
                     }
@@ -2658,7 +2705,7 @@
                         resetIdleTimer();
                     });
                 }
-                // 串流播放器載入邏輯
+                
                 if (Hls.isSupported()) {
                     if (window.hlsInstance) window.hlsInstance.destroy(); 
                     window.hlsInstance = new Hls();
@@ -2680,12 +2727,11 @@
                 shieldEl.style.display = 'block';
                 iframeEl.src = url;
             }
-            // 跳動浮水印
+            
             const sName = localStorage.getItem('studentName') || "未知學員";
             const sIp = typeof globalClientIP !== 'undefined' && globalClientIP ? globalClientIP : "未知IP";
             
             function jumpWatermark() {
-                // 隨機座標
                 const randomX = Math.floor(Math.random() * 60) + 5;
                 const randomY = Math.floor(Math.random() * 75) + 5;
                 const timeStr = new Date().toLocaleTimeString();
