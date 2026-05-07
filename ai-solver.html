@@ -2,7 +2,7 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>蘇昊數理｜AI 解題幫手</title>
     
     <meta name="description" content="AI 家教即時解惑。結合嚴謹的數理邏輯運算與清晰的步驟拆解，為學生提供 24 小時不間斷的個人化學習指導。">
@@ -31,18 +31,18 @@
     <script src="https://tikzjax.com/v1/tikzjax.js"></script>
     
     <style>
-        :root { --primary: #8e9775; --dark: #5b6348; --bg: #f8f8f6; --white: #ffffff; --border: #eeeeee; }
+        :root { --primary: #8e9775; --dark: #5b6348; --user-bg: #eef1e6; --ai-bg: #ffffff; --bg: #f5f5f5; --border: #eeeeee; }
         
-        /* 防拷貝與選取設定 */
-        body {
-            font-family: "Noto Serif TC", serif;
-            background-color: var(--bg);
+        /* 防拷貝與選取設定 & 全螢幕固定設定 */
+        html, body {
+            height: 100%;
             margin: 0;
+            overflow: hidden; /* 防止整個網頁捲動，改由對話框內部捲動 */
+            background-color: var(--bg);
+            font-family: "Noto Serif TC", serif;
             color: #333;
-            line-height: 1.8;
             -webkit-font-smoothing: antialiased;
             
-            /* 禁用全畫面選取與右鍵 */
             -webkit-touch-callout: none;
             -webkit-user-select: none;
             -khtml-user-select: none;
@@ -51,88 +51,147 @@
             user-select: none;
         }
 
-        /* 但允許輸入框可以打字選取 */
+        /* 允許輸入框可以打字選取 */
         input[type="text"] {
             -webkit-user-select: auto;
             -moz-user-select: auto;
             -ms-user-select: auto;
             user-select: auto;
+            font-family: "Noto Serif TC", serif;
         }
 
         .navbar {
             background: white;
-            padding: 15px 30px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.02);
-            border-bottom: 1px solid var(--border);
+            padding: 15px 20px;
+            box-shadow: 0 1px 5px rgba(0,0,0,0.05);
             display: flex;
             justify-content: space-between;
             align-items: center;
-            position: sticky;
+            position: absolute;
             top: 0;
-            z-index: 100;
+            width: 100%;
+            box-sizing: border-box;
+            z-index: 10;
         }
-        .brand-title { font-weight: 700; font-size: 18px; color: var(--dark); letter-spacing: 1px; }
+        .brand-title { font-weight: 700; font-size: 16px; color: var(--dark); letter-spacing: 1px; }
         .status-badge { color: #888; font-size: 12px; font-weight: bold; letter-spacing: 1px; display: flex; align-items: center; gap: 6px; }
         .status-dot { width: 8px; height: 8px; background-color: #ccc; border-radius: 50%; }
 
-        .container { max-width: 760px; margin: 40px auto; padding: 0 20px; }
+        /* 聊天主視窗：可捲動區域 */
+        .chat-window {
+            height: calc(100% - 130px); /* 扣除導航列與底部輸入框 */
+            margin-top: 55px; /* 避開 navbar */
+            overflow-y: auto;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
 
-        .card {
+        /* 氣泡通用樣式 */
+        .bubble {
+            max-width: 85%;
+            padding: 15px 20px;
+            border-radius: 18px;
+            font-size: 15px;
+            line-height: 1.8;
+            position: relative;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.02);
+            word-wrap: break-word;
+        }
+
+        /* AI 氣泡：左側 */
+        .bubble.ai {
+            align-self: flex-start;
+            background: var(--ai-bg);
+            border-bottom-left-radius: 4px;
+            border: 1px solid #e0e0e0;
+        }
+
+        /* 使用者氣泡：右側 */
+        .bubble.user {
+            align-self: flex-end;
+            background: var(--user-bg);
+            color: #4a5d23;
+            border-bottom-right-radius: 4px;
+        }
+
+        /* 題目原圖小縮圖設定 */
+        .question-thumb {
+            max-width: 100%;
+            max-height: 250px;
+            border-radius: 8px;
+            margin-bottom: 5px;
+            cursor: pointer;
+            border: 2px solid white;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            display: block;
+        }
+
+        /* 底部輸入區域 */
+        .input-bar {
             background: white;
-            border-radius: 4px;
-            padding: 30px;
-            box-shadow: 0 2px 15px rgba(0,0,0,0.03);
-            border: 1px solid var(--border);
-            margin-bottom: 25px;
-        }
-        .card-title {
-            margin-top: 0; font-size: 16px; color: var(--dark);
-            border-bottom: 1px solid var(--border);
-            padding-bottom: 12px; margin-bottom: 20px;
-            font-weight: 700; display: flex; align-items: center; gap: 8px;
+            padding: 15px 20px;
+            border-top: 1px solid #eee;
+            display: flex;
+            gap: 10px;
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+            box-sizing: border-box;
+            z-index: 10;
         }
 
-        .question-card { border-left: 4px solid #ddd; }
-        .question-image { max-width: 100%; border-radius: 2px; display: block; margin: 0 auto; border: 1px solid #f0f0f0; }
+        .input-bar input {
+            flex: 1;
+            border: 1px solid #ddd;
+            border-radius: 25px;
+            padding: 10px 20px;
+            outline: none;
+            font-size: 14px;
+            background: #fafafa;
+        }
 
-        .answer-card { border-left: 4px solid var(--primary); min-height: 150px; }
+        .input-bar button {
+            background: var(--primary);
+            color: white;
+            border: none;
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            transition: 0.2s;
+        }
+        .input-bar button:disabled { background: #ccc; cursor: not-allowed; }
 
-        .loading-container { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 30px 0; }
-        .loading-dots { display: flex; gap: 6px; margin-bottom: 12px; }
+        /* 動態讀取特效 */
+        .loading-container { align-self: flex-start; padding: 10px; }
+        .loading-dots { display: flex; gap: 6px; margin-bottom: 8px; }
         .loading-dots div { width: 8px; height: 8px; background-color: var(--primary); border-radius: 50%; animation: bounce 0.6s infinite alternate; opacity: 0.8; }
         .loading-dots div:nth-child(2) { animation-delay: 0.2s; }
         .loading-dots div:nth-child(3) { animation-delay: 0.4s; }
         @keyframes bounce { from { transform: translateY(0); opacity: 0.4; } to { transform: translateY(-8px); opacity: 1; } }
-        .loading-text { color: #888; font-size: 13px; letter-spacing: 1px; animation: pulse-text 2s infinite ease-in-out; }
+        .loading-text { color: #888; font-size: 12px; letter-spacing: 1px; animation: pulse-text 2s infinite ease-in-out; }
         @keyframes pulse-text { 0% { opacity: 0.5; } 50% { opacity: 1; } 100% { opacity: 0.5; } }
 
-        .ai-content { font-size: 15px; line-height: 2; color: #444; overflow-x: auto; }
+        /* AI Markdown 與 LaTeX 內容排版 */
+        .ai-content { color: #444; overflow-x: auto; }
         .ai-content p { margin-bottom: 15px; text-align: justify; }
         .ai-content h3 { 
             color: var(--dark); 
-            font-size: 18px; 
-            margin-top: 35px; 
-            margin-bottom: 15px;
-            padding-bottom: 8px;
+            font-size: 17px; 
+            margin-top: 25px; 
+            margin-bottom: 10px;
+            padding-bottom: 6px;
             border-bottom: 2px solid var(--primary);
             display: block;
         }
-        .ai-content ul, .ai-content ol { padding-left: 25px; margin-bottom: 20px; }
-        .ai-content li { margin-bottom: 8px; }
+        .ai-content h3:first-child { margin-top: 5px; }
+        .ai-content ul, .ai-content ol { padding-left: 20px; margin-bottom: 15px; }
+        .ai-content li { margin-bottom: 6px; }
 
-        .error-msg { text-align: center; color: #b03a2e; padding: 20px; font-size: 14px; background: #fdfaf6; border: 1px dashed #e5bcb8; border-radius: 4px; }
-
-        /* 多輪對話區塊樣式 */
-        .chat-container { margin-top: 30px; border-top: 1px dashed var(--border); padding-top: 20px; display: none; }
-        .chat-bubble { margin-bottom: 15px; padding: 15px; border-radius: 4px; max-width: 90%; clear: both; font-size: 14px; }
-        .chat-bubble.user { background: #f4f6f4; border-left: 3px solid #ccc; float: right; color: #555; }
-        .chat-bubble.ai { background: white; border: 1px solid var(--border); border-left: 3px solid var(--primary); float: left; width: 100%; }
-        .clearfix::after { content: ""; clear: both; display: table; }
-        
-        .chat-input-area { display: flex; gap: 10px; margin-top: 20px; }
-        .chat-input-area input { flex: 1; padding: 12px; border: 1px solid var(--border); border-radius: 4px; background: #fafafa; outline: none; font-size: 14px; }
-        .chat-input-area button { background: var(--primary); color: white; border: none; padding: 0 20px; border-radius: 4px; cursor: pointer; font-weight: bold; transition: 0.2s; white-space: nowrap; }
-        .chat-input-area button:disabled { background: #ccc; cursor: not-allowed; }
+        .error-msg { text-align: center; color: #b03a2e; padding: 15px; font-size: 14px; background: #fdfaf6; border-radius: 8px; }
     </style>
 </head>
 <body>
@@ -145,41 +204,23 @@
         </div>
     </nav>
 
-    <div class="container">
-        <div class="card question-card" id="question-box" style="display: none;">
-            <h3 class="card-title"><span style="font-size: 12px; background: #eee; padding: 2px 6px; border-radius: 3px; color: #777;">上傳原題</span></h3>
-            <img id="q-img" class="question-image" src="" alt="題目圖片">
-            <div id="q-deleted-msg" style="display: none; text-align: center; color: #888; font-size: 13px; padding: 10px;">
-                (原圖已依系統優化機制安全移除，您仍可檢視下方解析)
-            </div>
+    <div id="chat-window" class="chat-window">
+        <div id="loading-area" class="loading-container">
+            <div class="loading-dots"><div></div><div></div><div></div></div>
+            <div class="loading-text" id="loading-text">正在讀取題目影像...</div>
         </div>
+    </div>
 
-        <div class="card answer-card" id="answer-box">
-            <h3 class="card-title" style="color: var(--primary);">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
-                解析
-            </h3>
-            
-            <div id="loading-area" class="loading-container">
-                <div class="loading-dots"><div></div><div></div><div></div></div>
-                <div class="loading-text" id="loading-text">正在讀取題目影像...</div>
-            </div>
-
-            <div id="ai-result" class="ai-content" style="display: none;"></div>
-
-            <div id="chat-container" class="chat-container">
-                <div id="chat-history-box" class="clearfix"></div>
-                <div class="chat-input-area">
-                    <input type="text" id="chat-input" placeholder="對解析有疑問嗎？請輸入您的問題追問 AI 解題幫手..." autocomplete="off">
-                    <button id="chat-send-btn" onclick="sendFollowUp()">發問</button>
-                </div>
-            </div>
-        </div>
+    <div class="input-bar" id="input-bar" style="display: none;">
+        <input type="text" id="chat-input" placeholder="對解析有疑問嗎？請輸入您的問題追問 AI 解題幫手..." autocomplete="off">
+        <button id="chat-send-btn" onclick="sendFollowUp()">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+        </button>
     </div>
 
     <script>
         // ==========================================
-        // 0. 防拷貝與禁用 F12 機制
+        // 0. 防拷貝與禁用 F12 機制 (完全保留原版)
         // ==========================================
         const LOGIN_PAGE_URL = "index.html";
         document.addEventListener('contextmenu', event => {
@@ -208,7 +249,7 @@
         }, 1000);
 
         // ==========================================
-        // 1. 系統設定區
+        // 1. 系統設定區 (完全保留原版)
         // ==========================================
         const firebaseConfig = {
             apiKey: "AIzaSyALkTnkYY3JZLCTyajahpi4IZKmFX9USdw",
@@ -222,7 +263,7 @@
         const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwxFfufe0b7eJpDxSmLgnbVvlq1itLvoD6ZCpvDJKtJg7ChcWn7lpf9LgZqQ4ZsThJiXQ/exec";
 
         // ==========================================
-        // 2. 進階嚴謹系統提示詞 (System Prompt)
+        // 2. 進階嚴謹系統提示詞 (完全保留原版)
         // ==========================================
         const SYSTEM_PROMPT = `
         你是一位台灣具備頂尖教學經驗、邏輯嚴謹的國高中數理家教。
@@ -252,7 +293,7 @@
         ### 解題步驟
         （請以列表方式（Step 1, Step 2...），一步一步詳細寫下計算過程。每一個算式轉換都必須交代理由，具備絕對的邏輯連貫性，切勿跳躍步驟。）
         ### 解答
-        （請以明確、精煉的方式給出最終答案，答案請用 latex 用外框包住，例如：$$ \boxed{ \text{在此處填入最終答案內容} } $$。若有單位請務必標示清楚。例如：故本題答案為 $x = 5$ 或 $\\text{速度} = 10 \\text{ m/s}$。）
+        （請以明確、精煉的方式給出最終答案，答案請用 latex 用外框包住，例如：$$ \\boxed{ \\text{在此處填入最終答案內容} } $$。若有單位請務必標示清楚。例如：故本題答案為 $x = 5$ 或 $\\text{速度} = 10 \\text{ m/s}$。）
         ### 題目價值評鑑
            - **難易度：** （評估為簡單、中等或困難，並用一句話說明原因）
            - **認知向度：** （依據修訂版 Bloom 認知分類，從「記憶、瞭解、應用、分析、評鑑、創作」中挑選最符合的向度並用一句話說明原因）
@@ -271,6 +312,7 @@
         const statusText = document.getElementById('system-status-text');
         const statusDot = document.getElementById('system-status-dot');
         const loadText = document.getElementById('loading-text');
+        const chatWindow = document.getElementById('chat-window');
 
         // 全域對話狀態紀錄
         window.sessionImage = null;       
@@ -288,6 +330,58 @@
             fetchTaskData(taskId);
         }
 
+        // ==========================================
+        // 【UI 渲染邏輯替換】：配合聊天室框架
+        // ==========================================
+        function scrollToBottom() { 
+            chatWindow.scrollTo({ top: chatWindow.scrollHeight, behavior: 'smooth' }); 
+        }
+
+        function appendChatBubble(role, html, id = null) {
+            const b = document.createElement('div');
+            // ai 的氣泡加上 ai-content 確保 LaTeX 與標題排版正常
+            b.className = `bubble ${role} ${role === 'ai' ? 'ai-content' : ''}`;
+            b.innerHTML = html;
+            const cid = id || "id_" + Date.now();
+            b.id = cid; 
+            chatWindow.appendChild(b); 
+            return cid;
+        }
+
+        function renderInitialResult(text) {
+            document.getElementById('loading-area').style.display = "none";
+            
+            // 1. 建立「學生傳圖片」氣泡
+            if (window.sessionImage) {
+                appendChatBubble('user', `<img src="data:image/jpeg;base64,${window.sessionImage}" class="question-thumb" onclick="window.open(this.src)"><div style="font-size:13px; opacity:0.8; margin-top:5px;">這是我想問的題目。</div>`);
+            } else {
+                appendChatBubble('user', `<div style="font-size:13px; opacity:0.8;">(原圖已依系統機制安全移除，請見下方解析)</div>`);
+            }
+
+            // 2. 建立「AI 老師解析」氣泡
+            appendChatBubble('ai', formatAIResponse(text));
+            
+            document.getElementById('input-bar').style.display = "flex";
+            updateStatus("解析完成", "#8e9775");
+            triggerMathJax();
+            setTimeout(scrollToBottom, 300);
+        }
+
+        function renderChatHistory() {
+            window.followUps.forEach(m => appendChatBubble(m.role==='user'?'user':'ai', m.role==='user'?m.text:formatAIResponse(m.text)));
+            triggerMathJax(); 
+            setTimeout(scrollToBottom, 300);
+        }
+
+        function showError(m) {
+            document.getElementById('loading-area').style.display = "none";
+            appendChatBubble('ai', `<div class="error-msg">${m}</div>`);
+            updateStatus("發生異常", "#c0392b");
+        }
+
+        // ==========================================
+        // 核心運算邏輯 (保留原版，僅修改 DOM 取用)
+        // ==========================================
         function fetchTaskData(tid) {
             db.ref("ai_tasks/" + tid).once("value").then((snap) => {
                 const data = snap.val();
@@ -296,13 +390,9 @@
                     return;
                 }
 
-                document.getElementById('question-box').style.display = "block";
+                // 紀錄圖片到全域變數，不再操作舊的 HTML img 標籤
                 if (data.image) {
                     window.sessionImage = data.image; 
-                    document.getElementById('q-img').src = "data:image/jpeg;base64," + data.image;
-                } else {
-                    document.getElementById('q-img').style.display = "none";
-                    document.getElementById('q-deleted-msg').style.display = "block";
                 }
 
                 if (data.status === "completed" && data.ai_response) {
@@ -312,7 +402,7 @@
                     renderInitialResult(data.ai_response);
                     renderChatHistory(); 
                 } else {
-                    updateStatus("AI 解題幫手運算中", "#f1c40f");
+                    updateStatus("AI 運算中", "#f1c40f");
                     loadText.innerText = "AI 解題幫手正在進行邏輯拆解與運算...";
                     callGeminiFirstTurn(data.image, tid, data.uid);
                 }
@@ -321,9 +411,6 @@
             });
         }
 
-        // ==========================================
-        // 4. 初次呼叫 Gemini (診斷優化版)
-        // ==========================================
         async function callGeminiFirstTurn(base64Img, tid, uid) {
             const payload = {
                 system_instruction: { parts: [{ text: SYSTEM_PROMPT }] },
@@ -391,9 +478,7 @@
                 db.ref("ai_state/" + uid).remove(); 
             }
         }
-        // ==========================================
-        // 5. 接續對話
-        // ==========================================
+
         async function sendFollowUp() {
             const inputEl = document.getElementById('chat-input');
             const btnEl = document.getElementById('chat-send-btn');
@@ -456,37 +541,7 @@
             return processed;
         }
         function triggerMathJax() { if (window.MathJax) MathJax.typesetPromise().catch(e => console.log(e.message)); }
-        function renderInitialResult(text) {
-            document.getElementById('loading-area').style.display = "none";
-            const resultBox = document.getElementById('ai-result');
-            resultBox.innerHTML = formatAIResponse(text);
-            resultBox.style.display = "block";
-            
-            document.getElementById('chat-container').style.display = "block";
-            updateStatus("解析完成", "#8e9775");
-            if (window.MathJax) {
-                MathJax.typesetPromise([resultBox]).catch(err => console.log(err));
-            }
-        }
-        function appendChatBubble(role, html, id = null) {
-            const box = document.getElementById('chat-history-box');
-            const b = document.createElement('div');
-            b.className = `chat-bubble ai-content ${role}`;
-            b.innerHTML = html;
-            const cid = id || "id_" + Date.now();
-            b.id = cid; box.appendChild(b); return cid;
-        }
-        function renderChatHistory() {
-            window.followUps.forEach(m => appendChatBubble(m.role==='user'?'user':'ai', m.role==='user'?m.text:formatAIResponse(m.text)));
-            triggerMathJax(); scrollToBottom();
-        }
-        function scrollToBottom() { window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' }); }
-        function showError(m) {
-            document.getElementById('loading-area').style.display = "none";
-            const box = document.getElementById('ai-result');
-            box.innerHTML = `<div class="error-msg">${m}</div>`;
-            box.style.display = "block"; updateStatus("發生異常", "#c0392b");
-        }
+        
         document.getElementById('chat-input').addEventListener('keypress', e => { if (e.key === 'Enter') sendFollowUp(); });
     </script>
 </body>
