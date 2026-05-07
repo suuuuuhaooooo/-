@@ -17,6 +17,7 @@
     
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-database-compat.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     
     <script>
       MathJax = {
@@ -107,7 +108,17 @@
 
         .ai-content { font-size: 15px; line-height: 2; color: #444; overflow-x: auto; }
         .ai-content p { margin-bottom: 15px; text-align: justify; }
-        .ai-content h3 { color: var(--dark); font-size: 16px; margin-top: 25px; border-left: 3px solid var(--primary); padding-left: 10px; }
+        .ai-content h3 { 
+            color: var(--dark); 
+            font-size: 18px; 
+            margin-top: 35px; 
+            margin-bottom: 15px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid var(--primary);
+            display: block;
+        }
+        .ai-content ul, .ai-content ol { padding-left: 25px; margin-bottom: 20px; }
+        .ai-content li { margin-bottom: 8px; }
 
         .error-msg { text-align: center; color: #b03a2e; padding: 20px; font-size: 14px; background: #fdfaf6; border: 1px dashed #e5bcb8; border-radius: 4px; }
 
@@ -214,11 +225,13 @@
         // 2. 進階嚴謹系統提示詞 (System Prompt)
         // ==========================================
         const SYSTEM_PROMPT = `
-        你是一位具備頂尖教學經驗、邏輯嚴謹的國高中數理家教。
+        你是一位台灣具備頂尖教學經驗、邏輯嚴謹的國高中數理家教。
         你的目標是引導學生深刻理解觀念，而非僅僅給出答案。
 
         【限制】：
         1. 領域限制：僅限解答「數學」與「自然科（物理、化學、生物、地科）」的題目。若圖片內容為其他科目、模糊不清或無關閒聊，請一律終止解題並回覆：「很抱歉，本解題系統僅支援數學與自然之題目。」
+        2. 嚴禁任何開場白、廢話或結語（例如：根據圖片、以下是解析...等）。
+        3. 必須直接從「### 破題分析」開始輸出，直到解答結束。
 
         【排版與語法規範】：
         1. 語言：請一律使用繁體中文，用詞需學術、專業且嚴謹。
@@ -242,7 +255,8 @@
         （請以明確、精煉的方式給出最終答案，若有單位請務必標示清楚。例如：故本題答案為 $x = 5$ 或 $\\text{速度} = 10 \\text{ m/s}$。）
 
         【後續追問回覆格式】：
-        若學生是對先前的解析提出疑問，請直接針對他的問題進行親切、耐心的引導與講解，不需再套用上述四大區塊。
+        1. 若學生是對先前的解析提出疑問，請直接針對他的問題進行親切、耐心的引導與講解，不需再套用上述四大區塊。
+        2. 不需套用上述的 ### 標題格式，請直接回覆文字內容即可。
         `;
 
         firebase.initializeApp(firebaseConfig);
@@ -429,18 +443,27 @@
         }
 
         function base64ImageClean(s) { return s.includes(",") ? s.split(",")[1] : s; }
-        function formatAIResponse(t) {
-            let p = t.replace(/\\begin\{tikzpicture\}([\s\S]*?)\\end\{tikzpicture\}/g, m => `<script type="text/tikz">\n${m}\n<\/script>`);
-            p = p.replace(/\n/g, '<br>');
-            return p.replace(/<script type="text\/tikz">([\s\S]*?)<\/script>/g, m => m.replace(/<br>/g, '\n'));
+        function formatAIResponse(text) {
+            let processed = text.replace(/\\begin\{tikzpicture\}([\s\S]*?)\\end\{tikzpicture\}/g, function(match) {
+                return `<script type="text/tikz">\n${match}\n<\/script>`;
+            });
+            marked.setOptions({ breaks: true, gfm: true });
+            processed = marked.parse(processed);
+
+            return processed;
         }
         function triggerMathJax() { if (window.MathJax) MathJax.typesetPromise().catch(e => console.log(e.message)); }
-        function renderInitialResult(t) {
+        function renderInitialResult(text) {
             document.getElementById('loading-area').style.display = "none";
-            const box = document.getElementById('ai-result');
-            box.innerHTML = formatAIResponse(t); box.style.display = "block";
+            const resultBox = document.getElementById('ai-result');
+            resultBox.innerHTML = formatAIResponse(text);
+            resultBox.style.display = "block";
+            
             document.getElementById('chat-container').style.display = "block";
-            updateStatus("解析完成", "#8e9775"); triggerMathJax();
+            updateStatus("解析完成", "#8e9775");
+            if (window.MathJax) {
+                MathJax.typesetPromise([resultBox]).catch(err => console.log(err));
+            }
         }
         function appendChatBubble(role, html, id = null) {
             const box = document.getElementById('chat-history-box');
