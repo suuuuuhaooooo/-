@@ -35,8 +35,7 @@
         :root { --primary: #8e9775; --dark: #5b6348; --user-bg: #eef1e6; --ai-bg: #ffffff; --bg: #f5f5f5; --border: #eeeeee; }
 
         html, body {
-            margin: 0;
-            padding: 0;
+            margin: 0; padding: 0;
             background-color: var(--bg);
             font-family: "Noto Serif TC", serif;
             color: #333;
@@ -46,11 +45,7 @@
             user-select: none;
         }
 
-        input[type="text"] {
-            -webkit-user-select: auto;
-            user-select: auto;
-            font-family: "Noto Serif TC", serif;
-        }
+        input[type="text"] { -webkit-user-select: auto; user-select: auto; font-family: "Noto Serif TC", serif; }
         .navbar {
             background: white; padding: 15px 20px; box-shadow: 0 1px 5px rgba(0,0,0,0.05);
             display: flex; justify-content: space-between; align-items: center;
@@ -63,12 +58,8 @@
         
         .chat-window {
             padding: 80px 15px 100px 15px; 
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
-            width: 100%;
-            box-sizing: border-box;
-            min-height: 100vh;
+            display: flex; flex-direction: column; gap: 20px;
+            width: 100%; box-sizing: border-box; min-height: 100vh;
         }
 
         .bubble {
@@ -81,59 +72,30 @@
         .bubble.user { align-self: flex-end; background: var(--user-bg); color: #4a5d23; border-bottom-right-radius: 4px; }
 
         .question-thumb {
-            max-width: 100%;
-            max-height: 250px;
-            border-radius: 8px;
-            margin-bottom: 5px;
-            cursor: pointer;
-            border: 2px solid white;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-            display: block;
+            max-width: 100%; max-height: 250px; border-radius: 8px;
+            margin-bottom: 5px; cursor: pointer; border: 2px solid white;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1); display: block;
         }
 
         .input-bar {
-            background: white;
-            padding: 15px 20px;
-            border-top: 1px solid #eee;
-            display: flex;
-            gap: 10px;
-            position: fixed;
-            bottom: 0;
-            width: 100%;
-            box-sizing: border-box;
-            z-index: 10;
+            background: white; padding: 15px 20px; border-top: 1px solid #eee;
+            display: flex; gap: 10px; position: fixed; bottom: 0; width: 100%;
+            box-sizing: border-box; z-index: 10;
         }
 
         .input-bar input {
-            flex: 1;
-            border: 1px solid #ddd;
-            border-radius: 25px;
-            padding: 10px 20px;
-            outline: none;
-            font-size: 14px;
-            background: #fafafa;
+            flex: 1; border: 1px solid #ddd; border-radius: 25px;
+            padding: 10px 20px; outline: none; font-size: 14px; background: #fafafa;
         }
 
         .input-bar button {
-            background: transparent; 
-            color: #333333; 
-            border: none;
-            width: 40px;
-            height: 40px;
-            cursor: pointer;
+            background: transparent; color: #333333; border: none;
+            width: 40px; height: 40px; cursor: pointer;
             display: flex; align-items: center; justify-content: center;
-            transition: 0.2s;
-            padding: 0;
+            transition: 0.2s; padding: 0;
         }
-        .input-bar button:disabled { 
-            background: transparent; 
-            color: #cccccc; 
-            cursor: not-allowed; 
-        }
-
-        .input-bar button:hover:not(:disabled) {
-            transform: scale(1.1);
-        }
+        .input-bar button:disabled { color: #cccccc; cursor: not-allowed; }
+        .input-bar button:hover:not(:disabled) { transform: scale(1.1); }
 
         .loading-container { align-self: flex-start; padding: 10px; }
         .loading-dots { display: flex; gap: 6px; margin-bottom: 8px; }
@@ -144,39 +106,16 @@
         .loading-text { color: #888; font-size: 12px; letter-spacing: 1px; animation: pulse-text 2s infinite ease-in-out; }
         @keyframes pulse-text { 0% { opacity: 0.5; } 50% { opacity: 1; } 100% { opacity: 0.5; } }
 
-        .ai-content { 
-            color: #444; 
-            overflow-x: hidden;
-            width: 100%; 
-        }
-        
+        .ai-content { color: #444; overflow-x: hidden; width: 100%; }
         .ai-content p { margin-bottom: 15px; text-align: justify; }
-        
         .ai-content h3 { 
-            color: var(--dark); 
-            font-size: 17px; 
-            margin-top: 25px; 
-            margin-bottom: 10px;
-            padding-bottom: 6px;
-            border-bottom: 2px solid var(--primary);
-            display: block;
+            color: var(--dark); font-size: 17px; margin-top: 25px; margin-bottom: 10px;
+            padding-bottom: 6px; border-bottom: 2px solid var(--primary); display: block;
         }
         .ai-content h3:first-child { margin-top: 5px; }
         .ai-content ul, .ai-content ol { padding-left: 20px; margin-bottom: 15px; }
         .ai-content li { margin-bottom: 6px; }
-
-        .ai-content mjx-container, .ai-content pre {
-            max-width: 100%;
-            overflow-x: auto;
-            overflow-y: hidden;
-            padding-bottom: 5px;
-        }
-        
-        .ai-content img {
-            max-width: 100%;
-            height: auto;
-        }
-
+        .ai-content mjx-container, .ai-content pre { max-width: 100%; overflow-x: auto; padding-bottom: 5px; }
         .error-msg { text-align: center; color: #b03a2e; padding: 15px; font-size: 14px; background: #fdfaf6; border-radius: 8px; }
     </style>
 </head>
@@ -205,7 +144,9 @@
     </div>
 
     <script>
-        // 🌟 狀態更新函式 (定義在最上方確保全域可用)
+        // ==========================================
+        // 🌟 1. 核心定義與初始化 (解決 is not defined)
+        // ==========================================
         function updateStatus(text, dotColor) {
             const sText = document.getElementById('system-status-text');
             const sDot = document.getElementById('system-status-dot');
@@ -215,38 +156,15 @@
             }
         }
 
-        // ==========================================
-        // 0. 防拷貝與禁用 F12 機制 (完全保留原版)
-        // ==========================================
-        const LOGIN_PAGE_URL = "index.html";
-        document.addEventListener('contextmenu', event => {
-            event.preventDefault();
-            alert("版權所有，翻印必究！");
-        });
-        document.addEventListener('keydown', function(event) {
-            if (event.keyCode === 123 || 
-               (event.ctrlKey && event.shiftKey && (event.keyCode === 73 || event.keyCode === 74)) || 
-               (event.ctrlKey && event.keyCode === 85)) { 
-                event.preventDefault();
-                alert("【警告】\n\n嚴禁開啟開發者工具！系統已記錄異常行為。");
-                window.location.replace(LOGIN_PAGE_URL);
-            }
-        });
+        const chatWindow = document.getElementById('chat-window');
+        const MY_LIFF_ID = "2010007538-HEESDWze"; 
+        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwxFfufe0b7eJpDxSmLgnbVvlq1itLvoD6ZCpvDJKtJg7ChcWn7lpf9LgZqQ4ZsThJiXQ/exec";
+        
+        window.sessionImage = null;       
+        window.initialResponse = "";      
+        window.followUps = [];            
 
-        setInterval(function() {
-            const before = new Date().getTime();
-            debugger;
-            const after = new Date().getTime();
-
-            if (after - before > 100) {
-                alert("【警告】\n\n嚴禁開啟開發者工具！系統已記錄異常行為。");
-                window.location.replace(LOGIN_PAGE_URL);
-            }
-        }, 1000);
-
-        // ==========================================
-        // 1. 系統設定區
-        // ==========================================
+        // Firebase 系統設定
         const firebaseConfig = {
             apiKey: "AIzaSyALkTnkYY3JZLCTyajahpi4IZKmFX9USdw",
             authDomain: "su-hao-classroom.firebaseapp.com",
@@ -256,11 +174,10 @@
             appId: "1:764168135846:web:f2923a5f4952fa1ca64067",
             databaseURL: "https://su-hao-classroom-default-rtdb.firebaseio.com/"
         };
-        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwxFfufe0b7eJpDxSmLgnbVvlq1itLvoD6ZCpvDJKtJg7ChcWn7lpf9LgZqQ4ZsThJiXQ/exec";
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
 
-        // ==========================================
-        // 2. 進階嚴謹系統提示詞
-        // ==========================================
+        // 蘇老師專用系統提示詞
         const SYSTEM_PROMPT = `
         你是一位台灣具備頂尖教學經驗、邏輯嚴謹的國高中數理家教。
         你的目標是引導學生深刻理解觀念，而非僅僅給出答案。
@@ -302,38 +219,18 @@
         2. 不需套用上述的 ### 標題格式，請直接回覆文字內容即可。
         `;
 
-        firebase.initializeApp(firebaseConfig);
-        const db = firebase.database();
-        
-        const urlParams = new URLSearchParams(window.location.search);
-        const taskId = urlParams.get('taskId');
-        const chatWindow = document.getElementById('chat-window');
-
-        // 全域對話狀態紀錄
-        window.sessionImage = null;       
-        window.initialResponse = "";      
-        window.followUps = [];            
-
         // ==========================================
-        // LIFF 身分驗證與啟動邏輯
+        // 🌟 2. 啟動主流程 (地毯式搜尋 taskId)
         // ==========================================
-        const MY_LIFF_ID = "2010007538-HEESDWze"; 
-
-        if (!taskId) {
-            showError("無效的解題連結！請由 LINE 官方帳號重新發起請求。");
-        } else {
-            initializeLiff(); 
-        }
+        initializeLiff();
 
         async function initializeLiff() {
             try {
                 await liff.init({ liffId: MY_LIFF_ID });
                 
-                // 1. 判斷環境
                 if (!liff.isInClient()) {
                     showError("【系統通知】\n為保護專屬版權，本系統僅限在 LINE 聊天室內部開啟。");
-                    const inputBar = document.getElementById('input-bar');
-                    if (inputBar) inputBar.style.display = "none";
+                    document.getElementById('input-bar').style.display = "none";
                     return; 
                 }
 
@@ -342,28 +239,22 @@
                     return;
                 }
 
-                // 🌟 2. 終極參數抓取邏輯 (層層搜索)
-                let tid = new URLSearchParams(window.location.search).get('taskId'); // 先找網址列
-                
+                // 終極地毯式搜尋 taskId
+                let tid = new URLSearchParams(window.location.search).get('taskId'); 
                 if (!tid) {
-                    // 找 LIFF 轉發的數據
                     const searchData = liff.getSearchData();
-                    tid = new URLSearchParams(searchData).get('taskId');
+                    if (searchData) tid = new URLSearchParams(searchData).get('taskId');
                 }
-                
                 if (!tid) {
-                    // 找網址 # 後面的數據 (LIFF 有時會把參數塞這裡)
                     const hashData = window.location.hash.split('?')[1];
-                    tid = new URLSearchParams(hashData).get('taskId');
+                    if (hashData) tid = new URLSearchParams(hashData).get('taskId');
                 }
 
-                // 3. 檢查抓到的 tid 是否有效
                 if (!tid) {
-                    showError("無效的解題連結！請由 LINE 官方帳號重新發起請求。\n(錯誤代碼：Param_Not_Found)");
+                    showError("無效的解題連結！請由 LINE 官方帳號重新發起請求。");
                     return;
                 }
 
-                // 4. 取得 Profile 並執行資料抓取
                 const profile = await liff.getProfile();
                 fetchTaskDataSecurely(tid, profile.userId);
 
@@ -373,7 +264,7 @@
         }
 
         // ==========================================
-        // 核心運算邏輯 (加入身分核對防護)
+        // 🌟 3. 資料核對與運算
         // ==========================================
         function fetchTaskDataSecurely(tid, visitorUid) {
             db.ref("ai_tasks/" + tid).once("value").then((snap) => {
@@ -384,14 +275,12 @@
                 }
 
                 if (data.uid !== visitorUid) {
-                    showError("【系統通知】\n此解析僅限發問者本人檢視。若您是蘇昊數理的學生，請親自在 LINE 官方帳號上傳題目！");
+                    showError("【權限不足】\n此解析僅限發問者本人檢視。");
                     document.getElementById('input-bar').style.display = "none";
                     return;
                 }
 
-                if (data.image) {
-                    window.sessionImage = data.image; 
-                }
+                if (data.image) window.sessionImage = data.image;
 
                 if (data.status === "completed" && data.ai_response) {
                     window.initialResponse = data.ai_response;
@@ -403,57 +292,7 @@
                     document.getElementById('loading-text').innerText = "AI 解題幫手正在進行邏輯拆解與運算...";
                     callGeminiFirstTurn(data.image, tid, data.uid);
                 }
-            }).catch(err => {
-                showError("資料庫連線失敗：" + err.message);
-            });
-        }
-
-        // ==========================================
-        // 聊天室框架
-        // ==========================================
-        function scrollToBottom() { 
-            window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' }); 
-        }
-
-        function appendChatBubble(role, html, id = null) {
-            const b = document.createElement('div');
-            b.className = `bubble ${role} ${role === 'ai' ? 'ai-content' : ''}`;
-            b.innerHTML = html;
-            const randomCode = Math.floor(Math.random() * 10000);
-            const cid = id || "id_" + Date.now() + "_" + randomCode;
-            
-            b.id = cid; 
-            chatWindow.appendChild(b); 
-            return cid;
-        }
-
-        function renderInitialResult(text) {
-            document.getElementById('loading-area').style.display = "none";
-            
-            if (window.sessionImage) {
-                appendChatBubble('user', `<img src="data:image/jpeg;base64,${window.sessionImage}" class="question-thumb" onclick="window.open(this.src)"><div style="font-size:13px; opacity:0.8; margin-top:5px;">這是我想問的題目。</div>`);
-            } else {
-                appendChatBubble('user', `<div style="font-size:13px; opacity:0.8;">(原圖已依系統機制安全移除，請見下方解析)</div>`);
-            }
-
-            appendChatBubble('ai', formatAIResponse(text));
-            
-            document.getElementById('input-bar').style.display = "flex";
-            updateStatus("解析完成", "#8e9775");
-            triggerMathJax();
-            setTimeout(scrollToBottom, 300);
-        }
-
-        function renderChatHistory() {
-            window.followUps.forEach(m => appendChatBubble(m.role==='user'?'user':'ai', m.role==='user'?m.text:formatAIResponse(m.text)));
-            triggerMathJax(); 
-            setTimeout(scrollToBottom, 300);
-        }
-
-        function showError(m) {
-            document.getElementById('loading-area').style.display = "none";
-            appendChatBubble('ai', `<div class="error-msg">${m}</div>`);
-            updateStatus("發生異常", "#c0392b");
+            }).catch(err => showError("資料庫連線失敗：" + err.message));
         }
 
         async function callGeminiFirstTurn(base64Img, tid, uid) {
@@ -461,41 +300,27 @@
                 system_instruction: { parts: [{ text: SYSTEM_PROMPT }] },
                 contents: [{ 
                     parts: [
-                        { text: "請先完整辨識圖片中的所有文字、數學符號、圖形資訊與條件，確認題意後再開始解題。" }, 
+                        { text: "請辨識題目並開始解題。" }, 
                         { inline_data: { mime_type: "image/jpeg", data: base64ImageClean(base64Img) } }
                     ] 
                 }],
-                generationConfig: { temperature: 0.05, topP: 0.8, topK: 16, maxOutputTokens: 8192 }
+                generationConfig: { temperature: 0.05, maxOutputTokens: 8192 }
             };
-        
             try {
                 const response = await fetch(SCRIPT_URL, {
-                    method: 'POST', 
-                    headers: { "Content-Type": "text/plain;charset=utf-8" },
+                    method: 'POST', headers: { "Content-Type": "text/plain;charset=utf-8" },
                     body: JSON.stringify({ action: "askGemini", geminiPayload: payload })
                 });
-        
                 const resultText = await response.text();
-                if (!resultText || resultText.trim() === "" || resultText.startsWith("<")) {
-                    throw new Error("伺服器回傳格式異常");
-                }
-        
                 let result = JSON.parse(resultText);
-                if (result.error) throw new Error(result.error.message || "API 錯誤");
-        
                 const aiText = result?.candidates?.[0]?.content?.parts?.[0]?.text;
                 if (aiText) {
                     window.initialResponse = aiText;
                     renderInitialResult(aiText);
                     db.ref("ai_tasks/" + tid).update({ status: "completed", ai_response: aiText, image: null });
                     db.ref("ai_state/" + uid).remove();
-                } else {
-                    throw new Error("AI 無法產生內容");
-                }
-            } catch (error) {
-                showError("【錯誤】" + error.message);
-                db.ref("ai_state/" + uid).remove(); 
-            }
+                } else { throw new Error("AI 無法產生內容"); }
+            } catch (error) { showError("【錯誤】" + error.message); }
         }
 
         async function sendFollowUp() {
@@ -512,8 +337,6 @@
             let apiContents = [];
             if (window.sessionImage) {
                 apiContents.push({ role: "user", parts: [{ text: "這是題目圖。" }, { inline_data: { mime_type: "image/jpeg", data: base64ImageClean(window.sessionImage) } }] });
-            } else {
-                apiContents.push({ role: "user", parts: [{ text: "這是一題數理題目。" }] });
             }
             apiContents.push({ role: "model", parts: [{ text: window.initialResponse }] });
             window.followUps.forEach(msg => apiContents.push({ role: msg.role === 'user' ? "user" : "model", parts: [{ text: msg.text }] }));
@@ -521,23 +344,23 @@
 
             try {
                 const response = await fetch(SCRIPT_URL, { 
-                    method: 'POST', 
-                    headers: { "Content-Type": "text/plain;charset=utf-8" },
-                    body: JSON.stringify({ action: "askGemini", geminiPayload: { system_instruction: { parts: [{ text: SYSTEM_PROMPT }] }, contents: apiContents, 
-                    generationConfig: { temperature: 0.05, topP: 0.8, topK: 16, maxOutputTokens: 8192 } } }) 
+                    method: 'POST', headers: { "Content-Type": "text/plain;charset=utf-8" },
+                    body: JSON.stringify({ action: "askGemini", geminiPayload: { system_instruction: { parts: [{ text: SYSTEM_PROMPT }] }, contents: apiContents } }) 
                 });
                 const result = await response.json();
                 const aiReply = result?.candidates?.[0]?.content?.parts?.[0]?.text;
                 
-                if (!aiReply) throw new Error("AI 無有效回覆");
-                
-                const loadingBubble = document.getElementById(loadingId);
-                if (loadingBubble) loadingBubble.remove();
-
-                appendChatBubble('ai', formatAIResponse(aiReply));
-                window.followUps.push({ role: "user", text: userText }, { role: "model", text: aiReply });
-                db.ref("ai_tasks/" + taskId).update({ follow_ups: window.followUps });
-                if (window.MathJax) MathJax.typesetPromise();
+                if (aiReply) {
+                    const lb = document.getElementById(loadingId);
+                    if (lb) lb.remove();
+                    appendChatBubble('ai', formatAIResponse(aiReply));
+                    window.followUps.push({ role: "user", text: userText }, { role: "model", text: aiReply });
+                    
+                    // 再次從網址或 LIFF 抓取最新的 taskId 以供寫入
+                    const currentTid = new URLSearchParams(window.location.search).get('taskId') || new URLSearchParams(liff.getSearchData()).get('taskId');
+                    db.ref("ai_tasks/" + currentTid).update({ follow_ups: window.followUps });
+                    triggerMathJax();
+                }
             } catch (e) {
                 const lb = document.getElementById(loadingId);
                 if (lb) lb.innerHTML = "<span style='color:#c0392b;'>錯誤: " + e.message + "</span>";
@@ -545,15 +368,58 @@
             inputEl.disabled = false; btnEl.disabled = false; inputEl.focus(); scrollToBottom();
         }
 
-        function base64ImageClean(s) { return s.includes(",") ? s.split(",")[1] : s; }
+        // ==========================================
+        // 🌟 4. 輔助功能與安全性 (防拷貝、渲染)
+        // ==========================================
+        const LOGIN_PAGE_URL = "index.html";
+        document.addEventListener('contextmenu', e => { e.preventDefault(); alert("版權所有，翻印必究！"); });
+        document.addEventListener('keydown', e => {
+            if (e.keyCode === 123 || (e.ctrlKey && e.shiftKey && (e.keyCode === 73 || e.keyCode === 74)) || (e.ctrlKey && e.keyCode === 85)) { 
+                e.preventDefault(); alert("【警告】\n\n嚴禁開啟開發者工具！"); window.location.replace(LOGIN_PAGE_URL);
+            }
+        });
+
+        function appendChatBubble(role, html, id = null) {
+            const b = document.createElement('div');
+            b.className = `bubble ${role} ${role === 'ai' ? 'ai-content' : ''}`;
+            b.innerHTML = html;
+            const cid = id || "id_" + Date.now() + "_" + Math.floor(Math.random() * 1000);
+            b.id = cid; chatWindow.appendChild(b); 
+            return cid;
+        }
+
+        function renderInitialResult(text) {
+            document.getElementById('loading-area').style.display = "none";
+            if (window.sessionImage) {
+                appendChatBubble('user', `<img src="data:image/jpeg;base64,${window.sessionImage}" class="question-thumb" onclick="window.open(this.src)"><div style="font-size:13px; opacity:0.8; margin-top:5px;">這是我想問的題目。</div>`);
+            }
+            appendChatBubble('ai', formatAIResponse(text));
+            document.getElementById('input-bar').style.display = "flex";
+            updateStatus("解析完成", "#8e9775");
+            triggerMathJax();
+            setTimeout(scrollToBottom, 300);
+        }
+
+        function renderChatHistory() {
+            window.followUps.forEach(m => appendChatBubble(m.role==='user'?'user':'ai', m.role==='user'?m.text:formatAIResponse(m.text)));
+            triggerMathJax(); setTimeout(scrollToBottom, 300);
+        }
+
+        function showError(m) {
+            document.getElementById('loading-area').style.display = "none";
+            appendChatBubble('ai', `<div class="error-msg">${m}</div>`);
+            updateStatus("發生異常", "#c0392b");
+        }
+
         function formatAIResponse(text) {
-            let processed = text.replace(/\\begin\{tikzpicture\}([\s\S]*?)\\end\{tikzpicture\}/g, function(match) {
-                return `<script type="text/tikz">\n${match}\n<\/script>`;
-            });
+            let processed = text.replace(/\\begin\{tikzpicture\}([\s\S]*?)\\end\{tikzpicture\}/g, m => `<script type="text/tikz">\n${m}\n<\/script>`);
             marked.setOptions({ breaks: true, gfm: true });
             return marked.parse(processed);
         }
+
         function triggerMathJax() { if (window.MathJax) MathJax.typesetPromise().catch(e => console.log(e.message)); }
+        function base64ImageClean(s) { return s.includes(",") ? s.split(",")[1] : s; }
+        function scrollToBottom() { window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' }); }
         
         document.getElementById('chat-input').addEventListener('keypress', e => { if (e.key === 'Enter') sendFollowUp(); });
     </script>
