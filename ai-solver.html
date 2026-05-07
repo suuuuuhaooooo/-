@@ -227,6 +227,8 @@
            - 繪圖程式碼必須完全相容於 pdflatex。
            - 請直接輸出 \\begin{tikzpicture} ... \\end{tikzpicture}，不需要包含 \\documentclass 或 \\usepackage 等前置宣告。
            - 圖形需力求簡潔、比例正確，並標示該圖繪需要的參數。
+        4. 若無法確定題目資訊、符號、圖片細節或數值，禁止自行腦補或猜測，必須明確指出哪部分無法辨識。
+        5. 若為計算題，每一步皆需重新檢查前一步的運算結果，避免符號錯誤與計算失誤。
 
         【初次解析回覆格式】：
         若你是在初次解析圖片，請嚴格按照以下四個區塊來建構你的回覆，並使用 Markdown 的 ### 標題格式：
@@ -309,7 +311,12 @@
             const payload = {
                 system_instruction: { parts: [{ text: SYSTEM_PROMPT }] },
                 contents: [{ parts: [{ text: "請解析這張圖片中的題目。" }, { inline_data: { mime_type: "image/jpeg", data: base64ImageClean(base64Img) } }] }],
-                generationConfig: { temperature: 0.2 }
+                generationConfig: {
+                    temperature: 0.05,
+                    topP: 0.8,
+                    topK: 16,
+                    maxOutputTokens: 8192
+                }
             };
 
             try {
@@ -368,7 +375,13 @@
                 const response = await fetch(SCRIPT_URL, { 
                     method: 'POST', 
                     headers: { "Content-Type": "text/plain;charset=utf-8" },
-                    body: JSON.stringify({ action: "askGemini", geminiPayload: { system_instruction: { parts: [{ text: SYSTEM_PROMPT }] }, contents: apiContents, generationConfig: { temperature: 0.2 } } }) 
+                    body: JSON.stringify({ action: "askGemini", geminiPayload: { system_instruction: { parts: [{ text: SYSTEM_PROMPT }] }, contents: apiContents, 
+                    generationConfig: {
+                        temperature: 0.05,
+                        topP: 0.8,
+                        topK: 16,
+                        maxOutputTokens: 8192
+                    } } }) 
                 });
                 const result = await response.json();
                 const aiReply = result.candidates[0].content.parts[0].text;
