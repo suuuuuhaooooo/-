@@ -121,17 +121,25 @@
         }
 
         .input-bar button {
-            background: var(--primary);
-            color: white;
+            background: transparent; /* 移除底色 */
+            color: #333333; /* 改為深黑色圖示 */
             border: none;
-            width: 45px;
-            height: 45px;
-            border-radius: 50%;
+            width: 40px;
+            height: 40px;
             cursor: pointer;
             display: flex; align-items: center; justify-content: center;
             transition: 0.2s;
+            padding: 0;
         }
-        .input-bar button:disabled { background: #ccc; cursor: not-allowed; }
+        .input-bar button:disabled { 
+            background: transparent; 
+            color: #cccccc; /* 禁用時圖示變成淺灰色 */
+            cursor: not-allowed; 
+        }
+
+        .input-bar button:hover:not(:disabled) {
+            transform: scale(1.1);
+        }
 
         /* 動態讀取特效 */
         .loading-container { align-self: flex-start; padding: 10px; }
@@ -279,6 +287,8 @@
         （請以列表方式（Step 1, Step 2...），一步一步詳細寫下計算過程。每一個算式轉換都必須交代理由，具備絕對的邏輯連貫性，切勿跳躍步驟。）
         ### 解答
         （請以明確、精煉的方式給出最終答案，答案請用 latex 用外框包住，例如：$$ \\boxed{ \\text{在此處填入最終答案內容} } $$。若有單位請務必標示清楚。例如：故本題答案為 $x = 5$ 或 $\\text{速度} = 10 \\text{ m/s}$。）
+        ### ☆ 不昊你時間小撇步
+        （若此題有「速解法」、「秒殺公式」、「極限代入法」或「考試偷吃步」，請在此區塊簡短分享。請用補習班名師分享秘訣的輕鬆、自信口吻來撰寫。**若此題為必須按部就班計算的常規題、真的沒有速解法，請絕對要直接省略此區塊，嚴禁為了寫而硬湊。**）
         ### 題目價值評鑑
            - **難易度：** （評估為簡單、中等或困難，並用一句話說明原因）
            - **認知向度：** （依據修訂版 Bloom 認知分類，從「記憶、瞭解、應用、分析、評鑑、創作」中挑選最符合的向度並用一句話說明原因）
