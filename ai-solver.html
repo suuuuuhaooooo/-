@@ -144,15 +144,13 @@
     </div>
 
     <script>
-        // ==========================================
-        // 🌟 1. 核心定義與初始化 (解決 is not defined)
-        // ==========================================
+        // 核心函式定義 (放在最前面，解決 is not defined)
         function updateStatus(text, dotColor) {
-            const sText = document.getElementById('system-status-text');
-            const sDot = document.getElementById('system-status-dot');
-            if (sText && sDot) {
-                sText.innerText = text;
-                sDot.style.backgroundColor = dotColor;
+            const statusText = document.getElementById('system-status-text');
+            const statusDot = document.getElementById('system-status-dot');
+            if (statusText && statusDot) {
+                statusText.innerText = text;
+                statusDot.style.backgroundColor = dotColor;
             }
         }
 
@@ -163,6 +161,7 @@
         window.sessionImage = null;       
         window.initialResponse = "";      
         window.followUps = [];            
+        window.activeTaskId = null; // 全域儲存目前的 taskId
 
         // Firebase 系統設定
         const firebaseConfig = {
@@ -177,7 +176,6 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
 
-        // 蘇老師專用系統提示詞
         const SYSTEM_PROMPT = `
         你是一位台灣具備頂尖教學經驗、邏輯嚴謹的國高中數理家教。
         你的目標是引導學生深刻理解觀念，而非僅僅給出答案。
@@ -255,6 +253,7 @@
                     return;
                 }
 
+                window.activeTaskId = tid; // 存入全域變數
                 const profile = await liff.getProfile();
                 fetchTaskDataSecurely(tid, profile.userId);
 
@@ -263,19 +262,17 @@
             }
         }
 
-        // ==========================================
-        // 🌟 3. 資料核對與運算
-        // ==========================================
         function fetchTaskDataSecurely(tid, visitorUid) {
             db.ref("ai_tasks/" + tid).once("value").then((snap) => {
                 const data = snap.val();
                 if (!data) {
-                    showError("找不到此題目的資料，提問可能已過期刪除。");
+                    showError("找不到此題目的資料，提問可能已過期。");
                     return;
                 }
 
+                // 🔴 權限檢查 (若報錯請檢查 code.gs 是否存入的是 userId)
                 if (data.uid !== visitorUid) {
-                    showError("【權限不足】\n此解析僅限發問者本人檢視。");
+                    showError("【權限不足】\n此解析僅限發問者本人檢視。若您是學生，請親自上傳題目！");
                     document.getElementById('input-bar').style.display = "none";
                     return;
                 }
@@ -298,12 +295,7 @@
         async function callGeminiFirstTurn(base64Img, tid, uid) {
             const payload = {
                 system_instruction: { parts: [{ text: SYSTEM_PROMPT }] },
-                contents: [{ 
-                    parts: [
-                        { text: "請辨識題目並開始解題。" }, 
-                        { inline_data: { mime_type: "image/jpeg", data: base64ImageClean(base64Img) } }
-                    ] 
-                }],
+                contents: [{ parts: [{ text: "請辨識題目並開始解題。" }, { inline_data: { mime_type: "image/jpeg", data: base64ImageClean(base64Img) } }] }],
                 generationConfig: { temperature: 0.05, maxOutputTokens: 8192 }
             };
             try {
@@ -318,26 +310,22 @@
                     window.initialResponse = aiText;
                     renderInitialResult(aiText);
                     db.ref("ai_tasks/" + tid).update({ status: "completed", ai_response: aiText, image: null });
-                    db.ref("ai_state/" + uid).remove();
                 } else { throw new Error("AI 無法產生內容"); }
             } catch (error) { showError("【錯誤】" + error.message); }
         }
 
         async function sendFollowUp() {
             const inputEl = document.getElementById('chat-input');
-            const btnEl = document.getElementById('chat-send-btn');
             const userText = inputEl.value.trim();
-            if (!userText) return;
+            if (!userText || !window.activeTaskId) return;
             
-            inputEl.value = ""; inputEl.disabled = true; btnEl.disabled = true;
+            inputEl.value = ""; inputEl.disabled = true;
             appendChatBubble('user', userText);
             const loadingId = appendChatBubble('ai', "<div class='loading-dots' style='margin:0;'><div></div><div></div><div></div></div>");
             scrollToBottom();
 
             let apiContents = [];
-            if (window.sessionImage) {
-                apiContents.push({ role: "user", parts: [{ text: "這是題目圖。" }, { inline_data: { mime_type: "image/jpeg", data: base64ImageClean(window.sessionImage) } }] });
-            }
+            if (window.sessionImage) apiContents.push({ role: "user", parts: [{ text: "題目圖" }, { inline_data: { mime_type: "image/jpeg", data: base64ImageClean(window.sessionImage) } }] });
             apiContents.push({ role: "model", parts: [{ text: window.initialResponse }] });
             window.followUps.forEach(msg => apiContents.push({ role: msg.role === 'user' ? "user" : "model", parts: [{ text: msg.text }] }));
             apiContents.push({ role: "user", parts: [{ text: userText }] });
@@ -349,50 +337,29 @@
                 });
                 const result = await response.json();
                 const aiReply = result?.candidates?.[0]?.content?.parts?.[0]?.text;
-                
+                document.getElementById(loadingId).remove();
                 if (aiReply) {
-                    const lb = document.getElementById(loadingId);
-                    if (lb) lb.remove();
                     appendChatBubble('ai', formatAIResponse(aiReply));
                     window.followUps.push({ role: "user", text: userText }, { role: "model", text: aiReply });
-                    
-                    // 再次從網址或 LIFF 抓取最新的 taskId 以供寫入
-                    const currentTid = new URLSearchParams(window.location.search).get('taskId') || new URLSearchParams(liff.getSearchData()).get('taskId');
-                    db.ref("ai_tasks/" + currentTid).update({ follow_ups: window.followUps });
+                    db.ref("ai_tasks/" + window.activeTaskId).update({ follow_ups: window.followUps });
                     triggerMathJax();
                 }
-            } catch (e) {
-                const lb = document.getElementById(loadingId);
-                if (lb) lb.innerHTML = "<span style='color:#c0392b;'>錯誤: " + e.message + "</span>";
-            }
-            inputEl.disabled = false; btnEl.disabled = false; inputEl.focus(); scrollToBottom();
+            } catch (e) { document.getElementById(loadingId).innerText = "錯誤: " + e.message; }
+            inputEl.disabled = false; inputEl.focus(); scrollToBottom();
         }
 
-        // ==========================================
-        // 🌟 4. 輔助功能與安全性 (防拷貝、渲染)
-        // ==========================================
-        const LOGIN_PAGE_URL = "index.html";
-        document.addEventListener('contextmenu', e => { e.preventDefault(); alert("版權所有，翻印必究！"); });
-        document.addEventListener('keydown', e => {
-            if (e.keyCode === 123 || (e.ctrlKey && e.shiftKey && (e.keyCode === 73 || e.keyCode === 74)) || (e.ctrlKey && e.keyCode === 85)) { 
-                e.preventDefault(); alert("【警告】\n\n嚴禁開啟開發者工具！"); window.location.replace(LOGIN_PAGE_URL);
-            }
-        });
-
+        // 🌟 3. 輔助功能
         function appendChatBubble(role, html, id = null) {
             const b = document.createElement('div');
             b.className = `bubble ${role} ${role === 'ai' ? 'ai-content' : ''}`;
             b.innerHTML = html;
-            const cid = id || "id_" + Date.now() + "_" + Math.floor(Math.random() * 1000);
-            b.id = cid; chatWindow.appendChild(b); 
-            return cid;
+            const cid = id || "id_" + Date.now();
+            b.id = cid; chatWindow.appendChild(b); return cid;
         }
 
         function renderInitialResult(text) {
             document.getElementById('loading-area').style.display = "none";
-            if (window.sessionImage) {
-                appendChatBubble('user', `<img src="data:image/jpeg;base64,${window.sessionImage}" class="question-thumb" onclick="window.open(this.src)"><div style="font-size:13px; opacity:0.8; margin-top:5px;">這是我想問的題目。</div>`);
-            }
+            if (window.sessionImage) appendChatBubble('user', `<img src="data:image/jpeg;base64,${window.sessionImage}" class="question-thumb" onclick="window.open(this.src)"><div style="font-size:13px; opacity:0.8;">這是我想問的題目。</div>`);
             appendChatBubble('ai', formatAIResponse(text));
             document.getElementById('input-bar').style.display = "flex";
             updateStatus("解析完成", "#8e9775");
@@ -422,6 +389,7 @@
         function scrollToBottom() { window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' }); }
         
         document.getElementById('chat-input').addEventListener('keypress', e => { if (e.key === 'Enter') sendFollowUp(); });
+        document.addEventListener('contextmenu', e => { e.preventDefault(); alert("版權所有，翻印必究！"); });
     </script>
 </body>
 </html>
