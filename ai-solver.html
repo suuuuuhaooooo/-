@@ -310,7 +310,7 @@
         async function callGeminiFirstTurn(base64Img, tid, uid) {
             const payload = {
                 system_instruction: { parts: [{ text: SYSTEM_PROMPT }] },
-                contents: [{ parts: [{ text: "請解析這張圖片中的題目。" }, { inline_data: { mime_type: "image/jpeg", data: base64ImageClean(base64Img) } }] }],
+                contents: [{ parts: [{ text: "請先完整辨識圖片中的所有文字、數學符號、圖形資訊與條件，確認題意後再開始解題。若有任何符號模糊、圖片不完整或無法辨識之處，請明確指出，不可自行猜測。" }, { inline_data: { mime_type: "image/jpeg", data: base64ImageClean(base64Img) } }] }],
                 generationConfig: {
                     temperature: 0.05,
                     topP: 0.8,
@@ -332,7 +332,13 @@
                 if (result.error) throw new Error(JSON.stringify(result.error));
                 
                 if (result.candidates && result.candidates.length > 0) {
-                    const aiText = result.candidates[0].content.parts[0].text;
+                    const aiText =
+                      result?.candidates?.[0]?.content?.parts?.[0]?.text;
+                    
+                    if (!aiText) {
+                        console.log(result);
+                        throw new Error("AI 解題幫手無有效回覆");
+                    }
                     window.initialResponse = aiText;
                     renderInitialResult(aiText);
                     db.ref("ai_tasks/" + tid).update({ status: "completed", ai_response: aiText, image: null });
@@ -371,7 +377,6 @@
             apiContents.push({ role: "user", parts: [{ text: userText }] });
 
             try {
-                // [修改] 追問邏輯之前漏寫了 SCRIPT_URL 的連通
                 const response = await fetch(SCRIPT_URL, { 
                     method: 'POST', 
                     headers: { "Content-Type": "text/plain;charset=utf-8" },
@@ -384,7 +389,13 @@
                     } } }) 
                 });
                 const result = await response.json();
-                const aiReply = result.candidates[0].content.parts[0].text;
+                const aiReply =
+                  result?.candidates?.[0]?.content?.parts?.[0]?.text;
+                
+                if (!aiReply) {
+                    console.log(result);
+                    throw new Error("AI 解題幫手無有效回覆");
+                }
                 document.getElementById(loadingId).remove();
                 appendChatBubble('ai', formatAIResponse(aiReply));
                 window.followUps.push({ role: "user", text: userText }, { role: "model", text: aiReply });
