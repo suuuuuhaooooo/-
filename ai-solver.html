@@ -18,6 +18,7 @@
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-database-compat.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
     
     <script>
       MathJax = {
@@ -315,15 +316,78 @@
         window.initialResponse = "";      
         window.followUps = [];            
 
-        function updateStatus(text, dotColor) {
-            statusText.innerText = text;
-            statusDot.style.backgroundColor = dotColor;
-        }
+        // ==========================================
+        // LIFF 身分驗證與啟動邏輯
+        // ==========================================
+        const MY_LIFF_ID = "請在這裡貼上您的_LIFF_ID"; 
 
         if (!taskId) {
             showError("無效的解題連結！請由 LINE 官方帳號重新發起請求。");
         } else {
-            fetchTaskData(taskId);
+            initializeLiff(); // 改為呼叫 LIFF 初始化
+        }
+
+        async function initializeLiff() {
+            try {
+                await liff.init({ liffId: MY_LIFF_ID });
+                if (!liff.isInClient()) {
+                    showError("【系統通知】\n為保護專屬版權，本系統僅限在 LINE 聊天室內部開啟，不支援使用電腦版或外部瀏覽器檢視。");
+                    document.getElementById('input-bar').style.display = "none";
+                    return; // 程式直接中斷，完全不抓取資料
+                }
+
+                if (!liff.isLoggedIn()) {
+                    liff.login();
+                    return;
+                }
+
+                // 取得點開網址的使用者 LINE ID
+                const profile = await liff.getProfile();
+                const currentLineUserId = profile.userId;
+
+                // 執行驗證與抓取資料
+                fetchTaskDataSecurely(taskId, currentLineUserId);
+
+            } catch (err) {
+                showError("LINE 驗證初始化失敗：" + err.message);
+            }
+        }
+
+        // ==========================================
+        // 核心運算邏輯 (加入身分核對防護)
+        // ==========================================
+        function fetchTaskDataSecurely(tid, visitorUid) {
+            db.ref("ai_tasks/" + tid).once("value").then((snap) => {
+                const data = snap.val();
+                if (!data) {
+                    showError("找不到此題目的資料，提問可能已過期刪除。");
+                    return;
+                }
+
+                if (data.uid !== visitorUid) {
+                    showError("【系統通知】\n此解析僅限發問者本人檢視。若您是蘇昊數理的學生，請親自在 LINE 官方帳號上傳題目！");
+                    document.getElementById('input-bar').style.display = "none";
+                    return;
+                }
+
+                if (data.image) {
+                    window.sessionImage = data.image; 
+                }
+
+                if (data.status === "completed" && data.ai_response) {
+                    window.initialResponse = data.ai_response;
+                    window.followUps = data.follow_ups || [];
+                    
+                    renderInitialResult(data.ai_response);
+                    renderChatHistory(); 
+                } else {
+                    updateStatus("解題中", "#f1c40f");
+                    document.getElementById('loading-text').innerText = "AI 解題幫手正在進行邏輯拆解與運算...";
+                    callGeminiFirstTurn(data.image, tid, data.uid);
+                }
+            }).catch(err => {
+                showError("資料庫連線失敗：" + err.message);
+            });
         }
 
         // ==========================================
