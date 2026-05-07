@@ -303,198 +303,120 @@
         }
 
         // ==========================================
-        // 4. 初次呼叫 Gemini (含 Firebase 容量優化)
+        // 4. 初次呼叫 Gemini (診斷優化版)
         // ==========================================
         async function callGeminiFirstTurn(base64Img, tid, uid) {
-            // [刪除] 刪除了錯誤的 endpoint 變數（原本誤植為 Google API 網址）
-
             const payload = {
                 system_instruction: { parts: [{ text: SYSTEM_PROMPT }] },
-                contents: [{
-                    parts: [
-                        { text: "請解析這張圖片中的題目。" },
-                        { inline_data: { mime_type: "image/jpeg", data: base64ImageClean(base64Img) } }
-                    ]
-                }],
+                contents: [{ parts: [{ text: "請解析這張圖片中的題目。" }, { inline_data: { mime_type: "image/jpeg", data: base64ImageClean(base64Img) } }] }],
                 generationConfig: { temperature: 0.2 }
             };
 
             try {
-                // [修改] fetch 的對象改為 SCRIPT_URL (您的 GAS 後端)
-                // [新增] headers 加入 text/plain 避免 CORS 預檢失敗
                 const response = await fetch(SCRIPT_URL, {
                     method: 'POST', 
                     headers: { "Content-Type": "text/plain;charset=utf-8" },
                     body: JSON.stringify({ action: "askGemini", geminiPayload: payload })
                 });
-                const result = await response.json();
+                const resultText = await response.text();
+                if (resultText.startsWith("<")) throw new Error("GAS 伺服器回傳 HTML (可能是權限或語法錯誤)");
+                
+                const result = JSON.parse(resultText);
+                if (result.error) throw new Error(JSON.stringify(result.error));
                 
                 if (result.candidates && result.candidates.length > 0) {
                     const aiText = result.candidates[0].content.parts[0].text;
                     window.initialResponse = aiText;
                     renderInitialResult(aiText);
-                    
-                    db.ref("ai_tasks/" + tid).update({ 
-                        status: "completed", 
-                        ai_response: aiText,
-                        image: null  
-                    });
+                    db.ref("ai_tasks/" + tid).update({ status: "completed", ai_response: aiText, image: null });
                     db.ref("ai_state/" + uid).remove();
                 } else {
-                    throw new Error("AI 解題幫手無法產生回應");
+                    throw new Error("AI 解題幫手無法產生回應內容");
                 }
             } catch (error) {
-                showError("AI 解題幫手忙碌中或發生異常，請稍後再試。");
+                // [修改] 將真實錯誤顯示出來，不要再用死板的「發生異常」
+                showError("【錯誤】" + error.message);
                 db.ref("ai_state/" + uid).remove(); 
             }
         }
 
         // ==========================================
-        // 5. 繼續對話系統 (追問邏輯)
+        // 5. 接續對話
         // ==========================================
         async function sendFollowUp() {
             const inputEl = document.getElementById('chat-input');
             const btnEl = document.getElementById('chat-send-btn');
             const userText = inputEl.value.trim();
             if (!userText) return;
-
-            inputEl.value = "";
-            inputEl.disabled = true;
-            btnEl.disabled = true;
-
+            inputEl.value = ""; inputEl.disabled = true; btnEl.disabled = true;
             appendChatBubble('user', userText);
             const loadingId = appendChatBubble('ai', "<div class='loading-dots' style='margin:0;'><div></div><div></div><div></div></div>");
             scrollToBottom();
 
             let apiContents = [];
-            
             if (window.sessionImage) {
-                apiContents.push({ role: "user", parts: [
-                    { text: "請解析這張圖片中的題目。" },
-                    { inline_data: { mime_type: "image/jpeg", data: base64ImageClean(window.sessionImage) } }
-                ]});
+                apiContents.push({ role: "user", parts: [{ text: "這是題目圖。" }, { inline_data: { mime_type: "image/jpeg", data: base64ImageClean(window.sessionImage) } }] });
             } else {
-                apiContents.push({ role: "user", parts: [{ text: "這是一題數學或理科題目。(原圖已被系統釋放)" }] });
+                apiContents.push({ role: "user", parts: [{ text: "這是一題數理題目。" }] });
             }
             apiContents.push({ role: "model", parts: [{ text: window.initialResponse }] });
-
-            window.followUps.forEach(msg => {
-                apiContents.push({ role: msg.role === 'user' ? "user" : "model", parts: [{ text: msg.text }] });
-            });
-
+            window.followUps.forEach(msg => apiContents.push({ role: msg.role === 'user' ? "user" : "model", parts: [{ text: msg.text }] }));
             apiContents.push({ role: "user", parts: [{ text: userText }] });
 
             try {
-                // [刪除] 刪除了含 GEMINI_API_KEY 的 endpoint 變數（安全性與邏輯錯誤）
-
-                const payload = {
-                    system_instruction: { parts: [{ text: SYSTEM_PROMPT }] },
-                    contents: apiContents,
-                    generationConfig: { temperature: 0.2 }
-                };
-
-                // [修改] fetch 的對象改為 SCRIPT_URL (您的 GAS 後端)
-                // [新增] headers 加入 text/plain 避免 CORS 預檢失敗
+                // [修改] 追問邏輯之前漏寫了 SCRIPT_URL 的連通
                 const response = await fetch(SCRIPT_URL, { 
                     method: 'POST', 
                     headers: { "Content-Type": "text/plain;charset=utf-8" },
-                    body: JSON.stringify({ action: "askGemini", geminiPayload: payload }) 
+                    body: JSON.stringify({ action: "askGemini", geminiPayload: { system_instruction: { parts: [{ text: SYSTEM_PROMPT }] }, contents: apiContents, generationConfig: { temperature: 0.2 } } }) 
                 });
                 const result = await response.json();
-                
                 const aiReply = result.candidates[0].content.parts[0].text;
-                
                 document.getElementById(loadingId).remove();
                 appendChatBubble('ai', formatAIResponse(aiReply));
-                
-                window.followUps.push({ role: "user", text: userText });
-                window.followUps.push({ role: "model", text: aiReply });
+                window.followUps.push({ role: "user", text: userText }, { role: "model", text: aiReply });
                 db.ref("ai_tasks/" + taskId).update({ follow_ups: window.followUps });
-
-                triggerMathJax();
-
+                if (window.MathJax) MathJax.typesetPromise();
             } catch (e) {
-                document.getElementById(loadingId).innerHTML = "<span style='color:#c0392b;'>網路異常，請重新整理後再發問。</span>";
+                document.getElementById(loadingId).innerHTML = "<span style='color:#c0392b;'>錯誤: " + e.message + "</span>";
             }
-
-            inputEl.disabled = false;
-            btnEl.disabled = false;
-            inputEl.focus();
-            scrollToBottom();
+            inputEl.disabled = false; btnEl.disabled = false; inputEl.focus(); scrollToBottom();
         }
 
-        // ==========================================
-        // 6. UI 渲染工具
-        // ==========================================
-        function base64ImageClean(base64Str) {
-            return base64Str.includes(",") ? base64Str.split(",")[1] : base64Str;
+        function base64ImageClean(s) { return s.includes(",") ? s.split(",")[1] : s; }
+        function formatAIResponse(t) {
+            let p = t.replace(/\\begin\{tikzpicture\}([\s\S]*?)\\end\{tikzpicture\}/g, m => `<script type="text/tikz">\n${m}\n<\/script>`);
+            p = p.replace(/\n/g, '<br>');
+            return p.replace(/<script type="text\/tikz">([\s\S]*?)<\/script>/g, m => m.replace(/<br>/g, '\n'));
         }
-
-        function formatAIResponse(text) {
-            let processed = text.replace(/\\begin\{tikzpicture\}([\s\S]*?)\\end\{tikzpicture\}/g, function(match) {
-                return `<script type="text/tikz">\n${match}\n<\/script>`;
-            });
-            processed = processed.replace(/\n/g, '<br>');
-            processed = processed.replace(/<script type="text\/tikz">([\s\S]*?)<\/script>/g, function(match) {
-                return match.replace(/<br>/g, '\n');
-            });
-            return processed;
-        }
-
-        function triggerMathJax() {
-            if (window.MathJax) {
-                MathJax.typesetPromise().catch(err => console.log('MathJax 錯誤:', err.message));
-            }
-        }
-
-        function renderInitialResult(text) {
+        function triggerMathJax() { if (window.MathJax) MathJax.typesetPromise().catch(e => console.log(e.message)); }
+        function renderInitialResult(t) {
             document.getElementById('loading-area').style.display = "none";
-            const resultBox = document.getElementById('ai-result');
-            
-            resultBox.innerHTML = formatAIResponse(text);
-            resultBox.style.display = "block";
-            
-            // 顯示對話框
+            const box = document.getElementById('ai-result');
+            box.innerHTML = formatAIResponse(t); box.style.display = "block";
             document.getElementById('chat-container').style.display = "block";
-            updateStatus("解析完成", "#8e9775");
-            triggerMathJax();
+            updateStatus("解析完成", "#8e9775"); triggerMathJax();
         }
-
-        function appendChatBubble(role, htmlContent, customId = null) {
+        function appendChatBubble(role, html, id = null) {
             const box = document.getElementById('chat-history-box');
-            const bubble = document.createElement('div');
-            bubble.className = `chat-bubble ai-content ${role}`;
-            bubble.innerHTML = htmlContent;
-            if (customId) bubble.id = customId;
-            box.appendChild(bubble);
-            return customId;
+            const b = document.createElement('div');
+            b.className = `chat-bubble ai-content ${role}`;
+            b.innerHTML = html;
+            const cid = id || "id_" + Date.now();
+            b.id = cid; box.appendChild(b); return cid;
         }
-
         function renderChatHistory() {
-            if (window.followUps && window.followUps.length > 0) {
-                window.followUps.forEach(msg => {
-                    appendChatBubble(msg.role === 'user' ? 'user' : 'ai', msg.role === 'user' ? msg.text : formatAIResponse(msg.text));
-                });
-                triggerMathJax();
-                scrollToBottom();
-            }
+            window.followUps.forEach(m => appendChatBubble(m.role==='user'?'user':'ai', m.role==='user'?m.text:formatAIResponse(m.text)));
+            triggerMathJax(); scrollToBottom();
         }
-
-        function scrollToBottom() {
-            window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
-        }
-
-        function showError(msg) {
+        function scrollToBottom() { window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' }); }
+        function showError(m) {
             document.getElementById('loading-area').style.display = "none";
-            const resultBox = document.getElementById('ai-result');
-            resultBox.innerHTML = `<div class="error-msg">${msg}</div>`;
-            resultBox.style.display = "block";
-            updateStatus("發生異常", "#c0392b");
+            const box = document.getElementById('ai-result');
+            box.innerHTML = `<div class="error-msg">${m}</div>`;
+            box.style.display = "block"; updateStatus("發生異常", "#c0392b");
         }
-
-        document.getElementById('chat-input').addEventListener('keypress', function (e) {
-            if (e.key === 'Enter') sendFollowUp();
-        });
+        document.getElementById('chat-input').addEventListener('keypress', e => { if (e.key === 'Enter') sendFollowUp(); });
     </script>
 </body>
 </html>
