@@ -328,20 +328,30 @@
         async function initializeLiff() {
             try {
                 await liff.init({ liffId: MY_LIFF_ID });
+                
+                // 1. 判斷環境
                 if (!liff.isInClient()) {
-                    showError("【系統通知】\n為保護權益，本系統僅限在 LINE 聊天室內部開啟，不支援使用電腦版或外部瀏覽器檢視。");
+                    showError("【系統通知】\n為保護權益，本系統僅限在 LINE 聊天室內部開啟。");
                     document.getElementById('input-bar').style.display = "none";
                     return; 
                 }
-
                 if (!liff.isLoggedIn()) {
                     liff.login();
                     return;
                 }
-
+                let tid = taskId; 
+                if (!tid) {
+                    const liffData = liff.getSearchData();
+                    const liffParams = new URLSearchParams(liffData);
+                    tid = liffParams.get('taskId');
+                }
+                if (!tid) {
+                    showError("無效的解題連結！請由 LINE 官方帳號重新發起請求。");
+                    return;
+                }
+                // 取得 Profile 並執行
                 const profile = await liff.getProfile();
-                fetchTaskDataSecurely(taskId, profile.userId);
-
+                fetchTaskDataSecurely(tid, profile.userId);
             } catch (err) {
                 showError("LINE 驗證初始化失敗：" + err.message);
             }
