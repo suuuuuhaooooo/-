@@ -60,13 +60,8 @@
         .brand-title { font-weight: 700; font-size: 16px; color: var(--dark); letter-spacing: 1px; }
         .status-badge { color: #888; font-size: 12px; font-weight: bold; letter-spacing: 1px; display: flex; align-items: center; gap: 6px; }
         .status-dot { width: 8px; height: 8px; background-color: #ccc; border-radius: 50%; }
-        .input-bar {
-            background: white; padding: 15px 20px; border-top: 1px solid #eee;
-            display: flex; gap: 10px; 
-            position: fixed; bottom: 0; left: 0; width: 100%; box-sizing: border-box; z-index: 100;
-        }
+        
         .chat-window {
-
             padding: 80px 15px 100px 15px; 
             display: flex;
             flex-direction: column;
@@ -85,7 +80,6 @@
         .bubble.ai { align-self: flex-start; background: var(--ai-bg); border-bottom-left-radius: 4px; border: 1px solid #eaeaea; }
         .bubble.user { align-self: flex-end; background: var(--user-bg); color: #4a5d23; border-bottom-right-radius: 4px; }
 
-        /* 題目原圖小縮圖設定 */
         .question-thumb {
             max-width: 100%;
             max-height: 250px;
@@ -97,7 +91,6 @@
             display: block;
         }
 
-        /* 底部輸入區域 */
         .input-bar {
             background: white;
             padding: 15px 20px;
@@ -122,8 +115,8 @@
         }
 
         .input-bar button {
-            background: transparent; /* 移除底色 */
-            color: #333333; /* 改為深黑色圖示 */
+            background: transparent; 
+            color: #333333; 
             border: none;
             width: 40px;
             height: 40px;
@@ -134,7 +127,7 @@
         }
         .input-bar button:disabled { 
             background: transparent; 
-            color: #cccccc; /* 禁用時圖示變成淺灰色 */
+            color: #cccccc; 
             cursor: not-allowed; 
         }
 
@@ -142,7 +135,6 @@
             transform: scale(1.1);
         }
 
-        /* 動態讀取特效 */
         .loading-container { align-self: flex-start; padding: 10px; }
         .loading-dots { display: flex; gap: 6px; margin-bottom: 8px; }
         .loading-dots div { width: 8px; height: 8px; background-color: var(--primary); border-radius: 50%; animation: bounce 0.6s infinite alternate; opacity: 0.8; }
@@ -213,6 +205,16 @@
     </div>
 
     <script>
+        // 🌟 狀態更新函式 (定義在最上方確保全域可用)
+        function updateStatus(text, dotColor) {
+            const sText = document.getElementById('system-status-text');
+            const sDot = document.getElementById('system-status-dot');
+            if (sText && sDot) {
+                sText.innerText = text;
+                sDot.style.backgroundColor = dotColor;
+            }
+        }
+
         // ==========================================
         // 0. 防拷貝與禁用 F12 機制 (完全保留原版)
         // ==========================================
@@ -243,7 +245,7 @@
         }, 1000);
 
         // ==========================================
-        // 1. 系統設定區 (完全保留原版)
+        // 1. 系統設定區
         // ==========================================
         const firebaseConfig = {
             apiKey: "AIzaSyALkTnkYY3JZLCTyajahpi4IZKmFX9USdw",
@@ -257,7 +259,7 @@
         const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwxFfufe0b7eJpDxSmLgnbVvlq1itLvoD6ZCpvDJKtJg7ChcWn7lpf9LgZqQ4ZsThJiXQ/exec";
 
         // ==========================================
-        // 2. 進階嚴謹系統提示詞 (完全保留原版)
+        // 2. 進階嚴謹系統提示詞
         // ==========================================
         const SYSTEM_PROMPT = `
         你是一位台灣具備頂尖教學經驗、邏輯嚴謹的國高中數理家教。
@@ -305,10 +307,6 @@
         
         const urlParams = new URLSearchParams(window.location.search);
         const taskId = urlParams.get('taskId');
-
-        const statusText = document.getElementById('system-status-text');
-        const statusDot = document.getElementById('system-status-dot');
-        const loadText = document.getElementById('loading-text');
         const chatWindow = document.getElementById('chat-window');
 
         // 全域對話狀態紀錄
@@ -324,7 +322,7 @@
         if (!taskId) {
             showError("無效的解題連結！請由 LINE 官方帳號重新發起請求。");
         } else {
-            initializeLiff(); // 改為呼叫 LIFF 初始化
+            initializeLiff(); 
         }
 
         async function initializeLiff() {
@@ -333,7 +331,7 @@
                 if (!liff.isInClient()) {
                     showError("【系統通知】\n為保護專屬版權，本系統僅限在 LINE 聊天室內部開啟，不支援使用電腦版或外部瀏覽器檢視。");
                     document.getElementById('input-bar').style.display = "none";
-                    return; // 程式直接中斷，完全不抓取資料
+                    return; 
                 }
 
                 if (!liff.isLoggedIn()) {
@@ -341,12 +339,8 @@
                     return;
                 }
 
-                // 取得點開網址的使用者 LINE ID
                 const profile = await liff.getProfile();
-                const currentLineUserId = profile.userId;
-
-                // 執行驗證與抓取資料
-                fetchTaskDataSecurely(taskId, currentLineUserId);
+                fetchTaskDataSecurely(taskId, profile.userId);
 
             } catch (err) {
                 showError("LINE 驗證初始化失敗：" + err.message);
@@ -377,7 +371,6 @@
                 if (data.status === "completed" && data.ai_response) {
                     window.initialResponse = data.ai_response;
                     window.followUps = data.follow_ups || [];
-                    
                     renderInitialResult(data.ai_response);
                     renderChatHistory(); 
                 } else {
@@ -412,14 +405,12 @@
         function renderInitialResult(text) {
             document.getElementById('loading-area').style.display = "none";
             
-            // 1. 建立「學生傳圖片」氣泡
             if (window.sessionImage) {
                 appendChatBubble('user', `<img src="data:image/jpeg;base64,${window.sessionImage}" class="question-thumb" onclick="window.open(this.src)"><div style="font-size:13px; opacity:0.8; margin-top:5px;">這是我想問的題目。</div>`);
             } else {
                 appendChatBubble('user', `<div style="font-size:13px; opacity:0.8;">(原圖已依系統機制安全移除，請見下方解析)</div>`);
             }
 
-            // 2. 建立「AI 老師解析」氣泡
             appendChatBubble('ai', formatAIResponse(text));
             
             document.getElementById('input-bar').style.display = "flex";
@@ -440,53 +431,16 @@
             updateStatus("發生異常", "#c0392b");
         }
 
-        // ==========================================
-        // 核心運算邏輯 (保留原版，僅修改 DOM 取用)
-        // ==========================================
-        function fetchTaskData(tid) {
-            db.ref("ai_tasks/" + tid).once("value").then((snap) => {
-                const data = snap.val();
-                if (!data) {
-                    showError("找不到此題目的資料，提問可能已過期刪除。");
-                    return;
-                }
-
-                // 紀錄圖片到全域變數，不再操作舊的 HTML img 標籤
-                if (data.image) {
-                    window.sessionImage = data.image; 
-                }
-
-                if (data.status === "completed" && data.ai_response) {
-                    window.initialResponse = data.ai_response;
-                    window.followUps = data.follow_ups || [];
-                    
-                    renderInitialResult(data.ai_response);
-                    renderChatHistory(); 
-                } else {
-                    updateStatus("AI 運算中", "#f1c40f");
-                    loadText.innerText = "AI 解題幫手正在進行邏輯拆解與運算...";
-                    callGeminiFirstTurn(data.image, tid, data.uid);
-                }
-            }).catch(err => {
-                showError("資料庫連線失敗：" + err.message);
-            });
-        }
-
         async function callGeminiFirstTurn(base64Img, tid, uid) {
             const payload = {
                 system_instruction: { parts: [{ text: SYSTEM_PROMPT }] },
                 contents: [{ 
                     parts: [
-                        { text: "請先完整辨識圖片中的所有文字、數學符號、圖形資訊與條件，確認題意後再開始解題。若有任何符號模糊、圖片不完整或無法辨識之處，請明確指出，不可自行猜測。" }, 
+                        { text: "請先完整辨識圖片中的所有文字、數學符號、圖形資訊與條件，確認題意後再開始解題。" }, 
                         { inline_data: { mime_type: "image/jpeg", data: base64ImageClean(base64Img) } }
                     ] 
                 }],
-                generationConfig: {
-                    temperature: 0.05,
-                    topP: 0.8,
-                    topK: 16,
-                    maxOutputTokens: 8192
-                }
+                generationConfig: { temperature: 0.05, topP: 0.8, topK: 16, maxOutputTokens: 8192 }
             };
         
             try {
@@ -496,44 +450,23 @@
                     body: JSON.stringify({ action: "askGemini", geminiPayload: payload })
                 });
         
-                // 1. 先獲取文字內容
                 const resultText = await response.text();
-                console.log("GAS 原始回傳：", resultText);
-        
-                // 2. 嚴格檢查空內容或非 JSON 格式
-                if (!resultText || resultText.trim() === "") {
-                    throw new Error("伺服器回傳空內容");
-                }
-                
-                if (resultText.startsWith("<")) {
-                    throw new Error("伺服器回傳 HTML 而非 JSON");
+                if (!resultText || resultText.trim() === "" || resultText.startsWith("<")) {
+                    throw new Error("伺服器回傳格式異常");
                 }
         
-                let result;
-                try {
-                    result = JSON.parse(resultText);
-                } catch(e) {
-                    throw new Error("JSON 解析失敗：" + e.message + " | 內容：" + resultText.substring(0, 50));
-                }
-        
-                // 3. 處理 Gemini 回傳邏輯
-                if (result.error) {
-                    throw new Error("Google API 錯誤：" + (result.error.message || JSON.stringify(result.error)));
-                }
+                let result = JSON.parse(resultText);
+                if (result.error) throw new Error(result.error.message || "API 錯誤");
         
                 const aiText = result?.candidates?.[0]?.content?.parts?.[0]?.text;
-        
                 if (aiText) {
                     window.initialResponse = aiText;
                     renderInitialResult(aiText);
                     db.ref("ai_tasks/" + tid).update({ status: "completed", ai_response: aiText, image: null });
                     db.ref("ai_state/" + uid).remove();
                 } else {
-                    // 處理被安全過濾或其他導致無內容的情況
-                    console.warn("Gemini 回傳結構異常：", result);
-                    throw new Error("AI 解題幫手無法產生回應內容");
+                    throw new Error("AI 無法產生內容");
                 }
-        
             } catch (error) {
                 showError("【錯誤】" + error.message);
                 db.ref("ai_state/" + uid).remove(); 
@@ -545,6 +478,7 @@
             const btnEl = document.getElementById('chat-send-btn');
             const userText = inputEl.value.trim();
             if (!userText) return;
+            
             inputEl.value = ""; inputEl.disabled = true; btnEl.disabled = true;
             appendChatBubble('user', userText);
             const loadingId = appendChatBubble('ai', "<div class='loading-dots' style='margin:0;'><div></div><div></div><div></div></div>");
@@ -565,28 +499,23 @@
                     method: 'POST', 
                     headers: { "Content-Type": "text/plain;charset=utf-8" },
                     body: JSON.stringify({ action: "askGemini", geminiPayload: { system_instruction: { parts: [{ text: SYSTEM_PROMPT }] }, contents: apiContents, 
-                    generationConfig: {
-                        temperature: 0.05,
-                        topP: 0.8,
-                        topK: 16,
-                        maxOutputTokens: 8192
-                    } } }) 
+                    generationConfig: { temperature: 0.05, topP: 0.8, topK: 16, maxOutputTokens: 8192 } } }) 
                 });
                 const result = await response.json();
-                const aiReply =
-                  result?.candidates?.[0]?.content?.parts?.[0]?.text;
+                const aiReply = result?.candidates?.[0]?.content?.parts?.[0]?.text;
                 
-                if (!aiReply) {
-                    console.log(result);
-                    throw new Error("AI 解題幫手無有效回覆");
-                }
-                document.getElementById(loadingId).remove();
+                if (!aiReply) throw new Error("AI 無有效回覆");
+                
+                const loadingBubble = document.getElementById(loadingId);
+                if (loadingBubble) loadingBubble.remove();
+
                 appendChatBubble('ai', formatAIResponse(aiReply));
                 window.followUps.push({ role: "user", text: userText }, { role: "model", text: aiReply });
                 db.ref("ai_tasks/" + taskId).update({ follow_ups: window.followUps });
                 if (window.MathJax) MathJax.typesetPromise();
             } catch (e) {
-                document.getElementById(loadingId).innerHTML = "<span style='color:#c0392b;'>錯誤: " + e.message + "</span>";
+                const lb = document.getElementById(loadingId);
+                if (lb) lb.innerHTML = "<span style='color:#c0392b;'>錯誤: " + e.message + "</span>";
             }
             inputEl.disabled = false; btnEl.disabled = false; inputEl.focus(); scrollToBottom();
         }
@@ -597,9 +526,7 @@
                 return `<script type="text/tikz">\n${match}\n<\/script>`;
             });
             marked.setOptions({ breaks: true, gfm: true });
-            processed = marked.parse(processed);
-
-            return processed;
+            return marked.parse(processed);
         }
         function triggerMathJax() { if (window.MathJax) MathJax.typesetPromise().catch(e => console.log(e.message)); }
         
