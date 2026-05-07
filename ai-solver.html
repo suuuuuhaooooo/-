@@ -328,7 +328,24 @@
                 const resultText = await response.text();
                 if (resultText.startsWith("<")) throw new Error("GAS 伺服器回傳 HTML (可能是權限或語法錯誤)");
                 
-                const result = JSON.parse(resultText);
+                console.log("原始回傳：", resultText);
+
+                if (!resultText || resultText.trim() === "") {
+                    throw new Error("伺服器回傳空內容");
+                }
+                
+                if (resultText.startsWith("<")) {
+                    throw new Error("伺服器回傳 HTML 而非 JSON");
+                }
+                
+                let result;
+                
+                try {
+                    result = JSON.parse(resultText);
+                } catch(e) {
+                    console.log("JSON parse 失敗內容：", resultText);
+                    throw new Error("JSON Parse Error：" + e.message);
+                }
                 if (result.error) throw new Error(JSON.stringify(result.error));
                 
                 if (result.candidates && result.candidates.length > 0) {
