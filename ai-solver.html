@@ -33,11 +33,12 @@
     <style>
         :root { --primary: #8e9775; --dark: #5b6348; --user-bg: #eef1e6; --ai-bg: #ffffff; --bg: #f5f5f5; --border: #eeeeee; }
         
-        /* 防拷貝與選取設定 & 全螢幕固定設定 */
+        /* 防拷貝與選取設定 & 全螢幕 App 級別鎖定 */
         html, body {
             height: 100%;
             margin: 0;
-            overflow: hidden; /* 防止整個網頁捲動，改由對話框內部捲動 */
+            overflow: hidden; /* 鎖死最外層 */
+            overscroll-behavior-y: none; /* 🚫 阻止手機瀏覽器邊緣下拉的「彈跳感」，更像原生 App */
             background-color: var(--bg);
             font-family: "Noto Serif TC", serif;
             color: #333;
@@ -45,17 +46,11 @@
             
             -webkit-touch-callout: none;
             -webkit-user-select: none;
-            -khtml-user-select: none;
-            -moz-user-select: none;
-            -ms-user-select: none;
             user-select: none;
         }
 
-        /* 允許輸入框可以打字選取 */
         input[type="text"] {
             -webkit-user-select: auto;
-            -moz-user-select: auto;
-            -ms-user-select: auto;
             user-select: auto;
             font-family: "Noto Serif TC", serif;
         }
@@ -67,37 +62,41 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            position: absolute;
+            position: fixed; /* 🔒 永遠鎖死在畫面最上方 */
             top: 0;
             width: 100%;
             box-sizing: border-box;
-            z-index: 10;
+            z-index: 100;
         }
+        
         .brand-title { font-weight: 700; font-size: 16px; color: var(--dark); letter-spacing: 1px; }
         .status-badge { color: #888; font-size: 12px; font-weight: bold; letter-spacing: 1px; display: flex; align-items: center; gap: 6px; }
         .status-dot { width: 8px; height: 8px; background-color: #ccc; border-radius: 50%; }
 
-        /* 聊天主視窗：可捲動區域 */
         .chat-window {
-            height: calc(100% - 130px); 
-            margin-top: 55px; 
-            overflow-y: auto; /* 允許上下滑動 */
-            overflow-x: hidden;
-            padding: 20px;
+            position: absolute;
+            top: 54px; /* 避開頂部 navbar */
+            bottom: 76px; /* 避開底部 input-bar */
+            width: 100%;
+            box-sizing: border-box;
+            overflow-y: auto; 
+            overflow-x: hidden; 
+            -webkit-overflow-scrolling: touch;
+            padding: 20px 15px;
             display: flex;
             flex-direction: column;
             gap: 20px;
         }
 
-        /* 氣泡通用樣式 */
+        /* 氣泡通用樣式：放寬限制，讓長篇解析更好閱讀 */
         .bubble {
-            max-width: 85%;
-            padding: 15px 20px;
-            border-radius: 18px;
+            max-width: 92%;
+            padding: 18px 22px;
+            border-radius: 20px;
             font-size: 15px;
             line-height: 1.8;
             position: relative;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.02);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
             word-wrap: break-word;
             overflow-wrap: break-word;
             word-break: break-word; 
@@ -108,7 +107,7 @@
             align-self: flex-start;
             background: var(--ai-bg);
             border-bottom-left-radius: 4px;
-            border: 1px solid #e0e0e0;
+            border: 1px solid #eaeaea;
         }
 
         /* 使用者氣泡：右側 */
@@ -232,7 +231,7 @@
     </div>
 
     <div class="input-bar" id="input-bar" style="display: none;">
-        <input type="text" id="chat-input" placeholder="對解析有疑問嗎？請輸入您的問題追問 AI 解題幫手..." autocomplete="off">
+        <input type="text" id="chat-input" placeholder="對解析有疑問嗎？" autocomplete="off">
         <button id="chat-send-btn" onclick="sendFollowUp()">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
         </button>
