@@ -331,27 +331,42 @@
                 
                 // 1. 判斷環境
                 if (!liff.isInClient()) {
-                    showError("【系統通知】\n為保護權益，本系統僅限在 LINE 聊天室內部開啟。");
-                    document.getElementById('input-bar').style.display = "none";
+                    showError("【系統通知】\n為保護專屬版權，本系統僅限在 LINE 聊天室內部開啟。");
+                    const inputBar = document.getElementById('input-bar');
+                    if (inputBar) inputBar.style.display = "none";
                     return; 
                 }
+
                 if (!liff.isLoggedIn()) {
                     liff.login();
                     return;
                 }
-                let tid = taskId; 
+
+                // 🌟 2. 終極參數抓取邏輯 (層層搜索)
+                let tid = new URLSearchParams(window.location.search).get('taskId'); // 先找網址列
+                
                 if (!tid) {
-                    const liffData = liff.getSearchData();
-                    const liffParams = new URLSearchParams(liffData);
-                    tid = liffParams.get('taskId');
+                    // 找 LIFF 轉發的數據
+                    const searchData = liff.getSearchData();
+                    tid = new URLSearchParams(searchData).get('taskId');
                 }
+                
                 if (!tid) {
-                    showError("無效的解題連結！請由 LINE 官方帳號重新發起請求。");
+                    // 找網址 # 後面的數據 (LIFF 有時會把參數塞這裡)
+                    const hashData = window.location.hash.split('?')[1];
+                    tid = new URLSearchParams(hashData).get('taskId');
+                }
+
+                // 3. 檢查抓到的 tid 是否有效
+                if (!tid) {
+                    showError("無效的解題連結！請由 LINE 官方帳號重新發起請求。\n(錯誤代碼：Param_Not_Found)");
                     return;
                 }
-                // 取得 Profile 並執行
+
+                // 4. 取得 Profile 並執行資料抓取
                 const profile = await liff.getProfile();
                 fetchTaskDataSecurely(tid, profile.userId);
+
             } catch (err) {
                 showError("LINE 驗證初始化失敗：" + err.message);
             }
