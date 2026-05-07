@@ -223,7 +223,7 @@
         【排版與語法規範】：
         1. 語言：請一律使用繁體中文，用詞需學術、專業且嚴謹。
         2. 數學算式：嚴格使用 LaTeX 語法。行內公式必須使用 $ 包覆（例如：$x=2$），獨立成行的置中公式必須使用 $$ 包覆（例如：$$y = ax^2 + bx + c$$）。
-        3. 圖解輔助：若題目為幾何、力學受力圖、電路圖等需要圖像輔助說明的題型，請務必使用 TikZ 語法繪製簡圖。
+        3. 圖解輔助：若題目為幾何、力學受力圖、電路圖等需要圖像輔助說明應的題型，請務必使用 TikZ 語法繪製簡圖。
            - 繪圖程式碼必須完全相容於 pdflatex。
            - 請直接輸出 \\begin{tikzpicture} ... \\end{tikzpicture}，不需要包含 \\documentclass 或 \\usepackage 等前置宣告。
            - 圖形需力求簡潔、比例正確，並標示該圖繪需要的參數。
@@ -269,9 +269,6 @@
             fetchTaskData(taskId);
         }
 
-        // ==========================================
-        // 3. 讀取 Firebase 資料
-        // ==========================================
         function fetchTaskData(tid) {
             db.ref("ai_tasks/" + tid).once("value").then((snap) => {
                 const data = snap.val();
@@ -280,23 +277,21 @@
                     return;
                 }
 
-                // 處理容量優化：圖片可能已經被刪除
                 document.getElementById('question-box').style.display = "block";
                 if (data.image) {
-                    window.sessionImage = data.image; // 存入記憶體
+                    window.sessionImage = data.image; 
                     document.getElementById('q-img').src = "data:image/jpeg;base64," + data.image;
                 } else {
                     document.getElementById('q-img').style.display = "none";
                     document.getElementById('q-deleted-msg').style.display = "block";
                 }
 
-                // 判斷是否已經有解析紀錄
                 if (data.status === "completed" && data.ai_response) {
                     window.initialResponse = data.ai_response;
                     window.followUps = data.follow_ups || [];
                     
                     renderInitialResult(data.ai_response);
-                    renderChatHistory(); // 渲染過往對話
+                    renderChatHistory(); 
                 } else {
                     updateStatus("AI 解題幫手運算中", "#f1c40f");
                     loadText.innerText = "AI 解題幫手正在進行邏輯拆解與運算...";
@@ -308,9 +303,11 @@
         }
 
         // ==========================================
-        // 4. 初次呼叫 Gemini
+        // 4. 初次呼叫 Gemini (含 Firebase 容量優化)
         // ==========================================
         async function callGeminiFirstTurn(base64Img, tid, uid) {
+            // [刪除] 刪除了錯誤的 endpoint 變數（原本誤植為 Google API 網址）
+
             const payload = {
                 system_instruction: { parts: [{ text: SYSTEM_PROMPT }] },
                 contents: [{
@@ -323,8 +320,11 @@
             };
 
             try {
+                // [修改] fetch 的對象改為 SCRIPT_URL (您的 GAS 後端)
+                // [新增] headers 加入 text/plain 避免 CORS 預檢失敗
                 const response = await fetch(SCRIPT_URL, {
                     method: 'POST', 
+                    headers: { "Content-Type": "text/plain;charset=utf-8" },
                     body: JSON.stringify({ action: "askGemini", geminiPayload: payload })
                 });
                 const result = await response.json();
@@ -366,7 +366,6 @@
             const loadingId = appendChatBubble('ai', "<div class='loading-dots' style='margin:0;'><div></div><div></div><div></div></div>");
             scrollToBottom();
 
-            // 準備打包對話紀錄
             let apiContents = [];
             
             if (window.sessionImage) {
@@ -386,14 +385,19 @@
             apiContents.push({ role: "user", parts: [{ text: userText }] });
 
             try {
+                // [刪除] 刪除了含 GEMINI_API_KEY 的 endpoint 變數（安全性與邏輯錯誤）
+
                 const payload = {
                     system_instruction: { parts: [{ text: SYSTEM_PROMPT }] },
                     contents: apiContents,
                     generationConfig: { temperature: 0.2 }
                 };
 
+                // [修改] fetch 的對象改為 SCRIPT_URL (您的 GAS 後端)
+                // [新增] headers 加入 text/plain 避免 CORS 預檢失敗
                 const response = await fetch(SCRIPT_URL, { 
                     method: 'POST', 
+                    headers: { "Content-Type": "text/plain;charset=utf-8" },
                     body: JSON.stringify({ action: "askGemini", geminiPayload: payload }) 
                 });
                 const result = await response.json();
