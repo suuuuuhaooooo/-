@@ -79,9 +79,10 @@
 
         /* 聊天主視窗：可捲動區域 */
         .chat-window {
-            height: calc(100% - 130px); /* 扣除導航列與底部輸入框 */
-            margin-top: 55px; /* 避開 navbar */
-            overflow-y: auto;
+            height: calc(100% - 130px); 
+            margin-top: 55px; 
+            overflow-y: auto; /* 允許上下滑動 */
+            overflow-x: hidden;
             padding: 20px;
             display: flex;
             flex-direction: column;
@@ -98,6 +99,8 @@
             position: relative;
             box-shadow: 0 2px 5px rgba(0,0,0,0.02);
             word-wrap: break-word;
+            overflow-wrap: break-word;
+            word-break: break-word; 
         }
 
         /* AI 氣泡：左側 */
@@ -175,9 +178,14 @@
         .loading-text { color: #888; font-size: 12px; letter-spacing: 1px; animation: pulse-text 2s infinite ease-in-out; }
         @keyframes pulse-text { 0% { opacity: 0.5; } 50% { opacity: 1; } 100% { opacity: 0.5; } }
 
-        /* AI Markdown 與 LaTeX 內容排版 */
-        .ai-content { color: #444; overflow-x: auto; }
+        .ai-content { 
+            color: #444; 
+            overflow-x: hidden;
+            width: 100%; 
+        }
+        
         .ai-content p { margin-bottom: 15px; text-align: justify; }
+        
         .ai-content h3 { 
             color: var(--dark); 
             font-size: 17px; 
@@ -190,6 +198,18 @@
         .ai-content h3:first-child { margin-top: 5px; }
         .ai-content ul, .ai-content ol { padding-left: 20px; margin-bottom: 15px; }
         .ai-content li { margin-bottom: 6px; }
+
+        .ai-content mjx-container, .ai-content pre {
+            max-width: 100%;
+            overflow-x: auto;
+            overflow-y: hidden;
+            padding-bottom: 5px;
+        }
+        
+        .ai-content img {
+            max-width: 100%;
+            height: auto;
+        }
 
         .error-msg { text-align: center; color: #b03a2e; padding: 15px; font-size: 14px; background: #fdfaf6; border-radius: 8px; }
     </style>
