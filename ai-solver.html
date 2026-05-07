@@ -310,7 +310,7 @@
                     window.initialResponse = aiText;
                     renderInitialResult(aiText);
                     db.ref("ai_tasks/" + tid).update({ status: "completed", ai_response: aiText, image: null });
-                } else { throw new Error("AI 無法產生內容"); }
+                } else { throw new Error("AI 解題幫手無法產生內容，請關閉視窗重試。"); }
             } catch (error) { showError("【錯誤】" + error.message); }
         }
 
