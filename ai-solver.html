@@ -310,7 +310,12 @@
         async function callGeminiFirstTurn(base64Img, tid, uid) {
             const payload = {
                 system_instruction: { parts: [{ text: SYSTEM_PROMPT }] },
-                contents: [{ parts: [{ text: "請先完整辨識圖片中的所有文字、數學符號、圖形資訊與條件，確認題意後再開始解題。若有任何符號模糊、圖片不完整或無法辨識之處，請明確指出，不可自行猜測。" }, { inline_data: { mime_type: "image/jpeg", data: base64ImageClean(base64Img) } }] }],
+                contents: [{ 
+                    parts: [
+                        { text: "請先完整辨識圖片中的所有文字、數學符號、圖形資訊與條件，確認題意後再開始解題。若有任何符號模糊、圖片不完整或無法辨識之處，請明確指出，不可自行猜測。" }, 
+                        { inline_data: { mime_type: "image/jpeg", data: base64ImageClean(base64Img) } }
+                    ] 
+                }],
                 generationConfig: {
                     temperature: 0.05,
                     topP: 0.8,
@@ -318,18 +323,19 @@
                     maxOutputTokens: 8192
                 }
             };
-
+        
             try {
                 const response = await fetch(SCRIPT_URL, {
                     method: 'POST', 
                     headers: { "Content-Type": "text/plain;charset=utf-8" },
                     body: JSON.stringify({ action: "askGemini", geminiPayload: payload })
                 });
+        
+                // 1. 先獲取文字內容
                 const resultText = await response.text();
-                if (resultText.startsWith("<")) throw new Error("GAS 伺服器回傳 HTML (可能是權限或語法錯誤)");
-                
-                console.log("原始回傳：", resultText);
-
+                console.log("GAS 原始回傳：", resultText);
+        
+                // 2. 嚴格檢查空內容或非 JSON 格式
                 if (!resultText || resultText.trim() === "") {
                     throw new Error("伺服器回傳空內容");
                 }
@@ -337,39 +343,37 @@
                 if (resultText.startsWith("<")) {
                     throw new Error("伺服器回傳 HTML 而非 JSON");
                 }
-                
+        
                 let result;
-                
                 try {
                     result = JSON.parse(resultText);
                 } catch(e) {
-                    console.log("JSON parse 失敗內容：", resultText);
-                    throw new Error("JSON Parse Error：" + e.message);
+                    throw new Error("JSON 解析失敗：" + e.message + " | 內容：" + resultText.substring(0, 50));
                 }
-                if (result.error) throw new Error(JSON.stringify(result.error));
-                
-                if (result.candidates && result.candidates.length > 0) {
-                    const aiText =
-                      result?.candidates?.[0]?.content?.parts?.[0]?.text;
-                    
-                    if (!aiText) {
-                        console.log(result);
-                        throw new Error("AI 解題幫手無有效回覆");
-                    }
+        
+                // 3. 處理 Gemini 回傳邏輯
+                if (result.error) {
+                    throw new Error("Google API 錯誤：" + (result.error.message || JSON.stringify(result.error)));
+                }
+        
+                const aiText = result?.candidates?.[0]?.content?.parts?.[0]?.text;
+        
+                if (aiText) {
                     window.initialResponse = aiText;
                     renderInitialResult(aiText);
                     db.ref("ai_tasks/" + tid).update({ status: "completed", ai_response: aiText, image: null });
                     db.ref("ai_state/" + uid).remove();
                 } else {
+                    // 處理被安全過濾或其他導致無內容的情況
+                    console.warn("Gemini 回傳結構異常：", result);
                     throw new Error("AI 解題幫手無法產生回應內容");
                 }
+        
             } catch (error) {
-                // [修改] 將真實錯誤顯示出來，不要再用死板的「發生異常」
                 showError("【錯誤】" + error.message);
                 db.ref("ai_state/" + uid).remove(); 
             }
         }
-
         // ==========================================
         // 5. 接續對話
         // ==========================================
