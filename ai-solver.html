@@ -170,20 +170,31 @@
         // ==========================================
         // 0. 防拷貝與禁用 F12 機制
         // ==========================================
+        const LOGIN_PAGE_URL = "index.html";
         document.addEventListener('contextmenu', event => {
             event.preventDefault();
             alert("版權所有，翻印必究！");
         });
-        
         document.addEventListener('keydown', function(event) {
-            // 禁用 F12, Ctrl+Shift+I, Ctrl+Shift+J, Ctrl+U
             if (event.keyCode === 123 || 
                (event.ctrlKey && event.shiftKey && (event.keyCode === 73 || event.keyCode === 74)) || 
                (event.ctrlKey && event.keyCode === 85)) { 
                 event.preventDefault();
                 alert("【警告】\n\n嚴禁開啟開發者工具！系統已記錄異常行為。");
+                window.location.replace(LOGIN_PAGE_URL);
             }
         });
+
+        setInterval(function() {
+            const before = new Date().getTime();
+            debugger;
+            const after = new Date().getTime();
+
+            if (after - before > 100) {
+                alert("【警告】\n\n嚴禁開啟開發者工具！系統已記錄異常行為。");
+                window.location.replace(LOGIN_PAGE_URL);
+            }
+        }, 1000);
 
         // ==========================================
         // 1. 系統設定區
@@ -197,7 +208,7 @@
             appId: "1:764168135846:web:f2923a5f4952fa1ca64067",
             databaseURL: "https://su-hao-classroom-default-rtdb.firebaseio.com/"
         };
-        const GEMINI_API_KEY = "AIzaSyB9c4J9LHPYdZDfYB8lVag3BP0XOJGikhU";
+        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwxFfufe0b7eJpDxSmLgnbVvlq1itLvoD6ZCpvDJKtJg7ChcWn7lpf9LgZqQ4ZsThJiXQ/exec";
 
         // ==========================================
         // 2. 進階嚴謹系統提示詞 (System Prompt)
@@ -206,7 +217,7 @@
         你是一位具備頂尖教學經驗、邏輯嚴謹的國高中數理家教。
         你的目標是引導學生深刻理解觀念，而非僅僅給出答案。
 
-        【絕對防線】：
+        【限制】：
         1. 領域限制：僅限解答「數學」與「自然科（物理、化學、生物、地科）」的題目。若圖片內容為其他科目、模糊不清或無關閒聊，請一律終止解題並回覆：「很抱歉，本解題系統僅支援數學與自然之題目。」
 
         【排版與語法規範】：
@@ -297,10 +308,9 @@
         }
 
         // ==========================================
-        // 4. 初次呼叫 Gemini (含 Firebase 容量優化)
+        // 4. 初次呼叫 Gemini
         // ==========================================
         async function callGeminiFirstTurn(base64Img, tid, uid) {
-            const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent?key=${GEMINI_API_KEY}`;
             const payload = {
                 system_instruction: { parts: [{ text: SYSTEM_PROMPT }] },
                 contents: [{
@@ -313,8 +323,9 @@
             };
 
             try {
-                const response = await fetch(endpoint, {
-                    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload)
+                const response = await fetch(SCRIPT_URL, {
+                    method: 'POST', 
+                    body: JSON.stringify({ action: "askGemini", geminiPayload: payload })
                 });
                 const result = await response.json();
                 
@@ -323,7 +334,6 @@
                     window.initialResponse = aiText;
                     renderInitialResult(aiText);
                     
-                    // 🌟 寫入解析，立刻把佔空間的 image 刪除
                     db.ref("ai_tasks/" + tid).update({ 
                         status: "completed", 
                         ai_response: aiText,
@@ -376,14 +386,16 @@
             apiContents.push({ role: "user", parts: [{ text: userText }] });
 
             try {
-                const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent?key=${GEMINI_API_KEY}`;
                 const payload = {
                     system_instruction: { parts: [{ text: SYSTEM_PROMPT }] },
                     contents: apiContents,
                     generationConfig: { temperature: 0.2 }
                 };
 
-                const response = await fetch(endpoint, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+                const response = await fetch(SCRIPT_URL, { 
+                    method: 'POST', 
+                    body: JSON.stringify({ action: "askGemini", geminiPayload: payload }) 
+                });
                 const result = await response.json();
                 
                 const aiReply = result.candidates[0].content.parts[0].text;
