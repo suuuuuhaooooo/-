@@ -218,7 +218,7 @@
         `;
 
         // ==========================================
-        // 🌟 2. 啟動主流程 (地毯式搜尋 taskId)
+        // 2. 啟動主流程 (地毯式搜尋 taskId)
         // ==========================================
         initializeLiff();
 
@@ -227,7 +227,7 @@
                 await liff.init({ liffId: MY_LIFF_ID });
                 
                 if (!liff.isInClient()) {
-                    showError("【系統通知】\n為保護專屬版權，本系統僅限在 LINE 聊天室內部開啟。");
+                    showError("【系統通知】\n為保護權益，本系統僅限在 LINE 聊天室內部開啟。");
                     document.getElementById('input-bar').style.display = "none";
                     return; 
                 }
@@ -270,9 +270,9 @@
                     return;
                 }
 
-                // 🔴 權限檢查 (若報錯請檢查 code.gs 是否存入的是 userId)
+                // 權限檢查
                 if (data.uid !== visitorUid) {
-                    showError("【權限不足】\n此解析僅限發問者本人檢視。若您是學生，請親自上傳題目！");
+                    showError("【系統通知】\n此解析僅限發問者本人檢視。若您是學生，請親自上傳題目！");
                     document.getElementById('input-bar').style.display = "none";
                     return;
                 }
@@ -348,7 +348,7 @@
             inputEl.disabled = false; inputEl.focus(); scrollToBottom();
         }
 
-        // 🌟 3. 輔助功能
+        // 3. 輔助功能
         function appendChatBubble(role, html, id = null) {
             const b = document.createElement('div');
             b.className = `bubble ${role} ${role === 'ai' ? 'ai-content' : ''}`;
