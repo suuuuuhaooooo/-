@@ -372,6 +372,10 @@
             document.getElementById('loading-area').style.display = "none";
             if (window.sessionImage) appendChatBubble('user', `<img src="data:image/jpeg;base64,${window.sessionImage}" class="question-thumb" onclick="window.open(this.src)"><div style="font-size:13px; opacity:0.8;">這是我想問的題目。</div>`);
             appendChatBubble('ai', formatAIResponse(text));
+            const btnHtml = `<div style="margin-top: 15px; text-align: center;">
+                <button id="similar-q-btn" onclick="generateSimilarQuestion()" style="background: var(--dark); color: white; border: none; padding: 12px 24px; border-radius: 25px; font-size: 15px; font-weight: bold; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.15); transition: 0.2s;">我昊想再練練！</button>
+            </div>`;
+            appendChatBubble('ai', btnHtml);
             document.getElementById('input-bar').style.display = "flex";
             updateStatus("解析完成", "#8e9775");
             triggerMathJax();
@@ -398,6 +402,63 @@
         function triggerMathJax() { if (window.MathJax) MathJax.typesetPromise().catch(e => console.log(e.message)); }
         function base64ImageClean(s) { return s.includes(",") ? s.split(",")[1] : s; }
         function scrollToBottom() { window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' }); }
+        // ==========================================
+        // 類題生成器核心邏輯
+        // ==========================================
+        async function generateSimilarQuestion() {
+            const btn = document.getElementById('similar-q-btn');
+            if (btn) {
+                btn.disabled = true;
+                btn.innerText = "類題生成中...";
+                btn.style.opacity = "0.7";
+            }
+            appendChatBubble('user', "我昊想再練練！");
+            const loadingId = appendChatBubble('ai', "<div class='loading-dots' style='margin:0;'><div></div><div></div><div></div></div>");
+            scrollToBottom();
+            const secretPrompt = `【系統指令：啟動類題生成器】
+            請依據你剛剛解答的這道題目，為學生量身打造一道「核心觀念與難度相同，但數字或情境不同」的類題。
+            請嚴格遵守以下排版：
+            
+            ### 挑戰類題
+            （請在此寫出類題的題目敘述。嚴禁使用原題的數字。）
+            
+            ---
+            ### 類題詳解
+            （請在此給出這道類題的詳細計算步驟與最終答案。排版請完全比照先前的 LaTeX 規範，答案加上 \\boxed。）`;
+
+            // 4. 組合對話歷史紀錄
+            let apiContents = [];
+            if (window.sessionImage) apiContents.push({ role: "user", parts: [{ text: "題目圖" }, { inline_data: { mime_type: "image/jpeg", data: base64ImageClean(window.sessionImage) } }] });
+            apiContents.push({ role: "model", parts: [{ text: window.initialResponse }] });
+            window.followUps.forEach(msg => apiContents.push({ role: msg.role === 'user' ? "user" : "model", parts: [{ text: msg.text }] }));
+            
+            // 將隱藏指令加入對話中
+            apiContents.push({ role: "user", parts: [{ text: secretPrompt }] });
+
+            // 5. 發送給 GAS 後端
+            try {
+                const response = await fetch(SCRIPT_URL, { 
+                    method: 'POST', headers: { "Content-Type": "text/plain;charset=utf-8" },
+                    body: JSON.stringify({ action: "askGemini", geminiPayload: { system_instruction: { parts: [{ text: SYSTEM_PROMPT }] }, contents: apiContents } }) 
+                });
+                const result = await response.json();
+                const aiReply = result?.candidates?.[0]?.content?.parts?.[0]?.text;
+                
+                document.getElementById(loadingId).remove();
+                if (aiReply) {
+                    appendChatBubble('ai', formatAIResponse(aiReply));
+                    // 將這次互動存入 Firebase 歷史紀錄，這樣學生如果對類題有疑問，還能繼續追問！
+                    window.followUps.push({ role: "user", text: "我昊想再練練！" }, { role: "model", text: aiReply });
+                    db.ref("ai_tasks/" + window.activeTaskId).update({ follow_ups: window.followUps });
+                    triggerMathJax();
+                }
+                if (btn) btn.style.display = "none";
+            } catch (e) {
+                document.getElementById(loadingId).innerText = "出題失敗: " + e.message;
+                if (btn) { btn.disabled = false; btn.innerText = "我昊想再練練！"; btn.style.opacity = "1"; }
+            }
+            scrollToBottom();
+        }
         
         document.getElementById('chat-input').addEventListener('keypress', e => { if (e.key === 'Enter') sendFollowUp(); });
         document.addEventListener('contextmenu', e => { e.preventDefault(); alert("版權所有，翻印必究！"); });
