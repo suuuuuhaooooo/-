@@ -296,27 +296,28 @@
         }
 
         async function callGeminiFirstTurn(base64Img, tid, uid) {
-            const payload = {
-                system_instruction: { parts: [{ text: SYSTEM_PROMPT }] },
-                contents: [{ parts: [{ text: "請辨識題目並開始解題。" }, { inline_data: { mime_type: "image/jpeg", data: base64ImageClean(base64Img) } }] }],
-                generationConfig: { temperature: 0.05, maxOutputTokens: 8192 }
-            };
             try {
                 const response = await fetch(SCRIPT_URL, {
                     method: 'POST', headers: { "Content-Type": "text/plain;charset=utf-8" },
-                    body: JSON.stringify({ action: "askGemini", geminiPayload: payload })
+                    body: JSON.stringify({ 
+                        action: "smartSolveImage", 
+                        image: base64ImageClean(base64Img),
+                        systemPrompt: SYSTEM_PROMPT 
+                    })
                 });
+                
                 const resultText = await response.text();
                 let result = JSON.parse(resultText);
-                const aiText = result?.candidates?.[0]?.content?.parts?.[0]?.text;
-                if (aiText) {
-                    window.initialResponse = aiText;
-                    renderInitialResult(aiText);
-                    db.ref("ai_tasks/" + tid).update({ status: "completed", ai_response: aiText, image: null });
-                } else { throw new Error("AI 解題幫手無法產生內容，請關閉視窗重試。"); }
+                
+                if (result.success && result.text) {
+                    window.initialResponse = result.text;
+                    renderInitialResult(result.text);
+                    db.ref("ai_tasks/" + tid).update({ status: "completed", ai_response: result.text, image: null });
+                } else { 
+                    throw new Error(result.error || "AI 解題幫手忙線中，請稍後重試。"); 
+                }
             } catch (error) { showError("【錯誤】" + error.message); }
         }
-
         async function sendFollowUp() {
             const inputEl = document.getElementById('chat-input');
             const userText = inputEl.value.trim();
