@@ -11,7 +11,7 @@
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://suuuuuhaooooo.github.io/-/ai-solver.html">
     <meta property="og:image" content="https://suuuuuhaooooo.github.io/-/og-image.png">
-
+    <link rel="preload" href="cwTeXQMingZH-Medium.woff2" as="font" type="font/woff2" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;700&display=swap" rel="stylesheet">
     <link rel="icon" href="https://suuuuuhaooooo.github.io/-/favicon.png" type="image/png">
     
@@ -38,9 +38,11 @@
 
         @font-face {
             font-family: 'SuHaoMing';
-            src: url('cwTeXQMingZH-Medium.ttf') format('truetype');
+            src: url('cwTeXQMingZH-Medium.woff2') format('woff2'),
+                 url('cwTeXQMingZH-Medium.ttf') format('truetype');
             font-weight: normal;
             font-style: normal;
+            font-display: swap; 
         }
         .ai-content p, 
         .ai-content li {
