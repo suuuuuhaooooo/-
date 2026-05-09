@@ -32,6 +32,32 @@
     <script src="https://tikzjax.com/v1/tikzjax.js"></script>
     
     <style>
+        /* ==========================================
+           字體控制區塊
+           ========================================== */
+
+        @font-face {
+            font-family: 'SuHaoMing';
+            src: url('cwTeXQMingZH-Medium.ttf') format('truetype');
+            font-weight: normal;
+            font-style: normal;
+        }
+        .ai-content p, 
+        .ai-content li {
+            font-family: 'SuHaoMing', "Noto Serif TC", serif;
+            letter-spacing: 0.5px;
+        }
+        .ai-content strong, 
+        .ai-content b,
+        .ai-content h3 {
+            font-family: "Noto Serif TC", serif !important;
+            font-weight: bold;
+        }
+        .ai-content mjx-container,
+        .ai-content pre,
+        .ai-content code {
+            font-family: inherit !important;
+        }
         :root { --primary: #8e9775; --dark: #5b6348; --user-bg: #eef1e6; --ai-bg: #ffffff; --bg: #f5f5f5; --border: #eeeeee; }
 
         html, body {
