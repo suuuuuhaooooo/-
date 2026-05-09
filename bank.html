@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>蘇昊數理｜題庫中心</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #8e9775;
+            --dark: #5b6348;
+            --bg: #f8f9fa;
+            --card-bg: #ffffff;
+            --border: #e0e0e0;
+        }
+
+        body {
+            margin: 0; padding: 0;
+            font-family: "Noto Serif TC", serif;
+            background-color: var(--bg);
+            color: #333;
+            display: flex;
+            height: 100vh;
+        }
+
+        .btn {
+            background: var(--dark); color: white; border: none; padding: 10px 20px;
+            border-radius: 6px; font-size: 16px; cursor: pointer; transition: 0.2s; font-family: "Noto Serif TC", serif;
+        }
+        .btn:hover { background: var(--primary); }
+
+        /* 左側篩選控制面板 */
+        .sidebar {
+            width: 300px; background: var(--card-bg); border-right: 1px solid var(--border);
+            padding: 20px; box-sizing: border-box; overflow-y: auto;
+        }
+        .brand { font-size: 20px; font-weight: bold; color: var(--dark); margin-bottom: 30px; border-bottom: 2px solid var(--primary); padding-bottom: 10px; }
+        .filter-group { margin-bottom: 20px; }
+        .filter-group label { display: block; font-size: 14px; font-weight: bold; margin-bottom: 8px; color: #555; }
+        .filter-group select, .filter-group input[type="text"], .filter-group input[type="number"] {
+            width: 100%; padding: 8px; border: 1px solid var(--border); border-radius: 4px; font-family: inherit; font-size: 14px;
+        }
+        
+        /* 右側主畫面 (預覽與匯出) */
+        .main-content {
+            flex: 1; padding: 30px; overflow-y: auto; display: flex; flex-direction: column;
+        }
+        .header-actions {
+            display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;
+        }
+        .stats { font-size: 16px; color: #666; }
+
+        /* 題目預覽卡片 */
+        .question-card {
+            background: white; border: 1px solid var(--border); border-radius: 8px;
+            padding: 15px 20px; margin-bottom: 15px; box-shadow: 0 2px 5px rgba(0,0,0,0.02);
+            position: relative;
+        }
+        .q-header { display: flex; justify-content: space-between; font-size: 12px; color: #888; margin-bottom: 10px; }
+        .q-tag { background: #eef1e6; color: var(--dark); padding: 2px 8px; border-radius: 12px; font-weight: bold; }
+        .q-body { font-size: 15px; line-height: 1.6; }
+        .checkbox-container { position: absolute; right: 20px; top: 50%; transform: translateY(-50%); }
+
+        /* 底部輸出列 */
+        .export-bar {
+            background: white; border-top: 1px solid var(--border); padding: 15px 30px;
+            display: flex; justify-content: flex-end; gap: 15px; align-items: center;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="sidebar">
+        <div class="brand">蘇昊數理｜題庫系統</div>
+        
+        <div class="filter-group">
+            <label>1. 科目</label>
+            <select id="filter-subject">
+                <option value="math">數學</option>
+                <option value="physics">物理</option>
+                <option value="chem">化學</option>
+            </select>
+        </div>
+
+        <div class="filter-group">
+            <label>2. 適用版本 (出版社)</label>
+            <select id="filter-publisher">
+                <option value="all">通用跨版本</option>
+                <option value="L">龍騰版</option>
+                <option value="H">翰林版</option>
+                <option value="N">南一版</option>
+            </select>
+        </div>
+
+        <div class="filter-group">
+            <label>3. 範圍單元</label>
+            <select id="filter-unit">
+                <option value="u1">第一章：數與式</option>
+                <option value="u2">第二章：直線與圓</option>
+                <option value="u3">第三章：多項式</option>
+            </select>
+        </div>
+
+        <div class="filter-group">
+            <label>4. 難易度</label>
+            <select id="filter-diff">
+                <option value="all">不限</option>
+                <option value="easy">基礎觀念</option>
+                <option value="mid" selected>中等適中</option>
+                <option value="hard">進階挑戰</option>
+            </select>
+        </div>
+
+        <div class="filter-group">
+            <label>5. 關鍵字 / 標籤搜尋</label>
+            <input type="text" placeholder="例如：絕對值、易錯題...">
+        </div>
+
+        <button class="btn" style="width: 100%; margin-top: 10px;" onclick="searchQuestions()">搜尋題庫</button>
+    </div>
+
+    <div class="main-content">
+        <div class="header-actions">
+            <div class="stats">
+                已篩選出 <strong id="result-count" style="color: var(--primary);">0</strong> 題符合條件的題目
+            </div>
+            <div>
+                <label style="font-size: 14px; font-weight: bold; color: var(--dark);">隨機抽取題數：</label>
+                <input type="number" id="random-count" value="10" style="width: 60px; padding: 5px; border-radius: 4px; border: 1px solid #ccc;">
+            </div>
+        </div>
+
+        <div id="question-list" style="flex: 1; overflow-y: auto;">
+            <div style="text-align: center; color: #999; margin-top: 50px;">請在左側設定條件並點擊「搜尋題庫」</div>
+        </div>
+    </div>
+
+    <div class="export-bar">
+        <input type="text" id="paper-title" placeholder="請輸入考卷標題 (例如：高一數學段考複習卷)" style="width: 300px; padding: 10px; border: 1px solid var(--border); border-radius: 6px;">
+        <button class="btn" style="background: #7f8c8d;" onclick="generatePaper('student')">輸出試卷 (Word)</button>
+        <button class="btn" onclick="generatePaper('teacher')">輸出詳解卷 (Word)</button>
+    </div>
+
+    <script>
+        // 模擬從資料庫抓取題目並顯示
+        function searchQuestions() {
+            const list = document.getElementById('question-list');
+            document.getElementById('result-count').innerText = "3";
+            list.innerHTML = `
+                <div class="question-card">
+                    <div class="q-header">
+                        <span>編號：M-10-L-01-001A</span>
+                        <span class="q-tag">數與式</span>
+                    </div>
+                    <div class="q-body">
+                        若實數 $x$ 滿足 $|x - 3| \\le 5$，則 $x$ 的最大值與最小值的和為何？
+                    </div>
+                    <div class="checkbox-container"><input type="checkbox" checked style="transform: scale(1.5);"></div>
+                </div>
+
+                <div class="question-card">
+                    <div class="q-header">
+                        <span>編號：M-10-L-01-005 (通用-v2)</span>
+                        <span class="q-tag">絕對值不等式</span>
+                    </div>
+                    <div class="q-body">
+                        已知 $a, b$ 為實數，若不等式 $|ax + 1| \\le b$ 的解為 $-2 \\le x \\le 6$，求數對 $(a, b)$。
+                    </div>
+                    <div class="checkbox-container"><input type="checkbox" checked style="transform: scale(1.5);"></div>
+                </div>
+            `;
+            // 若 Classroom 已經有載入 MathJax，這裡可以直接呼叫 MathJax.typesetPromise()
+        }
+
+        function generatePaper(type) {
+            const title = document.getElementById('paper-title').value;
+            if (!title) { alert("請先輸入考卷標題！"); return; }
+            alert("系統已將請求發送至後端，正在呼叫 Google Docs API 進行排版與轉檔，請稍候...");
+            // 將請求帶上 Classroom 的 User Token 發送給 GAS
+        }
+    </script>
+
+</body>
+</html>
