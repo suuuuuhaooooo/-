@@ -135,7 +135,7 @@
         @keyframes pulse-text { 0% { opacity: 0.5; } 50% { opacity: 1; } 100% { opacity: 0.5; } }
 
         .ai-content { color: #444; overflow-x: hidden; width: 100%; }
-        .ai-content p { margin-bottom: 15px; text-align: justify; }
+        .ai-content p { margin-bottom: 15px; text-align: left; line-height: 1.8; }
         .ai-content h3 { 
             color: var(--dark); font-size: 17px; margin-top: 25px; margin-bottom: 10px;
             padding-bottom: 6px; border-bottom: 2px solid var(--primary); display: block;
@@ -417,10 +417,20 @@
             updateStatus("發生異常", "#c0392b");
         }
 
+        // 🟢 加強版的 AI 回覆格式化函式 (徹底解決 Markdown 與 LaTeX 衝突)
         function formatAIResponse(text) {
             let processed = text.replace(/\\begin\{tikzpicture\}([\s\S]*?)\\end\{tikzpicture\}/g, m => `<script type="text/tikz">\n${m}\n<\/script>`);
+            const mathBlocks = [];
+            processed = processed.replace(/(\$\$[\s\S]*?\$\$|\$[\s\S]*?\$)/g, (match) => {
+                mathBlocks.push(match);
+                return `%%%MATH_BLOCK_${mathBlocks.length - 1}%%%`;
+            });
             marked.setOptions({ breaks: true, gfm: true });
-            return marked.parse(processed);
+            let html = marked.parse(processed);
+            html = html.replace(/%%%MATH_BLOCK_(\d+)%%%/g, (match, index) => {
+                return mathBlocks[index];
+            });
+            return html;
         }
 
         function triggerMathJax() { if (window.MathJax) MathJax.typesetPromise().catch(e => console.log(e.message)); }
