@@ -264,18 +264,6 @@
             try {
                 await liff.init({ liffId: MY_LIFF_ID });
                 
-                if (!liff.isInClient()) {
-                    showError("為保護權益，本系統僅限在 LINE 聊天室內部開啟。");
-                    document.getElementById('input-bar').style.display = "none";
-                    return; 
-                }
-
-                if (!liff.isLoggedIn()) {
-                    liff.login();
-                    return;
-                }
-
-                // 終極地毯式搜尋 taskId
                 let tid = new URLSearchParams(window.location.search).get('taskId'); 
                 if (!tid) {
                     const searchData = liff.getSearchData();
@@ -287,16 +275,27 @@
                 }
 
                 if (!tid) {
-                    showError("無效的解題連結！請由 LINE 官方帳號重新發起請求。");
+                    showError("無效的解題連結！");
                     return;
                 }
 
-                window.activeTaskId = tid; // 存入全域變數
+                window.activeTaskId = tid;
+
+                // 🟢 關鍵：如果不在 LINE 裡面，或者沒登入，就當作「訪客 (null)」直接讀取資料
+                if (!liff.isInClient() || !liff.isLoggedIn()) {
+                    fetchTaskDataSecurely(tid, null); 
+                    return; 
+                }
+
+                // 如果是本人在 LINE 裡面，正常抓取 ID
                 const profile = await liff.getProfile();
                 fetchTaskDataSecurely(tid, profile.userId);
 
             } catch (err) {
-                showError("LINE 驗證初始化失敗：" + err.message);
+                // 出錯也嘗試當作訪客讀取
+                const tid = new URLSearchParams(window.location.search).get('taskId');
+                if (tid) fetchTaskDataSecurely(tid, null);
+                else showError("初始化失敗：" + err.message);
             }
         }
 
@@ -307,34 +306,24 @@
                     showError("找不到此題目的資料，提問可能已過期。");
                     return;
                 }
-                const isOwner = (data.uid === visitorUid);
-                if (!isOwner) {
-                    if (data.status === "completed" && data.ai_response) {
-                        updateStatus("唯讀分享", "#3498db");
-                        if (data.image) window.sessionImage = data.image;
-                        window.initialResponse = data.ai_response;
-                        window.followUps = data.follow_ups || [];
-                        
-                        renderInitialResult(data.ai_response, false);
-                        renderChatHistory();
-                        appendChatBubble('ai', "<div style='text-align:center; color:#888; font-size:13px; margin-top:10px; line-height:1.6;'>此為唯讀分享模式，無法進行後續提問。<br>若您也想體驗此服務，請洽詢<strong style='color:var(--dark);'>蘇昊數理</strong>！</div>");
-                    } else {
-                        showError("原發問者的解析尚未完成，請稍後再試。");
-                    }
-                    return;
-                }
-
+                const isOwner = (visitorUid && data.uid === visitorUid);
                 if (data.image) window.sessionImage = data.image;
-
                 if (data.status === "completed" && data.ai_response) {
                     window.initialResponse = data.ai_response;
                     window.followUps = data.follow_ups || [];
-                    renderInitialResult(data.ai_response, true);
+                    renderInitialResult(data.ai_response, isOwner);
                     renderChatHistory(); 
+                    if (!isOwner) {
+                        appendChatBubble('ai', "<div style='text-align:center; color:#888; font-size:12px; margin-top:10px; border-top:1px dashed #eee; padding-top:10px;'>此為唯讀分享模式，無法進行後續提問。<br>若需完整體驗，請洽蘇昊數理。</div>");
+                    }
                 } else {
-                    updateStatus("解題中", "#f1c40f");
-                    document.getElementById('loading-text').innerText = "AI 解題幫手正在進行邏輯拆解與運算...";
-                    callGeminiFirstTurn(data.image, tid, data.uid);
+                    if (isOwner) {
+                        updateStatus("解題中", "#f1c40f");
+                        document.getElementById('loading-text').innerText = "AI 解題幫手正在進行邏輯拆解與運算...";
+                        callGeminiFirstTurn(data.image, tid, data.uid);
+                    } else {
+                        showError("原發問者的解析尚未完成，請稍後再試。");
+                    }
                 }
             }).catch(err => showError("資料庫連線失敗：" + err.message));
         }
@@ -405,12 +394,22 @@
             b.id = cid; chatWindow.appendChild(b); return cid;
         }
 
-        function renderInitialResult(text) {
+        function renderInitialResult(text, isOwner = true) {
             document.getElementById('loading-area').style.display = "none";
-            if (window.sessionImage) appendChatBubble('user', `<img src="data:image/jpeg;base64,${window.sessionImage}" class="question-thumb" onclick="window.open(this.src)"><div style="font-size:13px; opacity:0.8;">這是我想問的題目。</div>`);
+            
+            if (window.sessionImage) {
+                let userHint = isOwner ? "這是我想問的題目。" : "這是原發問者的題目。";
+                appendChatBubble('user', `<img src="data:image/jpeg;base64,${window.sessionImage}" class="question-thumb" onclick="window.open(this.src)"><div style="font-size:13px; opacity:0.8;">${userHint}</div>`);
+            }
             appendChatBubble('ai', formatAIResponse(text));
-            document.getElementById('input-bar').style.display = "flex";
-            updateStatus("解析完成", "#8e9775");
+            if (isOwner) {
+                document.getElementById('input-bar').style.display = "flex";
+                updateStatus("解析完成", "#8e9775");
+            } else {
+                document.getElementById('input-bar').style.display = "none";
+                updateStatus("唯讀分享模式", "#3498db");
+            }
+            
             triggerMathJax();
             setTimeout(scrollToBottom, 300);
         }
