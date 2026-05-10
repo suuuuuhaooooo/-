@@ -97,7 +97,14 @@
             word-wrap: break-word; overflow-wrap: break-word; word-break: break-word; 
         }
         .bubble.ai { align-self: flex-start; background: var(--ai-bg); border-bottom-left-radius: 4px; border: 1px solid #eaeaea; }
-        .bubble.user { align-self: flex-end; background: var(--user-bg); color: #4a5d23; border-bottom-right-radius: 4px; }
+        .bubble.user { 
+            align-self: flex-end; 
+            background: var(--user-bg); 
+            color: #4a5d23; 
+            border-bottom-right-radius: 4px; 
+            font-family: 'SuHaoMing', "Noto Serif TC", serif; 
+            letter-spacing: 0.5px;
+        }
 
         .question-thumb {
             max-width: 100%; max-height: 250px; border-radius: 8px;
@@ -114,6 +121,7 @@
         .input-bar input {
             flex: 1; border: 1px solid #ddd; border-radius: 25px;
             padding: 10px 20px; outline: none; font-size: 14px; background: #fafafa;
+            font-family: 'SuHaoMing', "Noto Serif TC", serif;
         }
 
         .input-bar button {
