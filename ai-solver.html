@@ -318,9 +318,6 @@
                     window.followUps = data.follow_ups || [];
                     renderInitialResult(data.ai_response, isOwner);
                     renderChatHistory(); 
-                    if (!isOwner) {
-                        appendChatBubble('ai', "<div style='text-align:center; color:#888; font-size:12px; margin-top:10px; border-top:1px dashed #eee; padding-top:10px;'>此為唯讀分享模式，無法進行後續提問。<br>若需完整體驗，請洽蘇昊數理。</div>");
-                    }
                 } else {
                     if (isOwner) {
                         updateStatus("解題中", "#f1c40f");
