@@ -265,7 +265,7 @@
                 await liff.init({ liffId: MY_LIFF_ID });
                 
                 if (!liff.isInClient()) {
-                    showError("【系統通知】\n為保護權益，本系統僅限在 LINE 聊天室內部開啟。");
+                    showError("為保護權益，本系統僅限在 LINE 聊天室內部開啟。");
                     document.getElementById('input-bar').style.display = "none";
                     return; 
                 }
@@ -307,11 +307,20 @@
                     showError("找不到此題目的資料，提問可能已過期。");
                     return;
                 }
-
-                // 權限檢查
-                if (data.uid !== visitorUid) {
-                    showError("【系統通知】\n此解析僅限發問者本人檢視。若您是學生，請親自上傳題目！");
-                    document.getElementById('input-bar').style.display = "none";
+                const isOwner = (data.uid === visitorUid);
+                if (!isOwner) {
+                    if (data.status === "completed" && data.ai_response) {
+                        updateStatus("唯讀分享", "#3498db");
+                        if (data.image) window.sessionImage = data.image;
+                        window.initialResponse = data.ai_response;
+                        window.followUps = data.follow_ups || [];
+                        
+                        renderInitialResult(data.ai_response, false);
+                        renderChatHistory();
+                        appendChatBubble('ai', "<div style='text-align:center; color:#888; font-size:13px; margin-top:10px; line-height:1.6;'>此為唯讀分享模式，無法進行後續提問。<br>若您也想體驗此服務，請洽詢<strong style='color:var(--dark);'>蘇昊數理</strong>！</div>");
+                    } else {
+                        showError("原發問者的解析尚未完成，請稍後再試。");
+                    }
                     return;
                 }
 
@@ -320,7 +329,7 @@
                 if (data.status === "completed" && data.ai_response) {
                     window.initialResponse = data.ai_response;
                     window.followUps = data.follow_ups || [];
-                    renderInitialResult(data.ai_response);
+                    renderInitialResult(data.ai_response, true);
                     renderChatHistory(); 
                 } else {
                     updateStatus("解題中", "#f1c40f");
@@ -351,7 +360,7 @@
                 } else { 
                     throw new Error(result.error || "AI 解題幫手忙線中，請稍後重試。"); 
                 }
-            } catch (error) { showError("【錯誤】" + error.message); }
+            } catch (error) { showError("錯誤：" + error.message); }
         }
         async function sendFollowUp() {
             const inputEl = document.getElementById('chat-input');
