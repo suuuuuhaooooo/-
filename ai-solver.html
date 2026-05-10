@@ -256,14 +256,22 @@
         `;
 
         // ==========================================
-        // 2. 啟動主流程 (地毯式搜尋 taskId)
+        // 2. 主流程
         // ==========================================
         initializeLiff();
 
         async function initializeLiff() {
             try {
                 await liff.init({ liffId: MY_LIFF_ID });
-                
+                if (!liff.isInClient()) {
+                    showError("為保護權益，本系統僅限在 LINE 聊天室內部開啟。");
+                    document.getElementById('input-bar').style.display = "none";
+                    return; 
+                }
+                if (!liff.isLoggedIn()) {
+                    liff.login();
+                    return;
+                }
                 let tid = new URLSearchParams(window.location.search).get('taskId'); 
                 if (!tid) {
                     const searchData = liff.getSearchData();
@@ -275,27 +283,16 @@
                 }
 
                 if (!tid) {
-                    showError("無效的解題連結！");
+                    showError("無效的解題連結！請由 LINE 官方帳號重新發起請求。");
                     return;
                 }
 
                 window.activeTaskId = tid;
-
-                // 🟢 關鍵：如果不在 LINE 裡面，或者沒登入，就當作「訪客 (null)」直接讀取資料
-                if (!liff.isInClient() || !liff.isLoggedIn()) {
-                    fetchTaskDataSecurely(tid, null); 
-                    return; 
-                }
-
-                // 如果是本人在 LINE 裡面，正常抓取 ID
                 const profile = await liff.getProfile();
                 fetchTaskDataSecurely(tid, profile.userId);
 
             } catch (err) {
-                // 出錯也嘗試當作訪客讀取
-                const tid = new URLSearchParams(window.location.search).get('taskId');
-                if (tid) fetchTaskDataSecurely(tid, null);
-                else showError("初始化失敗：" + err.message);
+                showError("LINE 驗證初始化失敗：" + err.message);
             }
         }
 
