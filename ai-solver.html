@@ -151,7 +151,23 @@
         .ai-content h3:first-child { margin-top: 5px; }
         .ai-content ul, .ai-content ol { padding-left: 20px; margin-bottom: 15px; }
         .ai-content li { margin-bottom: 6px; }
-        .ai-content mjx-container, .ai-content pre { max-width: 100%; overflow-x: auto; padding-bottom: 5px; }
+        .ai-content mjx-container {
+            max-width: 100% !important;
+            overflow-x: auto !important;
+            overflow-y: hidden !important;
+            touch-action: pan-x !important;
+            padding-bottom: 4px; 
+        }
+        .ai-content mjx-container[display="true"] {
+            display: block !important; 
+        }
+        .ai-content pre { 
+            max-width: 100%; 
+            overflow-x: auto; 
+            overflow-y: hidden; 
+            touch-action: pan-x !important;
+            padding-bottom: 5px; 
+        }
         .error-msg { text-align: center; color: #b03a2e; padding: 15px; font-size: 14px; background: #fdfaf6; border-radius: 8px; }
     </style>
 </head>
