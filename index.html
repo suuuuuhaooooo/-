@@ -37,6 +37,9 @@
             align-items: center;
             min-height: 100vh;
             color: var(--text);
+            user-select: none;
+            -webkit-user-select: none;
+            -ms-user-select: none;
         }
 
         .container {
@@ -250,6 +253,46 @@
 </div>
 
 <script>
+    // ==========================================
+    // 反開發者工具與右鍵保護機制
+    // ==========================================
+    
+    // 1. 禁止滑鼠右鍵選單
+    document.addEventListener('contextmenu', function(event) {
+        event.preventDefault();
+    });
+
+    // 2. 攔截開發者常用快捷鍵 (F12, Ctrl+Shift+I, Ctrl+U 等)
+    document.addEventListener('keydown', function(event) {
+        // F12
+        if (event.keyCode === 123) {
+            event.preventDefault();
+            alert("【警告】\n\n嚴禁開啟開發者工具！");
+        }
+        // Ctrl+Shift+I (開發人員工具) / Ctrl+Shift+J (主控台)
+        if (event.ctrlKey && event.shiftKey && (event.keyCode === 73 || event.keyCode === 74)) {
+            event.preventDefault();
+            alert("【警告】\n\n嚴禁開啟開發者工具！");
+        }
+        // Ctrl+U (檢視原始碼)
+        if (event.ctrlKey && event.keyCode === 85) {
+            event.preventDefault();
+            alert("【警告】\n\n嚴禁檢視網頁原始碼！");
+        }
+    });
+
+    // 3. 陷阱機制：如果有人真的打開了開發者工具，會被 debugger 卡住
+    setInterval(function() {
+        const before = new Date().getTime();
+        debugger; 
+        const after = new Date().getTime();
+        // 如果執行 debugger 的時間差大於 100 毫秒，代表開發者工具是被打開的
+        if (after - before > 100) {
+            console.clear();
+            console.log("%c版權所有，嚴禁任何盜用行為。", "color: red; font-size: 20px; font-weight: bold;");
+        }
+    }, 1000);
+    
     function showMenu(role) {
         // 隱藏初始區域
         document.getElementById('selection-zone').style.display = 'none';
