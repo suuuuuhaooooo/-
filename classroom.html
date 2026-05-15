@@ -427,7 +427,7 @@
                 <span style="color: #ddd; font-size: 10px;">|</span>
                 <a href="forgot.html" style="font-size: 11px; color: #aaa; letter-spacing: 1px; text-decoration: none; transition: 0.2s;" onmouseover="this.style.color='#888'" onmouseout="this.style.color='#aaa'">忘記密碼</a>
                 <span style="color: #ddd; font-size: 10px;">|</span>
-                <a href="changelog.html" target="_blank" style="font-size: 11px; color: #aaa; letter-spacing: 1px; text-decoration: none; transition: 0.2s;" onmouseover="this.style.color='#888'" onmouseout="this.style.color='#aaa'">版本紀錄 v4.0.0</a>
+                <a href="changelog.html" id="login-version" target="_blank" style="font-size: 11px; color: #aaa; letter-spacing: 1px; text-decoration: none; transition: 0.2s;" onmouseover="this.style.color='#888'" onmouseout="this.style.color='#aaa'">版本紀錄載入中...</a>
             </div>
         </div>
     </div>
@@ -479,7 +479,7 @@
                         
                         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
                             <span class="logout-link" style="color: var(--dark); text-decoration: none; font-weight: 700; margin-top: 0; transition: 0.2s;" onclick="logout()">登出系統</span>
-                            <div style="font-size: 11px; color: #ccc; font-family: monospace; letter-spacing: 1px;">v4.0.0</div>
+                            <div id="sidebar-version" style="font-size: 11px; color: #ccc; font-family: monospace; letter-spacing: 1px;">載入中...</div>
                         </div>
         
                         <div id="login-ip" style="font-size: 10px; color: #bbb;">IP: 獲取中...</div>
@@ -914,6 +914,7 @@
       <div id="pdf-render-area" style="padding-top: 80px; padding-bottom: 50px;"></div>
     </div>
     <script>
+        const APP_VERSION = "v4.0.0";
         // 控制手機版漢堡選單開關
         function toggleMobileMenu() {
             document.querySelector('.sidebar').classList.toggle('open');
@@ -1674,6 +1675,8 @@
 
         let globalClientIP = "";
         document.addEventListener('DOMContentLoaded', function() {
+            if(document.getElementById('login-version')) document.getElementById('login-version').innerText = `版本紀錄 ${APP_VERSION}`;
+            if(document.getElementById('sidebar-version')) document.getElementById('sidebar-version').innerText = APP_VERSION;
             drawCaptcha();
             // 獲取使用者 IP
             fetch('https://api.ipify.org?format=json')
