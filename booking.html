@@ -199,79 +199,183 @@
         // ==========================================
         // 5. 搶課渲染與送出邏輯
         // ==========================================
+        
         async function loadSlots() {
+        
             const list = document.getElementById('slot-list');
+        
             try {
+        
                 const res = await fetch(
                     `${SCRIPT_URL}?token=SuHaoClassroom2026_SecureKey&action=getSlots`
                 );
+        
                 const slots = await res.json();
+        
                 // 目前登入學生
                 const myName = localStorage.getItem('studentName') || "";
+        
                 // 過濾可見時段
                 const filteredSlots = slots.filter(s => {
-                    // 沒有限制 -> 全部可看
+        
+                    // 無限制 -> 全部可看
                     if (!s.group || s.group.trim() === "") {
                         return true;
                     }
-                    // 拆白名單
+        
                     const allowList = s.group
                         .split(',')
                         .map(v => v.trim());
         
                     return allowList.includes(myName);
+        
                 });
-                // 沒有時段
+        
+                // 沒有可預約時段
                 if (filteredSlots.length === 0) {
+        
                     list.innerHTML = `
                         <div style='text-align:center; color:#888; padding:20px;'>
                             目前沒有開放給您的可預約時段。
                         </div>
                     `;
+        
                     return;
                 }
+        
                 // 渲染卡片
                 list.innerHTML = filteredSlots.map(s => {
+        
                     // 是否已預約
                     const alreadyBooked = (s.bookedList || "")
                         .split(',')
                         .map(v => v.trim())
                         .includes(myName);
+        
                     return `
+        
                         <div class="slot-card">
+        
                             <div>
+        
                                 <strong style="color:var(--primary); font-size:16px;">
                                     ${s.name}
                                 </strong><br>
+        
                                 <small style="color:#888;">
                                     開放時間：${s.openTime}
                                 </small><br>
+        
                                 <small style="color:#888;">
                                     剩餘名額：${s.max - s.current} / ${s.max}
                                 </small>
+        
                             </div>
+        
                             <button
                                 class="book-btn"
                                 onclick="bookSlot('${s.id}', this)"
                                 ${s.current >= s.max || alreadyBooked ? 'disabled' : ''}
                             >
+        
                                 ${
                                     alreadyBooked
                                         ? '已預約'
                                         : (s.current >= s.max ? '已額滿' : '立即預約')
                                 }
+        
                             </button>
+        
                         </div>
+        
                     `;
+        
                 }).join('');
+        
             } catch(e) {
+        
                 console.error(e);
+        
                 list.innerHTML = `
                     <div style='text-align:center; color:#b03a2e; padding:20px;'>
                         時段載入失敗，請重新整理頁面。
                     </div>
                 `;
+        
             }
+        
+        }
+        
+        // ==========================================
+        // 預約課程
+        // ==========================================
+        
+        async function bookSlot(slotId, btn) {
+        
+            if (!confirm("確認要預約此時段嗎？")) {
+                return;
+            }
+        
+            btn.disabled = true;
+            btn.innerText = "搶課中...";
+        
+            const controller = new AbortController();
+        
+            const timeoutId = setTimeout(() => {
+                controller.abort();
+            }, 8000);
+        
+            try {
+        
+                const user = firebase.auth().currentUser;
+        
+                const url =
+                    `${SCRIPT_URL}` +
+                    `?token=SuHaoClassroom2026_SecureKey` +
+                    `&action=bookClass` +
+                    `&slotId=${slotId}` +
+                    `&uid=${user.uid}` +
+                    `&name=${encodeURIComponent(localStorage.getItem('studentName'))}`;
+        
+                const res = await fetch(url, {
+                    signal: controller.signal
+                });
+        
+                clearTimeout(timeoutId);
+        
+                const data = await res.json();
+        
+                if (data.success) {
+        
+                    alert("預約成功！");
+        
+                    // 重新刷新列表
+                    loadSlots();
+        
+                } else {
+        
+                    throw new Error(data.message);
+        
+                }
+        
+            } catch(e) {
+        
+                console.error(e);
+        
+                alert(
+                    "預約失敗：" +
+                    (
+                        e.name === 'AbortError'
+                            ? "連線逾時"
+                            : e.message
+                    )
+                );
+        
+                btn.disabled = false;
+                btn.innerText = "立即預約";
+        
+            }
+        
         }
     </script>
 </body>
