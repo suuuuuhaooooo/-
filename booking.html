@@ -43,7 +43,10 @@
             <button onclick="logout()" style="background:none; border:none; color:#888; cursor:pointer;">登出系統</button>
         </div>
     </div>
-
+    <div class="captcha-container" style="display:flex; align-items:center; gap:10px; margin: 10px 0;">
+        <canvas id="captcha-canvas" width="120" height="45" onclick="drawCaptcha()" style="cursor:pointer; background:#eee;"></canvas>
+        <input type="text" id="captcha-input" placeholder="驗證碼" style="margin:0;">
+    </div>
     <script>
         // 1. 安全防護移植
         document.addEventListener('contextmenu', e => e.preventDefault());
@@ -52,6 +55,29 @@
                 e.preventDefault();
                 alert("嚴禁開啟開發者工具！");
                 location.reload();
+            }
+        });
+
+        // 繼承 classroom 的認證機制
+        auth.onAuthStateChanged(async (user) => {
+            if (user) {
+                // 登入後，立刻從 GAS 抓取該學生的資料，並檢查其「是否為正式學生」
+                const res = await fetch(`${SCRIPT_URL}?token=SuHaoClassroom2026_SecureKey`);
+                const allStudents = await res.json();
+                const myData = allStudents.find(s => s.uid === user.uid);
+                
+                if (myData) {
+                    localStorage.setItem('studentName', myData.name); // 存下姓名，搶課時會用到
+                    document.getElementById('login-ui').style.display = 'none';
+                    document.getElementById('booking-ui').style.display = 'block';
+                    loadSlots(); // 顯示搶課清單
+                } else {
+                    alert("查無學籍資料，請聯繫老師！");
+                    logout();
+                }
+            } else {
+                document.getElementById('login-ui').style.display = 'flex';
+                document.getElementById('booking-ui').style.display = 'none';
             }
         });
 
@@ -127,7 +153,44 @@
         }
 
         function logout() { auth.signOut().then(() => location.reload()); }
-        function login() { /* 請複製原本的 login() 函式與相關驗證邏輯 */ }
+        let currentCaptcha = "";
+        
+        function drawCaptcha() {
+            const canvas = document.getElementById('captcha-canvas');
+            const ctx = canvas.getContext('2d');
+            const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+            let code = "";
+            for (let i = 0; i < 4; i++) code += chars.charAt(Math.floor(Math.random() * chars.length));
+            currentCaptcha = code;
+            // 這裡請複製您 classroom.html 裡面完整的 drawCaptcha 繪圖邏輯
+        }
+        
+        async function login() {
+            const email = document.getElementById('email').value.trim();
+            const password = document.getElementById('password').value.trim();
+            const captcha = document.getElementById('captcha-input').value.trim();
+            
+            if (captcha !== currentCaptcha) {
+                alert("驗證碼錯誤");
+                drawCaptcha();
+                return;
+            }
+            
+            try {
+                await auth.signInWithEmailAndPassword(email, password);
+                // 登入後，auth.onAuthStateChanged 會自動觸發切換介面
+            } catch (e) {
+                alert("登入失敗：" + e.message);
+            }
+        }
+        
+        function togglePassword() {
+            const pwd = document.getElementById('password');
+            pwd.type = (pwd.type === "password") ? "text" : "password";
+        }
+        
+        // 頁面載入時啟動驗證碼
+        document.addEventListener('DOMContentLoaded', drawCaptcha);
     </script>
 </body>
 </html>
