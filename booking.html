@@ -4,19 +4,29 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>蘇昊數理｜加課預約中心</title>
+    <link rel="icon" href="https://suuuuuhaooooo.github.io/-/favicon.png" type="image/png">
+    <link rel="apple-touch-icon" href="https://suuuuuhaooooo.github.io/-/favicon.png">
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-database-compat.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;700&display=swap');
         :root { --primary: #8e9775; --dark: #5b6348; --bg: #f8f8f6; }
         body { font-family: "Noto Serif TC", serif; background-color: var(--bg); margin: 0; user-select: none; -webkit-user-select: none; }
         
-        /* 繼承原本的登入卡風格 */
+        /* 登入卡風格 (與 Classroom 完全一致) */
         #login-ui { display: flex; flex-direction: column; gap: 25px; justify-content: center; align-items: center; height: 100vh; background: var(--bg); }
         .login-card { background: white; padding: 40px; border-radius: 4px; box-shadow: 0 15px 35px rgba(0,0,0,0.05); width: 340px; text-align: center; border-top: 6px solid var(--primary); }
-        input { width: 100%; padding: 14px; border: 1px solid #eee; background: #fafafa; box-sizing: border-box; margin: 10px 0; }
-        .main-btn { background: var(--primary); color: white; border: none; padding: 14px; width: 100%; cursor: pointer; font-weight: 700; }
+        .input-group { position: relative; margin: 10px 0; }
+        input { width: 100%; padding: 14px; border: 1px solid #eee; background: #fafafa; box-sizing: border-box; outline: none; transition: 0.3s; }
+        input:focus { border-color: var(--primary); background: #fff; }
+        .toggle-password { position: absolute; right: 15px; top: 14px; cursor: pointer; color: #ccc; font-size: 14px; }
+        
+        /* 驗證碼區塊 */
+        .captcha-container { display: flex; align-items: center; gap: 10px; margin: 10px 0; }
+        #captcha-canvas { background: #eef1ec; cursor: pointer; border-radius: 2px; flex: 1; height: 45px; }
+
+        .main-btn { background: var(--primary); color: white; border: none; padding: 14px; width: 100%; cursor: pointer; letter-spacing: 2px; font-weight: 700; transition: 0.3s; margin-top: 10px; }
+        .main-btn:hover { background: var(--dark); }
         
         /* 加課搶票 UI */
         #booking-ui { display: none; padding: 40px 20px; max-width: 600px; margin: 0 auto; }
@@ -29,59 +39,55 @@
 
     <div id="login-ui">
         <div class="login-card">
-            <h1>加課預約登入</h1>
-            <input type="email" id="email" placeholder="帳號">
-            <input type="password" id="password" placeholder="密碼">
-            <button class="main-btn" onclick="login()">登入</button>
+            <h1 style="font-size: 22px; letter-spacing: 4px; margin-bottom: 10px;">加課預約中心</h1>
+            <div style="font-size: 12px; color: #aaa; margin-bottom: 30px;">蘇昊數理預約系統</div>
+            
+            <div class="input-group">
+                <input type="email" id="email" placeholder="帳號" autocomplete="off">
+            </div>
+            <div class="input-group">
+                <input type="password" id="password" placeholder="密碼" autocomplete="new-password">
+                <span class="toggle-password" onclick="togglePassword()">🔓</span>
+            </div>
+            
+            <div class="captcha-container">
+                <canvas id="captcha-canvas" width="120" height="45" title="點擊更換驗證碼" onclick="drawCaptcha()"></canvas>
+                <input type="text" id="captcha-input" placeholder="驗證碼">
+            </div>
+            
+            <button class="main-btn" onclick="login()" id="login-btn">登入系統</button>
+            <p id="error-msg" style="color:#b03a2e; font-size:12px; margin-top:15px; height: 15px;"></p>
         </div>
     </div>
 
     <div id="booking-ui">
-        <h2 style="text-align:center; color: var(--dark);">加課預約中心</h2>
-        <div id="slot-list">資料載入中...</div>
+        <h2 style="text-align:center; color: var(--dark);">可預約加課時段</h2>
+        <div id="slot-list">時段載入中...</div>
         <div style="text-align:center; margin-top:30px;">
             <button onclick="logout()" style="background:none; border:none; color:#888; cursor:pointer;">登出系統</button>
         </div>
     </div>
-    <div class="captcha-container" style="display:flex; align-items:center; gap:10px; margin: 10px 0;">
-        <canvas id="captcha-canvas" width="120" height="45" onclick="drawCaptcha()" style="cursor:pointer; background:#eee;"></canvas>
-        <input type="text" id="captcha-input" placeholder="驗證碼" style="margin:0;">
-    </div>
+
     <script>
-        // 1. 安全防護移植
+        // ==========================================
+        // 1. 資安防護 (與 classroom.html 一模一樣)
+        // ==========================================
         document.addEventListener('contextmenu', e => e.preventDefault());
         document.addEventListener('keydown', e => {
             if (e.keyCode === 123 || (e.ctrlKey && e.shiftKey && (e.keyCode === 73 || e.keyCode === 74)) || (e.ctrlKey && e.keyCode === 85)) {
-                e.preventDefault();
-                alert("嚴禁開啟開發者工具！");
-                location.reload();
+                e.preventDefault(); alert("【警告】嚴禁開啟開發者工具！"); location.reload();
             }
         });
+        setInterval(function() {
+            const before = new Date().getTime();
+            debugger; 
+            const after = new Date().getTime();
+            if (after - before > 100) { alert("偵測到異常行為，系統即將登出。"); logout(); }
+        }, 1000);
 
-        // 繼承 classroom 的認證機制
-        auth.onAuthStateChanged(async (user) => {
-            if (user) {
-                // 登入後，立刻從 GAS 抓取該學生的資料，並檢查其「是否為正式學生」
-                const res = await fetch(`${SCRIPT_URL}?token=SuHaoClassroom2026_SecureKey`);
-                const allStudents = await res.json();
-                const myData = allStudents.find(s => s.uid === user.uid);
-                
-                if (myData) {
-                    localStorage.setItem('studentName', myData.name); // 存下姓名，搶課時會用到
-                    document.getElementById('login-ui').style.display = 'none';
-                    document.getElementById('booking-ui').style.display = 'block';
-                    loadSlots(); // 顯示搶課清單
-                } else {
-                    alert("查無學籍資料，請聯繫老師！");
-                    logout();
-                }
-            } else {
-                document.getElementById('login-ui').style.display = 'flex';
-                document.getElementById('booking-ui').style.display = 'none';
-            }
-        });
-
-        // 2. 初始化環境
+        // ==========================================
+        // 2. Firebase & GAS 設定 (請補上您的資訊)
+        // ==========================================
         const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwxFfufe0b7eJpDxSmLgnbVvlq1itLvoD6ZCpvDJKtJg7ChcWn7lpf9LgZqQ4ZsThJiXQ/exec";
         const firebaseConfig = {
             apiKey: "AIzaSyALkTnkYY3JZLCTyajahpi4IZKmFX9USdw",
@@ -89,108 +95,169 @@
             projectId: "su-hao-classroom",
             storageBucket: "su-hao-classroom.firebasestorage.app", 
             messagingSenderId: "764168135846",
-            appId: "1:764168135846:web:f2923a5f4952fa1ca64067",
-            databaseURL: "https://su-hao-classroom-default-rtdb.firebaseio.com/"
+            appId: "1:764168135846:web:f2923a5f4952fa1ca64067"
         };
         firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth();
 
-        // 3. 頁面控制
-        auth.onAuthStateChanged(user => {
+        // ==========================================
+        // 3. 登入與圖形驗證碼邏輯
+        // ==========================================
+        let currentCaptcha = "";
+        function drawCaptcha() {
+            const canvas = document.getElementById('captcha-canvas');
+            const ctx = canvas.getContext('2d');
+            const chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjklmnpqrstuvwxyz23456789";
+            ctx.fillStyle = `rgb(${Math.random()*50+200},${Math.random()*50+200},${Math.random()*50+200})`;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            let code = "";
+            for (let i = 0; i < 4; i++) code += chars.charAt(Math.floor(Math.random() * chars.length));
+            currentCaptcha = code;
+            
+            ctx.font = "bold 26px Arial";
+            ctx.fillStyle = "#333";
+            ctx.fillText(code, 15, 32);
+            for (let i = 0; i < 4; i++) {
+                ctx.strokeStyle = `rgba(0,0,0,0.3)`;
+                ctx.beginPath();
+                ctx.moveTo(Math.random() * canvas.width, Math.random() * canvas.height);
+                ctx.lineTo(Math.random() * canvas.width, Math.random() * canvas.height);
+                ctx.stroke();
+            }
+        }
+
+        function togglePassword() {
+            const pwd = document.getElementById('password');
+            const icon = document.querySelector('.toggle-password');
+            pwd.type = (pwd.type === "password") ? "text" : "password";
+            icon.innerText = (pwd.type === "password") ? "🔓" : "🔒";
+        }
+
+        async function login() {
+            const email = document.getElementById('email').value.trim();
+            const password = document.getElementById('password').value.trim();
+            const captcha = document.getElementById('captcha-input').value.trim();
+            const errorMsg = document.getElementById('error-msg');
+            const btn = document.getElementById('login-btn');
+
+            if (!email || !password || !captcha) { errorMsg.innerText = "請完整填寫所有欄位"; return; }
+            if (captcha !== currentCaptcha) { 
+                errorMsg.innerText = "驗證碼錯誤，請重新輸入"; 
+                document.getElementById('captcha-input').value = '';
+                drawCaptcha(); return; 
+            }
+
+            btn.disabled = true;
+            btn.innerText = "身分驗證中...";
+            try {
+                await auth.signInWithEmailAndPassword(email, password);
+                // 登入後 onAuthStateChanged 會接手
+            } catch (e) {
+                errorMsg.innerText = "登入失敗：帳號或密碼錯誤";
+                btn.disabled = false;
+                btn.innerText = "登入系統";
+                drawCaptcha();
+            }
+        }
+
+        function logout() { auth.signOut().then(() => location.reload()); }
+
+        // ==========================================
+        // 4. 登入後狀態判斷 (重點：去 Sheet 查身分)
+        // ==========================================
+        auth.onAuthStateChanged(async (user) => {
             if (user) {
-                document.getElementById('login-ui').style.display = 'none';
-                document.getElementById('booking-ui').style.display = 'block';
-                loadSlots();
+                document.getElementById('login-btn').innerText = "資料庫核對中...";
+                try {
+                    const res = await fetch(`${SCRIPT_URL}?token=SuHaoClassroom2026_SecureKey`);
+                    const allStudents = await res.json();
+                    
+                    // 比對「學生資料」中的 UID
+                    const myData = allStudents.find(s => s.uid === user.uid);
+                    
+                    if (myData) {
+                        localStorage.setItem('studentName', myData.name);
+                        localStorage.setItem('studentGroup', myData.level); // 存下分流組別
+                        
+                        document.getElementById('login-ui').style.display = 'none';
+                        document.getElementById('booking-ui').style.display = 'block';
+                        loadSlots();
+                    } else {
+                        alert("您的帳號無法使用加課系統，請聯繫管理員！");
+                        logout();
+                    }
+                } catch(e) {
+                    alert("連線資料庫失敗，請重試");
+                    logout();
+                }
             } else {
                 document.getElementById('login-ui').style.display = 'flex';
                 document.getElementById('booking-ui').style.display = 'none';
+                drawCaptcha();
             }
         });
 
-        // 4. 加課系統邏輯
+        // ==========================================
+        // 5. 搶票渲染與送出邏輯
+        // ==========================================
         async function loadSlots() {
+            const list = document.getElementById('slot-list');
             try {
                 const res = await fetch(`${SCRIPT_URL}?token=SuHaoClassroom2026_SecureKey&action=getSlots`);
                 const slots = await res.json();
-                const list = document.getElementById('slot-list');
-                list.innerHTML = slots.map(s => `
+                const myGroup = localStorage.getItem('studentGroup') || "";
+                
+                // 【分流機制】過濾掉不屬於該學生的時段
+                const filteredSlots = slots.filter(s => !s.group || s.group.trim() === "" || s.group.trim() === myGroup.trim());
+
+                if (filteredSlots.length === 0) {
+                    list.innerHTML = "<div style='text-align:center; color:#888; padding:20px;'>目前沒有開放給您的可預約時段。</div>";
+                    return;
+                }
+
+                list.innerHTML = filteredSlots.map(s => `
                     <div class="slot-card">
                         <div>
-                            <strong>${s.name}</strong><br>
-                            <small>名額: ${s.current}/${s.max}</small>
+                            <strong style="color:var(--primary); font-size:16px;">${s.name}</strong><br>
+                            <small style="color:#888;">剩餘名額: ${s.max - s.current} / ${s.max}</small>
                         </div>
                         <button class="book-btn" onclick="bookSlot('${s.id}', this)" ${s.current >= s.max ? 'disabled' : ''}>
                             ${s.current >= s.max ? '已額滿' : '立即預約'}
                         </button>
                     </div>
                 `).join('');
-            } catch(e) { document.getElementById('slot-list').innerText = "載入失敗，請檢查網路。"; }
+            } catch(e) { list.innerText = "載入時段失敗，請重新整理網頁。"; }
         }
 
         async function bookSlot(slotId, btn) {
+            if(!confirm("確認要預約此時段嗎？")) return;
             btn.disabled = true;
             btn.innerText = "搶課中...";
-            // 隨機抖動延遲，降低伺服器瞬時壓力
-            await new Promise(r => setTimeout(r, Math.random() * 800));
             
+            // 加入 AbortController 預防無限等待
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 8000); // 8秒沒回應就切斷
+
             try {
                 const user = firebase.auth().currentUser;
                 const url = `${SCRIPT_URL}?token=SuHaoClassroom2026_SecureKey&action=bookClass&slotId=${slotId}&uid=${user.uid}&name=${localStorage.getItem('studentName')}`;
-                const res = await fetch(url);
+                
+                const res = await fetch(url, { signal: controller.signal });
+                clearTimeout(timeoutId);
                 const data = await res.json();
                 
                 if (data.success) {
-                    alert("預約成功！系統已將時段加入您的聯絡簿。");
-                    location.reload();
+                    alert("預約成功！系統已將時段加入日曆。");
+                    loadSlots(); // 刷新名額
                 } else {
                     throw new Error(data.message);
                 }
             } catch(e) {
-                alert("搶課失敗：" + e.message);
+                alert("預約失敗：" + (e.name === 'AbortError' ? "連線逾時，系統忙碌中" : e.message));
                 btn.disabled = false;
                 btn.innerText = "立即預約";
             }
         }
-
-        function logout() { auth.signOut().then(() => location.reload()); }
-        let currentCaptcha = "";
-        
-        function drawCaptcha() {
-            const canvas = document.getElementById('captcha-canvas');
-            const ctx = canvas.getContext('2d');
-            const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
-            let code = "";
-            for (let i = 0; i < 4; i++) code += chars.charAt(Math.floor(Math.random() * chars.length));
-            currentCaptcha = code;
-            // 這裡請複製您 classroom.html 裡面完整的 drawCaptcha 繪圖邏輯
-        }
-        
-        async function login() {
-            const email = document.getElementById('email').value.trim();
-            const password = document.getElementById('password').value.trim();
-            const captcha = document.getElementById('captcha-input').value.trim();
-            
-            if (captcha !== currentCaptcha) {
-                alert("驗證碼錯誤");
-                drawCaptcha();
-                return;
-            }
-            
-            try {
-                await auth.signInWithEmailAndPassword(email, password);
-                // 登入後，auth.onAuthStateChanged 會自動觸發切換介面
-            } catch (e) {
-                alert("登入失敗：" + e.message);
-            }
-        }
-        
-        function togglePassword() {
-            const pwd = document.getElementById('password');
-            pwd.type = (pwd.type === "password") ? "text" : "password";
-        }
-        
-        // 頁面載入時啟動驗證碼
-        document.addEventListener('DOMContentLoaded', drawCaptcha);
     </script>
 </body>
 </html>
