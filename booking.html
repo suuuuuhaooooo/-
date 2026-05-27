@@ -72,7 +72,7 @@
         // ==========================================
         // 1. 資安防護 (與 classroom.html 一模一樣)
         // ==========================================
-        document.addEventListener('contextmenu', e => e.preventDefault());
+        /*document.addEventListener('contextmenu', e => e.preventDefault());
         document.addEventListener('keydown', e => {
             if (e.keyCode === 123 || (e.ctrlKey && e.shiftKey && (e.keyCode === 73 || e.keyCode === 74)) || (e.ctrlKey && e.keyCode === 85)) {
                 e.preventDefault(); alert("【警告】嚴禁開啟開發者工具！"); location.reload();
@@ -84,7 +84,7 @@
             const after = new Date().getTime();
             if (after - before > 100) { alert("偵測到異常行為，系統即將登出。"); logout(); }
         }, 1000);
-
+        */
         // ==========================================
         // 2. Firebase & GAS 設定 (請補上您的資訊)
         // ==========================================
