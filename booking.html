@@ -201,7 +201,7 @@
         // ==========================================
         
         async function loadSlots() {
-        
+            const now = new Date();
             const list = document.getElementById('slot-list');
         
             try {
@@ -218,17 +218,27 @@
                 // 過濾可見時段
                 const filteredSlots = slots.filter(s => {
         
-                    // 無限制 -> 全部可看
+                    // ========= 1. 時間限制 =========
+                    if (s.openTime) {
+                
+                        const openDate = new Date(s.openTime.replace(" ", "T"));
+                
+                        // 還沒到開放時間 → 不顯示
+                        if (now < openDate) {
+                            return false;
+                        }
+                    }
+                
+                    // ========= 2. 分流限制 =========
                     if (!s.group || s.group.trim() === "") {
                         return true;
                     }
-        
+                
                     const allowList = s.group
                         .split(',')
                         .map(v => v.trim());
-        
+                
                     return allowList.includes(myName);
-        
                 });
         
                 // 沒有可預約時段
