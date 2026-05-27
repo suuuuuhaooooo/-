@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>蘇昊數理｜加課預約</title>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-database-compat.js"></script>
+    <style>
+        body { font-family: "Noto Serif TC", serif; background: #f8f8f6; padding: 20px; }
+        .slot-card { background: white; padding: 20px; margin: 10px 0; border-radius: 8px; border: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; }
+        .book-btn { background: #8e9775; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; }
+        .book-btn:disabled { background: #ccc; }
+    </style>
+</head>
+<body>
+    <h2>加課預約系統</h2>
+    <div id="slot-list">
+        <div class="slot-card">
+            <span>6/1 18:00 - 19:00</span>
+            <button class="book-btn" onclick="bookClass('slot_0601_1800', this)">預約時段</button>
+        </div>
+    </div>
+
+    <script>
+        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwxFfufe0b7eJpDxSmLgnbVvlq1itLvoD6ZCpvDJKtJg7ChcWn7lpf9LgZqQ4ZsThJiXQ/exec";
+        
+        async function bookClass(slotId, btn) {
+            btn.disabled = true;
+            btn.innerText = "搶課中...";
+            
+            // 隨機延遲 0-500ms 避免同時過多請求 (防暴衝)
+            await new Promise(r => setTimeout(r, Math.random() * 500));
+            
+            try {
+                const user = firebase.auth().currentUser;
+                const url = `${SCRIPT_URL}?action=bookClass&slotId=${slotId}&uid=${user.uid}&name=${localStorage.getItem('studentName')}`;
+                const response = await fetch(url);
+                const data = await response.json();
+                
+                if (data.success) {
+                    alert("預約成功！");
+                    btn.innerText = "已預約";
+                } else {
+                    throw new Error(data.message);
+                }
+            } catch (err) {
+                alert("預約失敗：" + err.message);
+                btn.disabled = false;
+                btn.innerText = "預約時段";
+            }
+        }
+    </script>
+</body>
+</html>
