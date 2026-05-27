@@ -3,45 +3,86 @@
 <head>
     <meta charset="UTF-8">
     <title>蘇昊數理｜加課預約系統</title>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-database-compat.js"></script>
+    
     <style>
-        /* 繼承原本的登入卡風格 */
-        body { font-family: "Noto Serif TC", serif; background: #f8f8f6; }
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;700&display=swap');
+        body { font-family: "Noto Serif TC", serif; background: #f8f8f6; padding: 20px; user-select: none; }
         .booking-container { max-width: 600px; margin: 40px auto; }
         .slot-card { background: white; padding: 20px; margin: 15px 0; border-radius: 8px; border: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 5px rgba(0,0,0,0.02); }
-        .book-btn { background: #8e9775; color: white; border: none; padding: 12px 24px; border-radius: 4px; cursor: pointer; font-weight: bold; }
-        .book-btn:disabled { background: #ccc; cursor: not-allowed; }
+        .main-btn { background: #8e9775; color: white; border: none; padding: 12px 24px; border-radius: 4px; cursor: pointer; font-weight: bold; }
+        .main-btn:disabled { background: #ccc; cursor: not-allowed; }
     </style>
 </head>
 <body>
+
     <div id="login-ui"> </div>
-    
-    <div id="booking-ui" style="display:none;">
+
+    <div id="booking-ui" style="display:none;" class="booking-container">
         <h2 style="text-align:center;">加課預約中心</h2>
-        <div id="slot-list" class="booking-container">
-            </div>
+        <div id="slot-list">載入時段中...</div>
+        <button onclick="logout()" style="margin-top:20px; background:none; border:none; color:#888; cursor:pointer;">登出</button>
     </div>
 
     <script>
-        // 初始化邏輯 (同樣使用 firebase.auth().onAuthStateChanged)
-        // 若使用者已登入，隱藏 login-ui，顯示 booking-ui 並執行 loadSlots();
-        
+        // 1. 繼承 classroom.html 的反偵測邏輯
+        document.addEventListener('keydown', function(event) {
+            if (event.keyCode === 123 || (event.ctrlKey && event.shiftKey && (event.keyCode === 73 || event.keyCode === 74)) || (event.ctrlKey && event.keyCode === 85)) { 
+                event.preventDefault();
+                alert("【警告】嚴禁開啟開發者工具！");
+                location.reload();
+            }
+        });
+        document.addEventListener('contextmenu', e => e.preventDefault());
+
+        // 2. 初始化 Firebase (與 classroom.html 一致)
+        const firebaseConfig = { /* 請複製 classroom.html 的 firebaseConfig */ };
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const SCRIPT_URL = "您的_GAS_URL";
+
+        // 3. 登入後的監聽
+        auth.onAuthStateChanged(user => {
+            if (user) {
+                document.getElementById('login-ui').style.display = 'none';
+                document.getElementById('booking-ui').style.display = 'block';
+                loadSlots();
+            }
+        });
+
+        // 4. 搶票核心邏輯
+        async function loadSlots() {
+            // 從 GAS 獲取加課時段資料
+            const res = await fetch(`${SCRIPT_URL}?token=SuHaoClassroom2026_SecureKey&action=getSlots`);
+            const slots = await res.json();
+            const list = document.getElementById('slot-list');
+            list.innerHTML = slots.map(s => `
+                <div class="slot-card">
+                    <div>
+                        <strong>${s.name}</strong><br>
+                        <small>剩餘名額: ${s.max - s.current} / ${s.max}</small>
+                    </div>
+                    <button class="main-btn" onclick="bookSlot('${s.id}', this)" ${s.current >= s.max ? 'disabled' : ''}>
+                        ${s.current >= s.max ? '已額滿' : '立即預約'}
+                    </button>
+                </div>
+            `).join('');
+        }
+
         async function bookSlot(slotId, btn) {
-            // 1. 防衝刺：鎖定按鈕
             btn.disabled = true;
             btn.innerText = "搶課中...";
-            
-            // 2. 隨機延遲 (讓後端 GAS 請求錯開)
-            await new Promise(r => setTimeout(r, Math.random() * 500));
-            
             try {
                 const user = firebase.auth().currentUser;
-                // 呼叫 GAS
-                const res = await fetch(`${SCRIPT_URL}?token=SuHaoClassroom2026_SecureKey&action=bookClass&slotId=${slotId}&uid=${user.uid}&name=${localStorage.getItem('studentName')}`);
+                const url = `${SCRIPT_URL}?token=SuHaoClassroom2026_SecureKey&action=bookClass&slotId=${slotId}&uid=${user.uid}&name=${localStorage.getItem('studentName')}`;
+                const res = await fetch(url);
                 const data = await res.json();
                 
                 if (data.success) {
                     alert("預約成功！");
-                    location.reload(); // 刷新名額
+                    location.reload(); 
                 } else {
                     throw new Error(data.message);
                 }
