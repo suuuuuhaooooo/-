@@ -177,7 +177,6 @@
                     
                     if (myData) {
                         localStorage.setItem('studentName', myData.name);
-                        localStorage.setItem('studentGroup', myData.level); // 存下分流組別
                         
                         document.getElementById('login-ui').style.display = 'none';
                         document.getElementById('booking-ui').style.display = 'block';
@@ -198,35 +197,80 @@
         });
 
         // ==========================================
-        // 5. 搶票渲染與送出邏輯
+        // 5. 搶課渲染與送出邏輯
         // ==========================================
         async function loadSlots() {
             const list = document.getElementById('slot-list');
+        
             try {
                 const res = await fetch(`${SCRIPT_URL}?token=SuHaoClassroom2026_SecureKey&action=getSlots`);
                 const slots = await res.json();
-                const myGroup = localStorage.getItem('studentGroup') || "";
-                
-                // 【分流機制】過濾掉不屬於該學生的時段
-                const filteredSlots = slots.filter(s => !s.group || s.group.trim() === "" || s.group.trim() === myGroup.trim());
-
+        
+                // 取得目前登入學生姓名
+                const myName = localStorage.getItem('studentName') || "";
+        
+                // 過濾可預約時段
+                const filteredSlots = slots.filter(s => {
+        
+                    // 若沒有限制開放對象 -> 所有人可看
+                    if (!s.group || s.group.trim() === "") {
+                        return true;
+                    }
+        
+                    // 將「測試,stu001」拆成陣列
+                    const allowList = s.group
+                        .split(',')
+                        .map(v => v.trim());
+        
+                    // 判斷學生姓名是否在名單內
+                    return allowList.includes(myName);
+                });
+        
+                // 沒有可預約時段
                 if (filteredSlots.length === 0) {
-                    list.innerHTML = "<div style='text-align:center; color:#888; padding:20px;'>目前沒有開放給您的可預約時段。</div>";
+                    list.innerHTML = `
+                        <div style='text-align:center; color:#888; padding:20px;'>
+                            目前沒有開放給您的可預約時段。
+                        </div>
+                    `;
                     return;
                 }
-
+        
+                // 渲染時段卡片
                 list.innerHTML = filteredSlots.map(s => `
                     <div class="slot-card">
                         <div>
-                            <strong style="color:var(--primary); font-size:16px;">${s.name}</strong><br>
-                            <small style="color:#888;">剩餘名額: ${s.max - s.current} / ${s.max}</small>
+                            <strong style="color:var(--primary); font-size:16px;">
+                                ${s.name}
+                            </strong><br>
+        
+                            <small style="color:#888;">
+                                開放時間：${s.openTime}
+                            </small><br>
+        
+                            <small style="color:#888;">
+                                剩餘名額: ${s.max - s.current} / ${s.max}
+                            </small>
                         </div>
-                        <button class="book-btn" onclick="bookSlot('${s.id}', this)" ${s.current >= s.max ? 'disabled' : ''}>
+        
+                        <button 
+                            class="book-btn" 
+                            onclick="bookSlot('${s.id}', this)"
+                            ${s.current >= s.max ? 'disabled' : ''}
+                        >
                             ${s.current >= s.max ? '已額滿' : '立即預約'}
                         </button>
                     </div>
                 `).join('');
-            } catch(e) { list.innerText = "載入時段失敗，請重新整理網頁。"; }
+        
+            } catch(e) {
+                list.innerHTML = `
+                    <div style='text-align:center; color:#b03a2e; padding:20px;'>
+                        時段載入失敗，請重新整理頁面。
+                    </div>
+                `;
+                console.error(e);
+            }
         }
 
         async function bookSlot(slotId, btn) {
