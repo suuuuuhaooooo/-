@@ -221,7 +221,12 @@
                     // ========= 1. 時間限制 =========
                     if (s.openTime) {
                 
-                        const openDate = new Date(s.openTime.replace(" ", "T"));
+                        const parseTime = (t) => {
+                            if (!t) return null;
+                            return new Date(t.replace(/\//g, "-").replace(" ", "T"));
+                        };
+                        
+                        const openDate = parseTime(s.openTime);
                 
                         // 還沒到開放時間 → 不顯示
                         if (now < openDate) {
