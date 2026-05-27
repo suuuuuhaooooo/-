@@ -237,42 +237,48 @@
                 }
         
                 // 渲染時段卡片
-                list.innerHTML = filteredSlots.map(s => `
-                    <div class="slot-card">
-                        <div>
-                            <strong style="color:var(--primary); font-size:16px;">
-                                ${s.name}
-                            </strong><br>
-        
-                            <small style="color:#888;">
-                                開放時間：${s.openTime}
-                            </small><br>
-        
-                            <small style="color:#888;">
-                                剩餘名額：${s.max - s.current} / ${s.max}
-                            </small>
+                const myName = localStorage.getItem('studentName') || "";
+                list.innerHTML = filteredSlots.map(s => {
+                
+                    // 判斷是否已預約
+                    const alreadyBooked = s.bookedList
+                        .split(',')
+                        .map(v => v.trim())
+                        .includes(myName);
+                
+                    return `
+                    
+                        <div class="slot-card">
+                            <div>
+                                <strong style="color:var(--primary); font-size:16px;">
+                                    ${s.name}
+                                </strong><br>
+                
+                                <small style="color:#888;">
+                                    開放時間：${s.openTime}
+                                </small><br>
+                
+                                <small style="color:#888;">
+                                    剩餘名額：${s.max - s.current} / ${s.max}
+                                </small>
+                            </div>
+                
+                            <button 
+                                class="book-btn" 
+                                onclick="bookSlot('${s.id}', this)"
+                                ${s.current >= s.max || alreadyBooked ? 'disabled' : ''}
+                            >
+                                ${
+                                    alreadyBooked
+                                        ? '已預約'
+                                        : (s.current >= s.max ? '已額滿' : '立即預約')
+                                }
+                            </button>
                         </div>
-        
-                        <button 
-                            class="book-btn" 
-                            onclick="bookSlot('${s.id}', this)"
-                            ${s.current >= s.max ? 'disabled' : ''}
-                        >
-                            ${s.current >= s.max ? '已額滿' : '立即預約'}
-                        </button>
-                    </div>
-                `).join('');
-        
-            } catch(e) {
-                list.innerHTML = `
-                    <div style='text-align:center; color:#b03a2e; padding:20px;'>
-                        時段載入失敗，請重新整理頁面。
-                    </div>
-                `;
-                console.error(e);
-            }
-        }
-
+                    `;
+                
+                }).join('');
+                
         async function bookSlot(slotId, btn) {
             if(!confirm("確認要預約此時段嗎？")) return;
             btn.disabled = true;
