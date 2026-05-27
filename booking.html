@@ -2,53 +2,53 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>蘇昊數理｜加課預約</title>
-    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-database-compat.js"></script>
+    <title>蘇昊數理｜加課預約系統</title>
     <style>
-        body { font-family: "Noto Serif TC", serif; background: #f8f8f6; padding: 20px; }
-        .slot-card { background: white; padding: 20px; margin: 10px 0; border-radius: 8px; border: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; }
-        .book-btn { background: #8e9775; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; }
-        .book-btn:disabled { background: #ccc; }
+        /* 繼承原本的登入卡風格 */
+        body { font-family: "Noto Serif TC", serif; background: #f8f8f6; }
+        .booking-container { max-width: 600px; margin: 40px auto; }
+        .slot-card { background: white; padding: 20px; margin: 15px 0; border-radius: 8px; border: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 5px rgba(0,0,0,0.02); }
+        .book-btn { background: #8e9775; color: white; border: none; padding: 12px 24px; border-radius: 4px; cursor: pointer; font-weight: bold; }
+        .book-btn:disabled { background: #ccc; cursor: not-allowed; }
     </style>
 </head>
 <body>
-    <h2>加課預約系統</h2>
-    <div id="slot-list">
-        <div class="slot-card">
-            <span>6/1 18:00 - 19:00</span>
-            <button class="book-btn" onclick="bookClass('slot_0601_1800', this)">預約時段</button>
-        </div>
+    <div id="login-ui"> </div>
+    
+    <div id="booking-ui" style="display:none;">
+        <h2 style="text-align:center;">加課預約中心</h2>
+        <div id="slot-list" class="booking-container">
+            </div>
     </div>
 
     <script>
-        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwxFfufe0b7eJpDxSmLgnbVvlq1itLvoD6ZCpvDJKtJg7ChcWn7lpf9LgZqQ4ZsThJiXQ/exec";
+        // 初始化邏輯 (同樣使用 firebase.auth().onAuthStateChanged)
+        // 若使用者已登入，隱藏 login-ui，顯示 booking-ui 並執行 loadSlots();
         
-        async function bookClass(slotId, btn) {
+        async function bookSlot(slotId, btn) {
+            // 1. 防衝刺：鎖定按鈕
             btn.disabled = true;
             btn.innerText = "搶課中...";
             
-            // 隨機延遲 0-500ms 避免同時過多請求 (防暴衝)
+            // 2. 隨機延遲 (讓後端 GAS 請求錯開)
             await new Promise(r => setTimeout(r, Math.random() * 500));
             
             try {
                 const user = firebase.auth().currentUser;
-                const url = `${SCRIPT_URL}?action=bookClass&slotId=${slotId}&uid=${user.uid}&name=${localStorage.getItem('studentName')}`;
-                const response = await fetch(url);
-                const data = await response.json();
+                // 呼叫 GAS
+                const res = await fetch(`${SCRIPT_URL}?token=SuHaoClassroom2026_SecureKey&action=bookClass&slotId=${slotId}&uid=${user.uid}&name=${localStorage.getItem('studentName')}`);
+                const data = await res.json();
                 
                 if (data.success) {
                     alert("預約成功！");
-                    btn.innerText = "已預約";
+                    location.reload(); // 刷新名額
                 } else {
                     throw new Error(data.message);
                 }
-            } catch (err) {
-                alert("預約失敗：" + err.message);
+            } catch(e) {
+                alert("預約失敗：" + e.message);
                 btn.disabled = false;
-                btn.innerText = "預約時段";
+                btn.innerText = "立即預約";
             }
         }
     </script>
