@@ -72,7 +72,7 @@
         // ==========================================
         // 1. 資安防護 (與 classroom.html 一模一樣)
         // ==========================================
-        /*document.addEventListener('contextmenu', e => e.preventDefault());
+        document.addEventListener('contextmenu', e => e.preventDefault());
         document.addEventListener('keydown', e => {
             if (e.keyCode === 123 || (e.ctrlKey && e.shiftKey && (e.keyCode === 73 || e.keyCode === 74)) || (e.ctrlKey && e.keyCode === 85)) {
                 e.preventDefault(); alert("【警告】嚴禁開啟開發者工具！"); location.reload();
@@ -84,7 +84,7 @@
             const after = new Date().getTime();
             if (after - before > 100) { alert("偵測到異常行為，系統即將登出。"); logout(); }
         }, 1000);
-        */
+        
         // ==========================================
         // 2. Firebase & GAS 設定 (請補上您的資訊)
         // ==========================================
@@ -201,32 +201,27 @@
         // ==========================================
         async function loadSlots() {
             const list = document.getElementById('slot-list');
-        
             try {
-                const res = await fetch(`${SCRIPT_URL}?token=SuHaoClassroom2026_SecureKey&action=getSlots`);
+                const res = await fetch(
+                    `${SCRIPT_URL}?token=SuHaoClassroom2026_SecureKey&action=getSlots`
+                );
                 const slots = await res.json();
-        
-                // 取得目前登入學生姓名
+                // 目前登入學生
                 const myName = localStorage.getItem('studentName') || "";
-        
-                // 過濾可預約時段
+                // 過濾可見時段
                 const filteredSlots = slots.filter(s => {
-        
-                    // 若沒有限制開放對象 -> 所有人可看
+                    // 沒有限制 -> 全部可看
                     if (!s.group || s.group.trim() === "") {
                         return true;
                     }
-        
-                    // 將「測試,stu001」拆成陣列
+                    // 拆白名單
                     const allowList = s.group
                         .split(',')
                         .map(v => v.trim());
         
-                    // 判斷學生姓名是否在名單內
                     return allowList.includes(myName);
                 });
-        
-                // 沒有可預約時段
+                // 沒有時段
                 if (filteredSlots.length === 0) {
                     list.innerHTML = `
                         <div style='text-align:center; color:#888; padding:20px;'>
@@ -235,36 +230,28 @@
                     `;
                     return;
                 }
-        
-                // 渲染時段卡片
-                const myName = localStorage.getItem('studentName') || "";
+                // 渲染卡片
                 list.innerHTML = filteredSlots.map(s => {
-                
-                    // 判斷是否已預約
-                    const alreadyBooked = s.bookedList
+                    // 是否已預約
+                    const alreadyBooked = (s.bookedList || "")
                         .split(',')
                         .map(v => v.trim())
                         .includes(myName);
-                
                     return `
-                    
                         <div class="slot-card">
                             <div>
                                 <strong style="color:var(--primary); font-size:16px;">
                                     ${s.name}
                                 </strong><br>
-                
                                 <small style="color:#888;">
                                     開放時間：${s.openTime}
                                 </small><br>
-                
                                 <small style="color:#888;">
                                     剩餘名額：${s.max - s.current} / ${s.max}
                                 </small>
                             </div>
-                
-                            <button 
-                                class="book-btn" 
+                            <button
+                                class="book-btn"
                                 onclick="bookSlot('${s.id}', this)"
                                 ${s.current >= s.max || alreadyBooked ? 'disabled' : ''}
                             >
@@ -276,36 +263,14 @@
                             </button>
                         </div>
                     `;
-                
                 }).join('');
-                
-        async function bookSlot(slotId, btn) {
-            if(!confirm("確認要預約此時段嗎？")) return;
-            btn.disabled = true;
-            btn.innerText = "搶課中...";
-            
-            // 加入 AbortController 預防無限等待
-            const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 8000); // 8秒沒回應就切斷
-
-            try {
-                const user = firebase.auth().currentUser;
-                const url = `${SCRIPT_URL}?token=SuHaoClassroom2026_SecureKey&action=bookClass&slotId=${slotId}&uid=${user.uid}&name=${localStorage.getItem('studentName')}`;
-                
-                const res = await fetch(url, { signal: controller.signal });
-                clearTimeout(timeoutId);
-                const data = await res.json();
-                
-                if (data.success) {
-                    alert("預約成功！系統已將時段加入日曆。");
-                    loadSlots(); // 刷新名額
-                } else {
-                    throw new Error(data.message);
-                }
             } catch(e) {
-                alert("預約失敗：" + (e.name === 'AbortError' ? "連線逾時，系統忙碌中" : e.message));
-                btn.disabled = false;
-                btn.innerText = "立即預約";
+                console.error(e);
+                list.innerHTML = `
+                    <div style='text-align:center; color:#b03a2e; padding:20px;'>
+                        時段載入失敗，請重新整理頁面。
+                    </div>
+                `;
             }
         }
     </script>
