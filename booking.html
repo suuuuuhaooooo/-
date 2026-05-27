@@ -56,8 +56,16 @@
         });
 
         // 2. 初始化環境
-        const SCRIPT_URL = "您的_GAS_網址"; 
-        const firebaseConfig = { /* 請貼上您原本的 firebaseConfig */ };
+        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwxFfufe0b7eJpDxSmLgnbVvlq1itLvoD6ZCpvDJKtJg7ChcWn7lpf9LgZqQ4ZsThJiXQ/exec";
+        const firebaseConfig = {
+            apiKey: "AIzaSyALkTnkYY3JZLCTyajahpi4IZKmFX9USdw",
+            authDomain: "su-hao-classroom.firebaseapp.com",
+            projectId: "su-hao-classroom",
+            storageBucket: "su-hao-classroom.firebasestorage.app", 
+            messagingSenderId: "764168135846",
+            appId: "1:764168135846:web:f2923a5f4952fa1ca64067",
+            databaseURL: "https://su-hao-classroom-default-rtdb.firebaseio.com/"
+        };
         firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth();
 
