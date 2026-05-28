@@ -424,7 +424,10 @@
                 const diff = target - new Date();
     
                 if (diff <= 0) {
-                    el.innerText = "";
+                    if (!el.dataset.finished) {
+                        el.dataset.finished = "1";
+                        loadSlots();
+                    }
                     return;
                 }
                 const totalSeconds = Math.floor(diff / 1000);
