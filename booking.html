@@ -33,6 +33,11 @@
         .slot-card { background: white; padding: 20px; margin: 15px 0; border-radius: 8px; border: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 5px rgba(0,0,0,0.02); }
         .book-btn { background: var(--primary); color: white; border: none; padding: 12px 24px; border-radius: 4px; cursor: pointer; font-weight: bold; }
         .book-btn:disabled { background: #ccc; cursor: not-allowed; }
+        .countdown {
+            font-size: 12px;
+            color: #c0392b;
+            margin-top: 4px;
+        }
     </style>
 </head>
 <body>
@@ -274,11 +279,8 @@
                     );
                     const notOpenYet = now < openDate;
                     return `
-        
                         <div class="slot-card">
-        
                             <div>
-        
                                 <strong style="color:var(--primary); font-size:16px;">
                                     ${s.name}
                                 </strong><br>
@@ -286,19 +288,22 @@
                                 <small style="color:#888;">
                                     開放時間：${s.openTime}
                                 </small><br>
-        
+                                ${
+                                    notOpenYet
+                                    ? `<div class="countdown" data-time="${s.openTime}">
+                                            距離開放剩餘：計算中...
+                                       </div>`
+                                    : ""
+                                }
                                 <small style="color:#888;">
                                     剩餘名額：${s.max - s.current} / ${s.max}
                                 </small>
-        
                             </div>
-        
                             <button
                                 class="book-btn"
                                 onclick='bookSlot(${JSON.stringify(s)}, this)'
                                 ${s.current >= s.max || alreadyBooked ? 'disabled' : ''}
                             >
-        
                                 ${
                                     alreadyBooked
                                         ? '已預約'
@@ -312,15 +317,11 @@
                                                 )
                                         )
                                 }
-        
                             </button>
-        
                         </div>
-        
                     `;
-        
                 }).join('');
-        
+                startCountdown();
             } catch(e) {
         
                 console.error(e);
@@ -388,6 +389,7 @@
         
                     // 重新刷新列表
                     loadSlots();
+                    
         
                 } else {
         
@@ -410,10 +412,31 @@
         
                 btn.disabled = false;
                 btn.innerText = "立即預約";
-        
             }
-        
         }
+        function startCountdown() {
+        const items = document.querySelectorAll('.countdown');
+        function update() {
+            items.forEach(el => {
+                const target = new Date(
+                    el.dataset.time.replace(/-/g, "/")
+                );
+                const diff = target - new Date();
+    
+                if (diff <= 0) {
+                    el.innerText = "";
+                    return;
+                }
+                const totalSeconds = Math.floor(diff / 1000);
+                const minutes = Math.floor(totalSeconds / 60);
+                const seconds = totalSeconds % 60;
+                el.innerText =
+                    `距離開放剩餘：${minutes}分 ${seconds}秒`;
+            });
+        }
+        update();
+        setInterval(update, 1000);
+    }
     </script>
 </body>
 </html>
