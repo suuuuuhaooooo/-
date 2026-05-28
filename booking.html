@@ -217,19 +217,21 @@
         
                 // 過濾可見時段
                 const filteredSlots = slots.filter(s => {
-        
                     // ========= 1. 時間限制 =========
                     if (s.openTime) {
-                
+                    
                         const parseTime = (t) => {
                             if (!t) return null;
                             return new Date(t.replace(/\//g, "-").replace(" ", "T"));
                         };
-                        
+                    
                         const openDate = parseTime(s.openTime);
-                
-                        // 還沒到開放時間 → 不顯示
-                        if (now < openDate) {
+                    
+                        // 提前五分鐘顯示
+                        const previewTime = new Date(openDate.getTime() - 5 * 60 * 1000);
+                    
+                        // 五分鐘前仍不可見
+                        if (now < previewTime) {
                             return false;
                         }
                     }
@@ -266,7 +268,11 @@
                         .split(',')
                         .map(v => v.trim())
                         .includes(myName);
-        
+                    // 是否已到真正開放時間
+                    const openDate = new Date(
+                        s.openTime.replace(/\//g, "-").replace(" ", "T")
+                    );
+                    const notOpenYet = now < openDate;
                     return `
         
                         <div class="slot-card">
@@ -289,14 +295,22 @@
         
                             <button
                                 class="book-btn"
-                                onclick="bookSlot('${s.id}', this)"
+                                onclick='bookSlot(${JSON.stringify(s)}, this)'
                                 ${s.current >= s.max || alreadyBooked ? 'disabled' : ''}
                             >
         
                                 ${
                                     alreadyBooked
                                         ? '已預約'
-                                        : (s.current >= s.max ? '已額滿' : '立即預約')
+                                        : (
+                                            s.current >= s.max
+                                                ? '已額滿'
+                                                : (
+                                                    notOpenYet
+                                                        ? '尚未開放'
+                                                        : '立即預約'
+                                                )
+                                        )
                                 }
         
                             </button>
@@ -325,7 +339,15 @@
         // 預約課程
         // ==========================================
         
-        async function bookSlot(slotId, btn) {
+        async function bookSlot(slot, btn)
+            const openDate = new Date(
+                slot.openTime.replace(/\//g, "-").replace(" ", "T")
+            );
+        
+            if (new Date() < openDate) {
+                alert("尚未到開放時間，請稍後再試");
+                return;
+            }
         
             if (!confirm("確認要預約此時段嗎？")) {
                 return;
@@ -348,7 +370,7 @@
                     `${SCRIPT_URL}` +
                     `?token=SuHaoClassroom2026_SecureKey` +
                     `&action=bookClass` +
-                    `&slotId=${slotId}` +
+                    `&slotId=${slot.id}` +
                     `&uid=${user.uid}` +
                     `&name=${encodeURIComponent(localStorage.getItem('studentName'))}`;
         
