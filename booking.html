@@ -104,7 +104,7 @@
         };
         firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth();
-
+        auth.setPersistence(firebase.auth.Auth.Persistence.SESSION);
         // ==========================================
         // 3. 登入與圖形驗證碼邏輯
         // ==========================================
@@ -440,6 +440,26 @@
         update();
         setInterval(update, 1000);
     }
+    // ==========================================
+    // 閒置自動登出
+    // ========================================== 
+    let idleTimer;
+    function resetIdleTimer() {
+        clearTimeout(idleTimer);
+        idleTimer = setTimeout(() => {
+            alert("閒置過久，系統已將您自動登出");
+    
+            logout();
+    
+        }, 10 * 60 * 1000); // 10分鐘
+    }
+    // 使用者操作時重置計時
+    ["click", "mousemove", "keydown", "scroll", "touchstart"]
+    .forEach(event => {
+        document.addEventListener(event, resetIdleTimer);
+    });
+    // 啟動
+    resetIdleTimer();
     </script>
 </body>
 </html>
