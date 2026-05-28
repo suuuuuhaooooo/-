@@ -339,7 +339,7 @@
         // 預約課程
         // ==========================================
         
-        async function bookSlot(slot, btn)
+        async function bookSlot(slot, btn){
             const openDate = new Date(
                 slot.openTime.replace(/\//g, "-").replace(" ", "T")
             );
