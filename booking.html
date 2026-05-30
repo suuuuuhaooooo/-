@@ -36,7 +36,7 @@
         .main-btn { background: var(--primary); color: white; border: none; padding: 14px; width: 100%; cursor: pointer; letter-spacing: 2px; font-weight: 700; transition: 0.3s; margin-top: 10px; }
         .main-btn:hover { background: var(--dark); }
         
-        /* 加課搶票 UI */
+        /* 加課 UI */
         #booking-ui { display: none; padding: 40px 20px; max-width: 600px; margin: 0 auto; }
         .slot-card { background: white; padding: 20px; margin: 15px 0; border-radius: 8px; border: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 5px rgba(0,0,0,0.02); }
         .book-btn { background: var(--primary); color: white; border: none; padding: 12px 24px; border-radius: 4px; cursor: pointer; font-weight: bold; }
@@ -210,7 +210,7 @@
         });
 
         // ==========================================
-        // 5. 搶課渲染與送出邏輯
+        // 5. 選課渲染與送出邏輯
         // ==========================================
         
         async function loadSlots() {
@@ -363,7 +363,7 @@
             }
         
             btn.disabled = true;
-            btn.innerText = "搶課中...";
+            btn.innerText = "選課中...";
         
             const controller = new AbortController();
         
