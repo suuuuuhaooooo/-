@@ -248,6 +248,17 @@
                             return false;
                         }
                     }
+
+                    if (s.endTime) {
+                        const endDate = new Date(
+                            s.endTime.replace(/\//g, "-")
+                                     .replace(" ", "T")
+                        );
+                    
+                        if (now > endDate) {
+                            return false;
+                        }
+                    }
                 
                     // ========= 2. 分流限制 =========
                     if (!s.group || s.group.trim() === "") {
@@ -295,7 +306,13 @@
         
                                 <small style="color:#888;">
                                     開放時間：${s.openTime}
-                                </small><br>
+                                </small>
+                                <br>
+                    
+                                <small style="color:#888;">
+                                    截止時間：${s.endTime}
+                                </small>
+                                <br>
                                 ${
                                     notOpenYet
                                     ? `<div class="countdown" data-time="${s.openTime}">
