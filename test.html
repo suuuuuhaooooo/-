@@ -721,6 +721,8 @@
         let currentQuestionIndex = 0;
         let userAnswers = [];
         let examStartTime = 0; // 記錄測驗開始時間
+        let allocatedTime = 0; // 記錄這份考卷的總時長
+        let frozenTimeSpent = null; // 用來凍結作答時間
         
         function startExam(examId) {
             const isConfirmed = confirm("【警告】\n\n點擊「確定」後將立即開始計時！\n\n測驗中途若「重新整理」或「離開網頁」，系統將直接強制收卷結算，無法重考。\n\n您確認已經準備好，要開始測驗了嗎？");
@@ -734,20 +736,27 @@
             currentQuestionIndex = 0;
             userAnswers = new Array(currentExam.questions.length).fill(null);
             
-            db.ref('exam_records/' + currentUserUid + '/' + examId).update({ score: 0, date: new Date().toISOString() });
-            completedRecords[examId] = { score: 0 };
-            hideAllUI();
-            document.getElementById('test-ui').style.display = 'block';
-            document.getElementById('active-exam-title').innerText = currentExam.title;
-            timeRemaining = 1800; updateTimerDisplay();
+            // 題數 × 3 分鐘 × 60 秒
+            allocatedTime = currentExam.questions.length * 3 * 60;
+            timeRemaining = allocatedTime; 
+            frozenTimeSpent = null; // 每次開考前重置凍結時間
+            
+            updateTimerDisplay();
             clearInterval(timerInterval);
             cheatWarnings = 0;
             isExamActive = true;
             examStartTime = Date.now(); // 記錄當下的毫秒數
             window.history.pushState('exam_active', null, '');
+            
             timerInterval = setInterval(() => {
                 timeRemaining--; updateTimerDisplay();
-                if (timeRemaining <= 0) { clearInterval(timerInterval); alert("測驗時間到！系統即將自動為您交卷結算。"); finishAndShowResults(); }
+                if (timeRemaining <= 0) { 
+                    clearInterval(timerInterval); 
+                    // 在跳出警告視窗前，立刻把作答時間鎖死為「總時長」
+                    frozenTimeSpent = allocatedTime; 
+                    alert("測驗時間到！系統即將自動為您交卷結算。"); 
+                    finishAndShowResults(); 
+                }
             }, 1000);
             renderQuestion();
         }
@@ -853,8 +862,9 @@
                 const idToken = await user.getIdToken(true);
 
                 // 3. 準備交卷資料
-                const timeSpentSec = Math.floor((Date.now() - examStartTime) / 1000);
+                const timeSpentSec = frozenTimeSpent !== null ? frozenTimeSpent : Math.floor((Date.now() - examStartTime) / 1000);
                 const timeSpentStr = Math.floor(timeSpentSec / 60) + "分" + (timeSpentSec % 60) + "秒";
+                
                 const studentName = localStorage.getItem('studentName') || "雲端同學";
                 let orderedAnswers = new Array(currentExam.questions.length).fill(null);
                 let shuffledIndices = [];
