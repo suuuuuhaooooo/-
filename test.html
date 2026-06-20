@@ -735,6 +735,12 @@
             currentExam.questions = shuffleQuestions(currentExam.questions);
             currentQuestionIndex = 0;
             userAnswers = new Array(currentExam.questions.length).fill(null);
+
+            db.ref('exam_records/' + currentUserUid + '/' + examId).update({ score: 0, date: new Date().toISOString() });
+            completedRecords[examId] = { score: 0 };
+            hideAllUI();
+            document.getElementById('test-ui').style.display = 'block';
+            document.getElementById('active-exam-title').innerText = currentExam.title;
             
             // 題數 × 3 分鐘 × 60 秒
             allocatedTime = currentExam.questions.length * 3 * 60;
