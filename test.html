@@ -742,8 +742,8 @@
             document.getElementById('test-ui').style.display = 'block';
             document.getElementById('active-exam-title').innerText = currentExam.title;
             
-            // 題數 × 3 分鐘 × 60 秒
-            allocatedTime = currentExam.questions.length * 3 * 60;
+            // 題數 × 2 分鐘 × 60 秒
+            allocatedTime = currentExam.questions.length * 2 * 60;
             timeRemaining = allocatedTime; 
             frozenTimeSpent = null; // 每次開考前重置凍結時間
             
