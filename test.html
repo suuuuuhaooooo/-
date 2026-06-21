@@ -950,7 +950,7 @@
                     // 將正式成績寫入 Firebase
                     const recordData = { score: finalScore, date: new Date().toISOString(), details: shuffledDetails };
                     completedRecords[currentExam.id] = recordData;
-                    db.ref('exam_records/' + currentUserUid + '/' + currentExam.id).set(recordData);
+                    // db.ref('exam_records/' + currentUserUid + '/' + currentExam.id).set(recordData);
 
                     // 顯示大字分數
                     const scoreEl = document.getElementById('score-display');
