@@ -558,11 +558,24 @@
                 }
             }
         });
-
+        // 防止考試中或「交卷傳輸中」誤關網頁
         window.addEventListener('beforeunload', function (e) {
             const testUi = document.getElementById('test-ui');
-            if (testUi && testUi.style.display === 'block' && !isAutoLoggingOut) {
+            const loadingScreen = document.getElementById('loading-screen');
+            let isTesting = testUi && testUi.style.display === 'block';
+            let isSubmitting = loadingScreen && loadingScreen.style.display === 'flex' && !isExamActive;
+
+            if ((isTesting || isSubmitting) && !isAutoLoggingOut) {
                 e.preventDefault(); e.returnValue = ''; return '';
+            }
+        });
+        // 網頁被隱藏或縮到背景的瞬間
+        window.addEventListener('pagehide', function (e) {
+            const loadingScreen = document.getElementById('loading-screen');
+            let isSubmitting = loadingScreen && loadingScreen.style.display === 'flex' && !isExamActive;
+            
+            if (isSubmitting) {
+                localStorage.setItem("emergency_backup_answers", JSON.stringify(userAnswers));
             }
         });
 
@@ -755,7 +768,10 @@
             window.history.pushState('exam_active', null, '');
             
             timerInterval = setInterval(() => {
-                timeRemaining--; updateTimerDisplay();
+                let elapsedSec = Math.floor((Date.now() - examStartTime) / 1000);
+                timeRemaining = allocatedTime - elapsedSec;
+                
+                updateTimerDisplay();
                 if (timeRemaining <= 0) { 
                     clearInterval(timerInterval); 
                     // 在跳出警告視窗前，立刻把作答時間鎖死為「總時長」
@@ -897,6 +913,7 @@
                     method: "POST", 
                     body: formData.toString(),
                     headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
+                    keepalive: true
                 });
                 
                 const result = await response.json(); // 接收 GAS 批改結果
