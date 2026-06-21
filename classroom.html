@@ -2414,7 +2414,7 @@
             // 判斷 2：未綁定，且有授權序號 -> 顯示綁定按鈕與密語
             else if (data.authCode) {
                 let suffix = data.authCode.toString().slice(-4);
-                window.currentBindString = "綁定 " + data.name + suffix; 
+                window.currentBindString = "綁定_" + data.name + "_" + suffix;
                 
                 bindContainer.onclick = openLineBinding; // 呼叫跳轉函式
                 bindContainer.style.background = "#f9f9f9";
