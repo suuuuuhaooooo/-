@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <link rel="icon" href="https://suuuuuhaooooo.github.io/-/favicon.png" type="image/png">
+    <link rel="apple-touch-icon" href="https://suuuuuhaooooo.github.io/-/favicon.png">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>蘇昊數理｜講義兌換系統</title>
+
+    <meta name="description" content="請輸入您的兌換序號與信箱，系統將自動為您開通講義的雲端閱讀權限。">
+    <meta property="og:title" content="蘇昊數理｜講義兌換系統">
+    <meta property="og:description" content="在此輸入並驗證您的授權序號，立即解鎖更多數位學習資源。">
+    <meta property="og:type" content="website">
+    
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-database-compat.js"></script>
+    
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;700&display=swap');
+        :root { --primary: #8e9775; --dark: #5b6348; --bg: #f8f8f6; --white: #ffffff; }
+        
+        body { 
+            font-family: "Noto Serif TC", serif; 
+            background-color: var(--bg); 
+            margin: 0; 
+            color: #333; 
+            height: 100vh; 
+            height: 100dvh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            user-select: none; 
+            -webkit-user-select: none;
+        }
+
+        .redeem-card { 
+            background: white; 
+            padding: 40px; 
+            border-radius: 8px; 
+            box-shadow: 0 15px 35px rgba(0,0,0,0.05); 
+            width: 90%; 
+            max-width: 360px; 
+            text-align: center; 
+            border-top: 6px solid var(--primary); 
+            box-sizing: border-box;
+            max-height: 95vh;
+            overflow-y: auto;
+        }
+
+        .redeem-card h1 { font-size: 22px; letter-spacing: 4px; margin: 0 0 10px 0; color: var(--dark); }
+        .redeem-card p { font-size: 13px; color: #888; margin-bottom: 25px; line-height: 1.6; letter-spacing: 1px; }
+
+        .input-group { position: relative; margin: 15px 0; text-align: left; }
+        .input-group label { display: block; font-size: 13px; color: #444; margin-bottom: 6px; font-weight: bold; letter-spacing: 1px; }
+        
+        input { 
+            width: 100%; 
+            padding: 12px 14px; 
+            border: 1px solid #ddd; 
+            background: #fafafa; 
+            border-radius: 4px;
+            box-sizing: border-box; 
+            outline: none; 
+            transition: 0.3s; 
+            font-size: 14px;
+            letter-spacing: 1px;
+            -webkit-user-select: text;
+            -moz-user-select: text;
+            -ms-user-select: text;
+            user-select: text;
+            -webkit-touch-callout: none;
+        }
+        input:focus { border-color: var(--primary); background: #fff; box-shadow: 0 0 5px rgba(142,151,117,0.2); }
+        input::placeholder { color: #bbb; font-size: 13px; letter-spacing: 0; }
+        
+        #redeem-code { font-family: monospace; font-size: 15px; letter-spacing: 2px; }
+
+        /* 驗證碼區塊樣式 */
+        .captcha-container { display: flex; align-items: center; gap: 10px; margin-top: 20px; }
+        #captcha-canvas { background: #eef1ec; cursor: pointer; border-radius: 4px; flex: 1; height: 45px; }
+        #captcha-input { margin: 0; flex: 1; height: 45px; }
+
+        .main-btn { 
+            background: var(--primary); color: white; border: none; padding: 15px; 
+            width: 100%; cursor: pointer; letter-spacing: 2px; font-weight: 700; 
+            transition: 0.3s; margin-top: 25px; border-radius: 4px; font-size: 16px;
+        }
+        .main-btn:disabled { background: #ccc; cursor: not-allowed; box-shadow: none; transform: none; }
+        .main-btn:hover:not(:disabled) { background: var(--dark); transform: translateY(-2px); box-shadow: 0 5px 15px rgba(142,151,117,0.3); }
+
+        #loading-overlay { 
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+            background: rgba(255,255,255,0.85); z-index: 9999; 
+            backdrop-filter: blur(5px);
+            flex-direction: column; justify-content: center; align-items: center; 
+        }
+        .spinner { border: 4px solid #f3f3f3; border-top: 4px solid var(--primary); border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin-bottom: 15px; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        
+        .redeem-card::-webkit-scrollbar { width: 4px; }
+        .redeem-card::-webkit-scrollbar-thumb { background-color: #ccc; border-radius: 4px; }
+    </style>
+</head>
+<body oncontextmenu="return false;">
+
+    <div id="loading-overlay">
+        <div class="spinner"></div>
+        <div id="loading-text" style="color: var(--dark); font-weight: bold; letter-spacing: 1px;">系統處理中...</div>
+    </div>
+
+    <div class="redeem-card">
+        <h1>講義兌換系統</h1>
+        <p>驗證並綁定您的 Google 帳號，<br>立即解鎖講義閱讀權限。</p>
+
+        <div class="input-group">
+            <label>兌換序號 (12 碼)</label>
+            <input type="text" id="redeem-code" placeholder="格式：xxxx-xxxx-xxxx" maxlength="14" autocomplete="off">
+        </div>
+
+        <div class="input-group">
+            <label>綁定信箱</label>
+            <input type="email" id="redeem-email" placeholder="請輸入您的 Gmail 信箱" autocomplete="off">
+        </div>
+
+        <div class="input-group">
+            <label>確認信箱</label>
+            <input type="email" id="redeem-email-confirm" placeholder="請手動再次輸入信箱" autocomplete="off"
+                   onpaste="alert('為確保授權正確，請手動輸入信箱喔！'); return false;" 
+                   ondrop="return false;">
+        </div>
+
+        <div class="captcha-container">
+            <canvas id="captcha-canvas" width="120" height="45" title="點擊更換驗證碼" onclick="drawCaptcha()"></canvas>
+            <input type="text" id="captcha-input" placeholder="圖形驗證碼" autocomplete="off" maxlength="4">
+        </div>
+
+        <button class="main-btn" id="submit-btn" onclick="processRedemption()">確認兌換</button>
+    </div>
+
+    <script>
+        // --- UI 與防護腳本 ---
+        document.addEventListener('contextmenu', event => event.preventDefault());
+        document.onselectstart = function() { return false; };
+        document.addEventListener('copy', (e) => e.preventDefault());
+        document.addEventListener('cut', (e) => e.preventDefault());
+        document.addEventListener('keydown', event => {
+            if (event.keyCode === 123 || (event.ctrlKey && event.shiftKey && (event.keyCode === 73 || event.keyCode === 74)) || (event.ctrlKey && event.keyCode === 85)) { 
+                event.preventDefault();
+            }
+        });
+
+        // 兌換碼格式化
+        document.getElementById('redeem-code').addEventListener('input', function(e) {
+            let target = e.target;
+            let val = target.value.replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
+            val = val.substring(0, 12);
+            let formatted = val.match(/.{1,4}/g)?.join('-') || val;
+            target.value = formatted;
+        });
+
+        // --- Firebase 初始化 ---
+        const firebaseConfig = {
+            apiKey: "AIzaSyALkTnkYY3JZLCTyajahpi4IZKmFX9USdw",
+            authDomain: "su-hao-classroom.firebaseapp.com",
+            projectId: "su-hao-classroom",
+            storageBucket: "su-hao-classroom.firebasestorage.app",
+            messagingSenderId: "764168135846",
+            appId: "1:764168135846:web:f2923a5f4952fa1ca64067",
+            databaseURL: "https://su-hao-classroom-default-rtdb.firebaseio.com/"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database(); 
+        
+        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycby2yt8YwAuIgYAUYx75Mf7sjAiEehx3VqVGVhZG0L6GXasGtqKrVZDOJmQM80hfq6o/exec"; 
+        
+        let currentCaptcha = "";
+        let globalClientIP = "unknown_IP";
+
+        // --- 網頁載入初始化 ---
+        window.onload = function() {
+            drawCaptcha();
+            fetch('https://api.ipify.org?format=json')
+                .then(res => res.json())
+                .then(data => { globalClientIP = data.ip; })
+                .catch(err => console.log("獲取 IP 失敗", err));
+        };
+
+        // --- 繪製高防護圖形驗證碼 ---
+        function drawCaptcha() {
+            const canvas = document.getElementById('captcha-canvas');
+            const ctx = canvas.getContext('2d');
+            const chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjklmnpqrstuvwxyz23456789";
+            
+            const r = Math.floor(Math.random() * 50 + 200);
+            const g = Math.floor(Math.random() * 50 + 200);
+            const b = Math.floor(Math.random() * 50 + 200);
+            ctx.fillStyle = `rgb(${r},${g},${b})`;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            let code = "";
+            for (let i = 0; i < 4; i++) code += chars.charAt(Math.floor(Math.random() * chars.length));
+            currentCaptcha = code;
+
+            for (let i = 0; i < 500; i++) {
+                ctx.fillStyle = `rgba(${Math.random()*255},${Math.random()*255},${Math.random()*255}, ${Math.random()*0.5})`;
+                ctx.fillRect(Math.random()*canvas.width, Math.random()*canvas.height, 1.5, 1.5);
+            }
+
+            const fontFamilies = ['Courier New', 'Georgia', 'Arial', 'Impact', 'Times New Roman'];
+            for (let i = 0; i < code.length; i++) {
+                const fontFamily = fontFamilies[Math.floor(Math.random() * fontFamilies.length)];
+                const fontSize = Math.floor(Math.random() * 10) + 26; 
+                ctx.font = `italic bold ${fontSize}px ${fontFamily}`;
+                ctx.save();
+                
+                const x = 12 + i * 24 + (Math.random() - 0.5) * 6;
+                const y = 32 + (Math.random() - 0.5) * 8; 
+                ctx.translate(x, y);
+                ctx.rotate((Math.random() - 0.5) * 1.0); 
+                
+                const scaleX = 0.7 + Math.random() * 0.4;
+                const scaleY = 0.7 + Math.random() * 0.4;
+                ctx.scale(scaleX, scaleY);
+                const skewX = (Math.random() - 0.5) * 0.6;
+                const skewY = (Math.random() - 0.5) * 0.6;
+                ctx.transform(1, skewY, skewX, 1, 0, 0);
+                
+                const cR = Math.floor(Math.random() * 120);
+                const cG = Math.floor(Math.random() * 120);
+                const cB = Math.floor(Math.random() * 120);
+                
+                if (Math.random() > 0.4) {
+                    ctx.fillStyle = `rgba(${cR},${cG},${cB}, 0.9)`;
+                    ctx.fillText(code[i], 0, 0);
+                } else {
+                    ctx.lineWidth = Math.random() * 1.5 + 0.5; 
+                    ctx.strokeStyle = `rgba(${cR},${cG},${cB}, 0.9)`;
+                    ctx.strokeText(code[i], 0, 0);
+                    ctx.fillStyle = `rgba(${Math.random()*255},${Math.random()*255},${Math.random()*255}, 0.4)`;
+                    ctx.fillText(code[i], 0, 0);
+                }
+                ctx.restore();
+            }
+
+            for (let i = 0; i < 6; i++) {
+                ctx.strokeStyle = `rgba(${Math.random()*150},${Math.random()*150},${Math.random()*150}, 0.8)`;
+                ctx.lineWidth = Math.random() * 2.5 + 0.5;
+                ctx.beginPath();
+                ctx.moveTo(Math.random() * canvas.width * 0.2, Math.random() * canvas.height);
+                ctx.bezierCurveTo(
+                    canvas.width / 2, Math.random() * canvas.height * 2 - canvas.height / 2, 
+                    canvas.width / 2, Math.random() * canvas.height * 2 - canvas.height / 2,
+                    canvas.width * 0.8 + Math.random() * canvas.width * 0.2, Math.random() * canvas.height 
+                );
+                ctx.stroke();
+            }
+        }
+
+        // --- 介面控制 ---
+        function showLoading(text) {
+            document.getElementById('loading-text').innerText = text;
+            document.getElementById('loading-overlay').style.display = 'flex';
+        }
+        function hideLoading() {
+            document.getElementById('loading-overlay').style.display = 'none';
+        }
+
+        // --- 核心兌換與防護邏輯 ---
+        async function processRedemption() {
+            const now = Date.now();
+            const safeIP = globalClientIP ? globalClientIP.replace(/[.#$\[\]:]/g, '_') : "unknown_IP";
+            const ipBanRef = db.ref('ip_bans/' + safeIP);
+
+            // 1. 檢查 Firebase 雲端 IP 封鎖
+            if (safeIP !== "unknown_IP") {
+                try {
+                    const snap = await ipBanRef.once('value');
+                    const banData = snap.val();
+                    if (banData && banData.lockUntil > now) {
+                        const remainingSec = Math.ceil((banData.lockUntil - now) / 1000);
+                        const min = Math.floor(remainingSec / 60);
+                        const sec = remainingSec % 60;
+                        alert(`【系統通知】\n因連續異常操作，已被系統暫時封鎖。\n請等待 ${min} 分 ${sec} 秒後再嘗試。`);
+                        return;
+                    }
+                } catch (e) { console.log("IP 檢查失敗，略過", e); }
+            }
+
+            // 2. 檢查本地端封鎖
+            let lockUntil = parseInt(localStorage.getItem('redeem_lock_until') || '0', 10);
+            let failCount = parseInt(localStorage.getItem('redeem_fail_count') || '0', 10);
+
+            if (now < lockUntil) {
+                const remainingSec = Math.ceil((lockUntil - now) / 1000);
+                const min = Math.floor(remainingSec / 60);
+                const sec = remainingSec % 60;
+                alert(`【系統通知】\n請等待 ${min} 分 ${sec} 秒後再嘗試。`);
+                return;
+            }
+
+            // 3. 欄位驗證
+            const rawCode = document.getElementById('redeem-code').value.trim();
+            const code = rawCode.replace(/-/g, ''); // 拔除破折號送給後端
+            const email = document.getElementById('redeem-email').value.trim();
+            const emailConfirm = document.getElementById('redeem-email-confirm').value.trim();
+            const captchaInput = document.getElementById('captcha-input').value.trim();
+
+            if (!rawCode || rawCode.length !== 14) { alert("請輸入完整 12 碼的兌換序號！"); return; }
+            if (!email || !emailConfirm) { alert("請填寫信箱欄位！"); return; }
+            if (email !== emailConfirm) { alert("兩次輸入的信箱不一致，請重新確認！"); return; }
+            if (!captchaInput) { alert("請輸入圖形驗證碼！"); return; }
+            
+            if (captchaInput !== currentCaptcha) {
+                alert("驗證碼錯誤（請注意大小寫需完全一致）");
+                drawCaptcha();
+                document.getElementById('captcha-input').value = "";
+                document.getElementById('captcha-input').focus();
+                return;
+            }
+
+            // 4. 發送請求
+            const btn = document.getElementById('submit-btn');
+            btn.disabled = true;
+            showLoading("正在驗證序號並開通權限...");
+
+            try {
+                const response = await fetch(SCRIPT_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                    body: JSON.stringify({ code: code, email: email })
+                });
+                
+                const result = await response.json(); 
+                hideLoading();
+
+                if (result.success) {
+                    alert("兌換成功！\n\n講義權限已為您開通，請前往您的 Google 雲端硬碟「與我共用」資料夾中查看。");
+                    
+                    // 清空欄位與解除封鎖紀錄
+                    document.getElementById('redeem-code').value = "";
+                    document.getElementById('redeem-email').value = "";
+                    document.getElementById('redeem-email-confirm').value = "";
+                    document.getElementById('captcha-input').value = "";
+                    drawCaptcha();
+
+                    localStorage.removeItem('redeem_fail_count');
+                    localStorage.removeItem('redeem_lock_until');
+                    if (safeIP !== "unknown_IP") ipBanRef.remove();
+                } else {
+                    // 處理失敗邏輯
+                    failCount++;
+                    localStorage.setItem('redeem_fail_count', failCount);
+                    
+                    let penaltyMinutes = 0;
+                    let cloudFails = failCount;
+
+                    if (safeIP !== "unknown_IP") {
+                        try {
+                            const snap = await ipBanRef.once('value');
+                            let banData = snap.val() || { fails: 0, lockUntil: 0 };
+                            banData.fails += 1;
+                            cloudFails = banData.fails;
+                            
+                            if (banData.fails === 3) penaltyMinutes = 10;
+                            else if (banData.fails === 4) penaltyMinutes = 30;
+                            else if (banData.fails >= 5) penaltyMinutes = 60; 
+
+                            if (penaltyMinutes > 0) {
+                                banData.lockUntil = now + (penaltyMinutes * 60 * 1000);
+                            }
+                            await ipBanRef.set(banData);
+                        } catch(e) { console.log("更新 IP 失敗次數錯誤", e); }
+                    }
+
+                    if (cloudFails > failCount) {
+                        failCount = cloudFails;
+                        localStorage.setItem('redeem_fail_count', failCount);
+                    }
+                    if (penaltyMinutes === 0) {
+                        if (failCount === 3) penaltyMinutes = 10;
+                        else if (failCount === 4) penaltyMinutes = 30;
+                        else if (failCount >= 5) penaltyMinutes = 60;
+                    }
+
+                    if (penaltyMinutes > 0) {
+                        localStorage.setItem('redeem_lock_until', now + (penaltyMinutes * 60 * 1000));
+                        alert(`【警告】\n偵測到多次無效序號！\n為保護系統安全，已暫停您的兌換權限 ${penaltyMinutes} 分鐘。`);
+                    } else {
+                        let attemptsLeft = 3 - failCount;
+                        alert("兌換失敗：" + (result.message || "序號錯誤或已兌換。") + `\n\n(警告：再失敗 ${attemptsLeft} 次將觸發安全鎖定)`);
+                    }
+                    
+                    drawCaptcha();
+                    document.getElementById('captcha-input').value = "";
+                }
+            } catch (error) {
+                hideLoading();
+                alert("連線發生異常，請檢查網路狀態後再試一次。");
+            } finally {
+                btn.disabled = false;
+            }
+        }
+    </script>
+</body>
+</html>
