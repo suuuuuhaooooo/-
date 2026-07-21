@@ -316,7 +316,7 @@
 
             // 3. 欄位驗證
             const rawCode = document.getElementById('redeem-code').value.trim();
-            const code = rawCode.replace(/-/g, ''); // 拔除破折號送給後端
+            const code = rawCode; // 改成這樣！直接把帶有破折號的序號送給後端
             const email = document.getElementById('redeem-email').value.trim();
             const emailConfirm = document.getElementById('redeem-email-confirm').value.trim();
             const captchaInput = document.getElementById('captcha-input').value.trim();
