@@ -178,11 +178,27 @@
 
         // --- 網頁載入初始化 ---
         window.onload = function() {
+            // 1. 畫圖形驗證碼
             drawCaptcha();
+            
+            // 2. 獲取使用者 IP
             fetch('https://api.ipify.org?format=json')
                 .then(res => res.json())
                 .then(data => { globalClientIP = data.ip; })
                 .catch(err => console.log("獲取 IP 失敗", err));
+
+            const urlParams = new URLSearchParams(window.location.search);
+            const autoCode = urlParams.get('code');
+            
+            if (autoCode) {
+                const codeInputEl = document.getElementById('redeem-code');
+                if (codeInputEl) {
+                    codeInputEl.value = autoCode; // 自動填入序號
+                    codeInputEl.readOnly = true;  // 鎖定欄位不給亂改
+                    codeInputEl.style.backgroundColor = "#eef1ec"; // 變更底色提示已自動帶入
+                    codeInputEl.style.cursor = "not-allowed";
+                }
+            }
         };
 
         // --- 繪製高防護圖形驗證碼 ---
