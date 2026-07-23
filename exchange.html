@@ -350,8 +350,13 @@
             
             // 當捲動高度 + 顯示高度 >= 內部總高度 (容許 5px 誤差避免手機縮放問題)
             if (box.scrollTop + box.clientHeight >= box.scrollHeight - 5) {
+                // 滑到底部：啟用按鈕
                 btn.disabled = false;
                 btn.innerText = "我已同意並確認兌換";
+            } else {
+                // 沒有在底部 (或往上滑)：禁用按鈕
+                btn.disabled = true;
+                btn.innerText = "請先閱讀至底部";
             }
         }
 
