@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>蘇昊數理｜雲端題庫系統</title>
+    
+    <meta name="description" content="專屬學員的雲端自動組卷系統，即時篩選、雲端編譯、秒出考卷。">
+    <link rel="icon" href="https://suuuuuhaooooo.github.io/-/favicon.png" type="image/png">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;700&display=swap" rel="stylesheet">
+    
+    <!-- 引入 LINE LIFF SDK -->
+    <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+    
+    <style>
+        /* ==========================================
+           基礎品牌與字體設定
+           ========================================== */
+        @font-face {
+            font-family: 'SuHaoMing';
+            src: url('cwTeXQMingZH-Medium.woff2') format('woff2'),
+                 url('cwTeXQMingZH-Medium.ttf') format('truetype');
+            font-display: swap; 
+        }
+        
+        :root { 
+            --primary: #8e9775; 
+            --dark: #5b6348; 
+            --bg: #f5f5f5; 
+            --white: #ffffff; 
+            --border: #eeeeee; 
+        }
+
+        body {
+            margin: 0; padding: 0;
+            background-color: var(--bg);
+            font-family: "Noto Serif TC", serif;
+            color: #333;
+            -webkit-font-smoothing: antialiased;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        /* ==========================================
+           頂部導覽列
+           ========================================== */
+        .navbar {
+            background: white; padding: 15px 20px; box-shadow: 0 1px 5px rgba(0,0,0,0.05);
+            display: flex; justify-content: space-between; align-items: center;
+            position: fixed; top: 0; left: 0; width: 100%; box-sizing: border-box; z-index: 100;
+            height: 60px;
+        }
+        .brand-title { font-weight: 700; font-size: 16px; color: var(--dark); letter-spacing: 1px; }
+        .user-badge { display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: bold; color: #666; }
+        .user-badge img { width: 28px; height: 28px; border-radius: 50%; border: 1px solid #ddd; }
+
+        /* ==========================================
+           主容器與卡片設計
+           ========================================== */
+        .container {
+            padding: 85px 20px 40px 20px;
+            max-width: 500px;
+            margin: 0 auto;
+            box-sizing: border-box;
+        }
+
+        .filter-card {
+            background: white;
+            border-radius: 12px;
+            padding: 25px 20px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.04);
+            border-top: 5px solid var(--primary);
+            margin-bottom: 20px;
+        }
+
+        .filter-card h2 {
+            margin: 0 0 5px 0;
+            font-size: 18px;
+            color: var(--dark);
+            letter-spacing: 1.5px;
+        }
+        .filter-card p {
+            margin: 0 0 20px 0;
+            font-size: 13px;
+            color: #888;
+            line-height: 1.5;
+        }
+
+        /* 表單元素 */
+        .input-group { margin-bottom: 18px; }
+        .input-group label {
+            display: block; font-size: 13px; color: #444; margin-bottom: 8px; font-weight: bold; letter-spacing: 1px;
+        }
+        
+        select, input[type="number"] {
+            width: 100%;
+            padding: 12px 15px;
+            border: 1px solid #ddd;
+            background: #fafafa;
+            border-radius: 8px;
+            font-family: "Noto Serif TC", serif;
+            font-size: 14px;
+            color: #333;
+            outline: none;
+            box-sizing: border-box;
+            transition: 0.3s;
+            appearance: none; /* 隱藏原生箭頭 */
+            background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23888' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+            background-repeat: no-repeat;
+            background-position: right 15px center;
+            background-size: 15px;
+        }
+        select:focus, input[type="number"]:focus {
+            border-color: var(--primary);
+            background: #fff;
+            box-shadow: 0 0 0 3px rgba(142,151,117,0.1);
+        }
+
+        .main-btn { 
+            background: var(--primary); color: white; border: none; padding: 15px; 
+            width: 100%; cursor: pointer; letter-spacing: 2px; font-weight: 700; 
+            transition: 0.3s; border-radius: 8px; font-size: 16px; font-family: "Noto Serif TC", serif;
+            margin-top: 10px;
+            display: flex; justify-content: center; align-items: center; gap: 10px;
+        }
+        .main-btn:disabled { background: #ccc; cursor: not-allowed; }
+        .main-btn:hover:not(:disabled) { background: var(--dark); transform: translateY(-2px); box-shadow: 0 5px 15px rgba(142,151,117,0.3); }
+
+        /* ==========================================
+           全螢幕 Loading 遮罩
+           ========================================== */
+        #loading-overlay { 
+            display: flex; position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+            background: rgba(255,255,255,0.9); z-index: 9999; 
+            backdrop-filter: blur(5px);
+            flex-direction: column; justify-content: center; align-items: center; 
+        }
+        .spinner { 
+            border: 4px solid #eef1e6; border-top: 4px solid var(--primary); 
+            border-radius: 50%; width: 45px; height: 45px; animation: spin 1s linear infinite; margin-bottom: 15px; 
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .loading-text { color: var(--dark); font-weight: bold; letter-spacing: 1.5px; font-size: 15px; }
+        .loading-subtext { color: #888; font-size: 12px; margin-top: 8px; letter-spacing: 1px; }
+
+        /* 資料統整小卡 */
+        .info-box {
+            background: #eef1e6;
+            border-left: 4px solid var(--primary);
+            padding: 12px 15px;
+            border-radius: 0 8px 8px 0;
+            font-size: 12px;
+            color: #555;
+            margin-bottom: 20px;
+            line-height: 1.6;
+        }
+    </style>
+</head>
+<body oncontextmenu="return false;">
+
+    <!-- Loading 遮罩 -->
+    <div id="loading-overlay">
+        <div class="spinner"></div>
+        <div class="loading-text" id="loading-text">系統初始化中...</div>
+        <div class="loading-subtext" id="loading-subtext">正在驗證您的 LINE 帳號</div>
+    </div>
+
+    <!-- 導覽列 -->
+    <nav class="navbar">
+        <div class="brand-title">蘇昊題庫中心</div>
+        <div class="user-badge" id="user-badge">
+            <span id="user-name">載入中</span>
+            <img id="user-avatar" src="https://suuuuuhaooooo.github.io/-/favicon.png" alt="Avatar">
+        </div>
+    </nav>
+
+    <!-- 主內容區 -->
+    <div class="container">
+        
+        <div class="filter-card">
+            <h2>自訂考卷條件</h2>
+            <p>請選擇您想挑戰的單元與題數，系統將透過雲端編譯器為您即時產出 PDF 專屬考卷。</p>
+            
+            <div class="info-box" id="db-info">
+                資料庫連線中，請稍候...
+            </div>
+
+            <div class="input-group">
+                <label>選擇科目</label>
+                <select id="select-subject" onchange="updateUnitDropdown()" disabled>
+                    <option value="">請先等待資料同步...</option>
+                </select>
+            </div>
+
+            <div class="input-group">
+                <label>選擇範圍 / 單元</label>
+                <select id="select-unit" disabled>
+                    <option value="">請先選擇科目</option>
+                </select>
+            </div>
+
+            <div class="input-group">
+                <label>抽卷題數 (上限 20 題)</label>
+                <input type="number" id="input-count" value="10" min="1" max="20" disabled>
+            </div>
+
+            <button class="main-btn" id="generate-btn" onclick="triggerRenderCompilation()" disabled>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                開始雲端組卷
+            </button>
+        </div>
+
+    </div>
+
+    <!-- 版權宣告 -->
+    <div style="text-align: center; font-size: 10px; color: #bbb; margin-top: 10px; letter-spacing: 1px; font-family: Arial, sans-serif;">
+        &copy; 2026 蘇昊數理 Su-Hao Math/Science.
+    </div>
+
+    <script>
+        // ==========================================
+        // 核心設定與變數
+        // ==========================================
+        const MY_LIFF_ID = "2010896789-64Pzz9hx"; // 您的專屬 LIFF ID
+        // 這是您在上一階段取得的 GAS API 網址 (負責提供題庫 JSON)
+        const GAS_API_URL = "https://script.google.com/macros/s/AKfycbwg1reUCaWdmvnjQyxxfOUSNL-6niiiaQlLztgOvSavphpUF2MzAXMVC1fa0TtLsLoC/exec?token=suhao2026";
+        
+        // 未來 Render 伺服器建置好後，把網址填在這邊
+        const RENDER_SERVER_URL = "https://suhao-exam-backend.onrender.com/generate"; 
+
+        let globalQuestions = [];
+        let groupedData = {}; // 用來存放 { "數學": ["多項式", "因式分解"], "理化": ["力學"] }
+        let currentUser = { name: "同學", uid: "" };
+
+        // ==========================================
+        // 1. 初始化 LIFF 與防護機制
+        // ==========================================
+        window.onload = async function() {
+            try {
+                await liff.init({ liffId: MY_LIFF_ID });
+                
+                if (!liff.isInClient()) {
+                    showError("為保護權益，題庫系統僅限在 LINE 聊天室內部開啟。");
+                    return;
+                }
+                
+                if (!liff.isLoggedIn()) {
+                    liff.login();
+                    return;
+                }
+
+                // 取得 LINE 使用者頭像與名稱
+                const profile = await liff.getProfile();
+                currentUser.name = profile.displayName;
+                currentUser.uid = profile.userId;
+                
+                document.getElementById('user-name').innerText = currentUser.name;
+                if(profile.pictureUrl) {
+                    document.getElementById('user-avatar').src = profile.pictureUrl;
+                }
+
+                // 身分驗證通過，開始同步 Google Sheet 題庫
+                fetchQuestionBank();
+
+            } catch (err) {
+                showError("LINE 驗證失敗，請重新開啟此頁面。");
+            }
+        };
+
+        // ==========================================
+        // 2. 抓取並解析 Google Sheet 題庫資料
+        // ==========================================
+        async function fetchQuestionBank() {
+            setLoadingState("正在同步雲端題庫資料...", "向 Google 資料庫請求中 (約需 2~3 秒)");
+            
+            try {
+                const response = await fetch(GAS_API_URL);
+                const data = await response.json();
+                
+                if (!data || data.length === 0) {
+                    throw new Error("題庫目前沒有資料");
+                }
+                
+                globalQuestions = data;
+                processDropdownData(data);
+
+            } catch (error) {
+                showError("題庫同步失敗，請聯絡管理員。");
+                console.error(error);
+            }
+        }
+
+        // ==========================================
+        // 3. 自動生成「科目」與「單元」的連動選單
+        // ==========================================
+        function processDropdownData(data) {
+            // 假設您的試算表有「科目」和「單元」兩個欄位。
+            // 程式會自動尋找並分類。如果欄位名稱不同，請修改下方的字串。
+            const subjectKey = data[0].hasOwnProperty("科目") ? "科目" : (data[0].hasOwnProperty("Subject") ? "Subject" : null);
+            const unitKey = data[0].hasOwnProperty("單元") ? "單元" : (data[0].hasOwnProperty("章節") ? "章節" : null);
+
+            if (!subjectKey || !unitKey) {
+                showError("試算表缺乏『科目』或『單元』欄位，無法進行分類。");
+                return;
+            }
+
+            // 進行分門別類
+            groupedData = {};
+            data.forEach(row => {
+                let subj = row[subjectKey] || "未分類科目";
+                let unit = row[unitKey] || "未分類單元";
+                
+                if (!groupedData[subj]) {
+                    groupedData[subj] = new Set();
+                }
+                groupedData[subj].add(unit);
+            });
+
+            // 渲染「科目」選單
+            const subjectSelect = document.getElementById('select-subject');
+            subjectSelect.innerHTML = '<option value="" disabled selected>請選擇科目...</option>';
+            
+            Object.keys(groupedData).forEach(subj => {
+                let opt = document.createElement('option');
+                opt.value = subj;
+                opt.innerText = subj;
+                subjectSelect.appendChild(opt);
+            });
+
+            // 解除封印
+            subjectSelect.disabled = false;
+            document.getElementById('input-count').disabled = false;
+            
+            // 更新狀態小卡
+            document.getElementById('db-info').innerHTML = 
+                `<b>資料庫同步完成</b><br>目前題庫總計收錄：<b>${globalQuestions.length}</b> 題。`;
+            
+            hideLoading();
+        }
+
+        // 當使用者選擇「科目」時，自動更新「單元」選單
+        function updateUnitDropdown() {
+            const subjectSelect = document.getElementById('select-subject');
+            const unitSelect = document.getElementById('select-unit');
+            const generateBtn = document.getElementById('generate-btn');
+            
+            const selectedSubj = subjectSelect.value;
+            unitSelect.innerHTML = '<option value="" disabled selected>請選擇範圍 / 單元...</option>';
+            
+            if (selectedSubj && groupedData[selectedSubj]) {
+                groupedData[selectedSubj].forEach(unit => {
+                    let opt = document.createElement('option');
+                    opt.value = unit;
+                    opt.innerText = unit;
+                    unitSelect.appendChild(opt);
+                });
+                unitSelect.disabled = false;
+            } else {
+                unitSelect.disabled = true;
+            }
+
+            // 監聽單元選擇，選好才能按鈕
+            unitSelect.onchange = function() {
+                generateBtn.disabled = (unitSelect.value === "");
+            };
+        }
+
+        // ==========================================
+        // 4. 傳送指令給 Render 伺服器產出 PDF
+        // ==========================================
+        async function triggerRenderCompilation() {
+            const selectedSubj = document.getElementById('select-subject').value;
+            const selectedUnit = document.getElementById('select-unit').value;
+            let count = parseInt(document.getElementById('input-count').value);
+            
+            if (count > 20) count = 20;
+            if (count < 1) count = 1;
+
+            setLoadingState("正在驅動雲端編譯器...", "XeLaTeX 引擎排版中，請勿關閉視窗 (約需 10~15 秒)");
+
+            const payload = {
+                uid: currentUser.uid,
+                name: currentUser.name,
+                subject: selectedSubj,
+                unit: selectedUnit,
+                questionCount: count
+            };
+
+            // 【未來串接點】：等您的 Render 伺服器上線後，這裡的 fetch 就能直接打過去！
+            try {
+                /* 
+                // 真正的串接代碼 (先註解起來，等 Render 寫好再開)
+                const res = await fetch(RENDER_SERVER_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const result = await res.json();
+                
+                if(result.pdfUrl) {
+                    alert("考卷產出成功！系統將自動為您下載。");
+                    window.location.href = result.pdfUrl;
+                    liff.closeWindow(); // 產出後自動關閉 LINE 視窗
+                }
+                */
+
+                // 模擬等待編譯的動畫 (測試用)
+                setTimeout(() => {
+                    alert(`【系統測試成功】\n準備送往 Render 的資料：\n學生：${payload.name}\n科目：${payload.subject}\n單元：${payload.unit}\n題數：${payload.questionCount}題\n\n(等待 Render 後端 Python 寫好後即可產出實體 PDF！)`);
+                    hideLoading();
+                }, 2500);
+
+            } catch (err) {
+                showError("雲端編譯伺服器無回應，請確認 Render 服務是否已啟動。");
+            }
+        }
+
+        // ==========================================
+        // UI 輔助功能
+        // ==========================================
+        function setLoadingState(mainText, subText) {
+            document.getElementById('loading-overlay').style.display = 'flex';
+            document.getElementById('loading-text').innerText = mainText;
+            document.getElementById('loading-subtext').innerText = subText;
+        }
+
+        function hideLoading() {
+            document.getElementById('loading-overlay').style.display = 'none';
+        }
+
+        function showError(msg) {
+            document.getElementById('loading-overlay').style.display = 'flex';
+            document.getElementById('loading-overlay').innerHTML = `
+                <div style="font-size: 40px; margin-bottom: 10px;">※</div>
+                <div style="color: #c0392b; font-weight: bold; font-size: 16px; text-align: center; padding: 0 20px;">
+                    ${msg}
+                </div>
+            `;
+        }
+
+        // 防拷貝防右鍵
+        document.addEventListener('contextmenu', event => event.preventDefault());
+        document.addEventListener('copy', (e) => e.preventDefault());
+    </script>
+</body>
+</html>
