@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>蘇昊數理｜雲端題庫系統</title>
     
-    <meta name="description" content="專屬學員的雲端自動組卷系統，即時篩選、雲端編譯、秒出考卷。">
+    <meta name="description" content="學員的雲端自動組卷系統，即時篩選、雲端編譯、秒出考卷。">
     <link rel="icon" href="https://suuuuuhaooooo.github.io/-/favicon.png" type="image/png">
     <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;700&display=swap" rel="stylesheet">
     
@@ -177,7 +177,7 @@
         
         <div class="filter-card">
             <h2>自訂考卷條件</h2>
-            <p>請選擇您想挑戰的範圍與題數，系統將透過雲端編譯器為您即時產出專屬 PDF 考卷。</p>
+            <p>請選擇您想篩選的條件，系統將透過雲端編譯器為您即時產出 PDF 考卷。</p>
             
             <div class="info-box" id="db-info">
                 資料庫連線中，請稍候...
@@ -467,7 +467,7 @@
         function showError(msg) {
             document.getElementById('loading-overlay').style.display = 'flex';
             document.getElementById('loading-overlay').innerHTML = `
-                <div style="font-size: 40px; margin-bottom: 10px;">※</div>
+                <div style="font-size: 40px; margin-bottom: 10px;"></div>
                 <div style="color: #c0392b; font-weight: bold; font-size: 16px; text-align: center; padding: 0 20px;">
                     ${msg}
                 </div>
