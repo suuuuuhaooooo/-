@@ -87,9 +87,9 @@
         }
 
         /* 表單元素 */
-        .input-group { margin-bottom: 18px; }
+        .input-group { margin-bottom: 15px; }
         .input-group label {
-            display: block; font-size: 13px; color: #444; margin-bottom: 8px; font-weight: bold; letter-spacing: 1px;
+            display: block; font-size: 13px; color: #444; margin-bottom: 6px; font-weight: bold; letter-spacing: 1px;
         }
         
         select, input[type="number"] {
@@ -104,7 +104,7 @@
             outline: none;
             box-sizing: border-box;
             transition: 0.3s;
-            appearance: none; /* 隱藏原生箭頭 */
+            appearance: none;
             background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23888' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
             background-repeat: no-repeat;
             background-position: right 15px center;
@@ -115,12 +115,13 @@
             background: #fff;
             box-shadow: 0 0 0 3px rgba(142,151,117,0.1);
         }
+        select:disabled { background-color: #eee; color: #999; cursor: not-allowed; }
 
         .main-btn { 
             background: var(--primary); color: white; border: none; padding: 15px; 
             width: 100%; cursor: pointer; letter-spacing: 2px; font-weight: 700; 
             transition: 0.3s; border-radius: 8px; font-size: 16px; font-family: "Noto Serif TC", serif;
-            margin-top: 10px;
+            margin-top: 15px;
             display: flex; justify-content: center; align-items: center; gap: 10px;
         }
         .main-btn:disabled { background: #ccc; cursor: not-allowed; }
@@ -158,44 +159,56 @@
 </head>
 <body oncontextmenu="return false;">
 
-    <!-- Loading 遮罩 -->
     <div id="loading-overlay">
         <div class="spinner"></div>
         <div class="loading-text" id="loading-text">系統初始化中...</div>
         <div class="loading-subtext" id="loading-subtext">正在驗證您的 LINE 帳號</div>
     </div>
 
-    <!-- 導覽列 -->
     <nav class="navbar">
-        <div class="brand-title">蘇昊題庫中心</div>
+        <div class="brand-title">蘇昊解題中心</div>
         <div class="user-badge" id="user-badge">
             <span id="user-name">載入中</span>
             <img id="user-avatar" src="https://suuuuuhaooooo.github.io/-/favicon.png" alt="Avatar">
         </div>
     </nav>
 
-    <!-- 主內容區 -->
     <div class="container">
         
         <div class="filter-card">
             <h2>自訂考卷條件</h2>
-            <p>請選擇您想挑戰的單元與題數，系統將透過雲端編譯器為您即時產出 PDF 專屬考卷。</p>
+            <p>請選擇您想挑戰的範圍與題數，系統將透過雲端編譯器為您即時產出專屬 PDF 考卷。</p>
             
             <div class="info-box" id="db-info">
                 資料庫連線中，請稍候...
             </div>
 
+            <!-- 對齊 image_48be15.jpg 欄位 -->
             <div class="input-group">
-                <label>選擇科目</label>
-                <select id="select-subject" onchange="updateUnitDropdown()" disabled>
+                <label>選擇年段</label>
+                <select id="select-grade" onchange="onGradeChange()" disabled>
                     <option value="">請先等待資料同步...</option>
                 </select>
             </div>
 
             <div class="input-group">
-                <label>選擇範圍 / 單元</label>
-                <select id="select-unit" disabled>
-                    <option value="">請先選擇科目</option>
+                <label>選擇版本</label>
+                <select id="select-version" onchange="onVersionChange()" disabled>
+                    <option value="">請先選擇年段</option>
+                </select>
+            </div>
+
+            <div class="input-group">
+                <label>選擇章節</label>
+                <select id="select-chapter" onchange="onChapterChange()" disabled>
+                    <option value="">請先選擇版本</option>
+                </select>
+            </div>
+
+            <div class="input-group">
+                <label>選擇次章節</label>
+                <select id="select-subchapter" onchange="onSubchapterChange()" disabled>
+                    <option value="">請先選擇章節</option>
                 </select>
             </div>
 
@@ -212,7 +225,6 @@
 
     </div>
 
-    <!-- 版權宣告 -->
     <div style="text-align: center; font-size: 10px; color: #bbb; margin-top: 10px; letter-spacing: 1px; font-family: Arial, sans-serif;">
         &copy; 2026 蘇昊數理 Su-Hao Math/Science.
     </div>
@@ -221,19 +233,15 @@
         // ==========================================
         // 核心設定與變數
         // ==========================================
-        const MY_LIFF_ID = "2010896789-64Pzz9hx"; // 您的專屬 LIFF ID
-        // 這是您在上一階段取得的 GAS API 網址 (負責提供題庫 JSON)
+        const MY_LIFF_ID = "2010896789-64Pzz9hx";
         const GAS_API_URL = "https://script.google.com/macros/s/AKfycbwg1reUCaWdmvnjQyxxfOUSNL-6niiiaQlLztgOvSavphpUF2MzAXMVC1fa0TtLsLoC/exec?token=suhao2026";
-        
-        // 未來 Render 伺服器建置好後，把網址填在這邊
-        const RENDER_SERVER_URL = "https://suhao-exam-backend.onrender.com/generate"; 
+        const RENDER_SERVER_URL = "https://suhao-exam-api.onrender.com/generate"; 
 
         let globalQuestions = [];
-        let groupedData = {}; // 用來存放 { "數學": ["多項式", "因式分解"], "理化": ["力學"] }
         let currentUser = { name: "同學", uid: "" };
 
         // ==========================================
-        // 1. 初始化 LIFF 與防護機制
+        // 1. 初始化 LIFF
         // ==========================================
         window.onload = async function() {
             try {
@@ -249,7 +257,6 @@
                     return;
                 }
 
-                // 取得 LINE 使用者頭像與名稱
                 const profile = await liff.getProfile();
                 currentUser.name = profile.displayName;
                 currentUser.uid = profile.userId;
@@ -259,7 +266,6 @@
                     document.getElementById('user-avatar').src = profile.pictureUrl;
                 }
 
-                // 身分驗證通過，開始同步 Google Sheet 題庫
                 fetchQuestionBank();
 
             } catch (err) {
@@ -268,11 +274,10 @@
         };
 
         // ==========================================
-        // 2. 抓取並解析 Google Sheet 題庫資料
+        // 2. 抓取雲端題庫資料
         // ==========================================
         async function fetchQuestionBank() {
             setLoadingState("正在同步雲端題庫資料...", "向 Google 資料庫請求中 (約需 2~3 秒)");
-            
             try {
                 const response = await fetch(GAS_API_URL);
                 const data = await response.json();
@@ -282,7 +287,7 @@
                 }
                 
                 globalQuestions = data;
-                processDropdownData(data);
+                initDropdowns();
 
             } catch (error) {
                 showError("題庫同步失敗，請聯絡管理員。");
@@ -291,86 +296,113 @@
         }
 
         // ==========================================
-        // 3. 自動生成「科目」與「單元」的連動選單
+        // 3. 動態連動選單邏輯
         // ==========================================
-        function processDropdownData(data) {
-            // 假設您的試算表有「科目」和「單元」兩個欄位。
-            // 程式會自動尋找並分類。如果欄位名稱不同，請修改下方的字串。
-            const subjectKey = data[0].hasOwnProperty("科目") ? "科目" : (data[0].hasOwnProperty("Subject") ? "Subject" : null);
-            const unitKey = data[0].hasOwnProperty("單元") ? "單元" : (data[0].hasOwnProperty("章節") ? "章節" : null);
-
-            if (!subjectKey || !unitKey) {
-                showError("試算表缺乏『科目』或『單元』欄位，無法進行分類。");
-                return;
-            }
-
-            // 進行分門別類
-            groupedData = {};
-            data.forEach(row => {
-                let subj = row[subjectKey] || "未分類科目";
-                let unit = row[unitKey] || "未分類單元";
-                
-                if (!groupedData[subj]) {
-                    groupedData[subj] = new Set();
-                }
-                groupedData[subj].add(unit);
-            });
-
-            // 渲染「科目」選單
-            const subjectSelect = document.getElementById('select-subject');
-            subjectSelect.innerHTML = '<option value="" disabled selected>請選擇科目...</option>';
+        function initDropdowns() {
+            // 提取所有不重複的「年段」
+            const grades = [...new Set(globalQuestions.map(q => q['年段']).filter(Boolean))];
             
-            Object.keys(groupedData).forEach(subj => {
+            const gradeSelect = document.getElementById('select-grade');
+            gradeSelect.innerHTML = '<option value="" disabled selected>請選擇年段...</option>';
+            grades.forEach(g => {
                 let opt = document.createElement('option');
-                opt.value = subj;
-                opt.innerText = subj;
-                subjectSelect.appendChild(opt);
+                opt.value = g; opt.innerText = g;
+                gradeSelect.appendChild(opt);
             });
 
-            // 解除封印
-            subjectSelect.disabled = false;
-            document.getElementById('input-count').disabled = false;
-            
-            // 更新狀態小卡
-            document.getElementById('db-info').innerHTML = 
-                `<b>資料庫同步完成</b><br>目前題庫總計收錄：<b>${globalQuestions.length}</b> 題。`;
-            
+            gradeSelect.disabled = false;
+            document.getElementById('db-info').innerHTML = `<b>資料庫同步完成</b><br>目前題庫總計收錄：<b>${globalQuestions.length}</b> 題。`;
             hideLoading();
         }
 
-        // 當使用者選擇「科目」時，自動更新「單元」選單
-        function updateUnitDropdown() {
-            const subjectSelect = document.getElementById('select-subject');
-            const unitSelect = document.getElementById('select-unit');
-            const generateBtn = document.getElementById('generate-btn');
+        function onGradeChange() {
+            const selectedGrade = document.getElementById('select-grade').value;
+            const filtered = globalQuestions.filter(q => q['年段'] === selectedGrade);
             
-            const selectedSubj = subjectSelect.value;
-            unitSelect.innerHTML = '<option value="" disabled selected>請選擇範圍 / 單元...</option>';
+            const versions = [...new Set(filtered.map(q => q['版本']).filter(Boolean))];
+            const versionSelect = document.getElementById('select-version');
             
-            if (selectedSubj && groupedData[selectedSubj]) {
-                groupedData[selectedSubj].forEach(unit => {
-                    let opt = document.createElement('option');
-                    opt.value = unit;
-                    opt.innerText = unit;
-                    unitSelect.appendChild(opt);
-                });
-                unitSelect.disabled = false;
-            } else {
-                unitSelect.disabled = true;
-            }
+            versionSelect.innerHTML = '<option value="" disabled selected>請選擇版本...</option>';
+            versions.forEach(v => {
+                let opt = document.createElement('option');
+                opt.value = v; opt.innerText = v;
+                versionSelect.appendChild(opt);
+            });
+            
+            versionSelect.disabled = false;
+            
+            // 重置下方選單
+            document.getElementById('select-chapter').innerHTML = '<option value="" disabled selected>請先選擇版本</option>';
+            document.getElementById('select-chapter').disabled = true;
+            document.getElementById('select-subchapter').innerHTML = '<option value="" disabled selected>請先選擇章節</option>';
+            document.getElementById('select-subchapter').disabled = true;
+            document.getElementById('input-count').disabled = true;
+            document.getElementById('generate-btn').disabled = true;
+        }
 
-            // 監聽單元選擇，選好才能按鈕
-            unitSelect.onchange = function() {
-                generateBtn.disabled = (unitSelect.value === "");
-            };
+        function onVersionChange() {
+            const selectedGrade = document.getElementById('select-grade').value;
+            const selectedVersion = document.getElementById('select-version').value;
+            const filtered = globalQuestions.filter(q => q['年段'] === selectedGrade && q['版本'] === selectedVersion);
+            
+            const chapters = [...new Set(filtered.map(q => q['章節']).filter(Boolean))];
+            const chapterSelect = document.getElementById('select-chapter');
+            
+            chapterSelect.innerHTML = '<option value="" disabled selected>請選擇章節...</option>';
+            chapters.forEach(c => {
+                let opt = document.createElement('option');
+                opt.value = c; opt.innerText = c;
+                chapterSelect.appendChild(opt);
+            });
+            
+            chapterSelect.disabled = false;
+            
+            // 重置下方選單
+            document.getElementById('select-subchapter').innerHTML = '<option value="" disabled selected>請先選擇章節</option>';
+            document.getElementById('select-subchapter').disabled = true;
+            document.getElementById('input-count').disabled = true;
+            document.getElementById('generate-btn').disabled = true;
+        }
+
+        function onChapterChange() {
+            const selectedGrade = document.getElementById('select-grade').value;
+            const selectedVersion = document.getElementById('select-version').value;
+            const selectedChapter = document.getElementById('select-chapter').value;
+            
+            const filtered = globalQuestions.filter(q => 
+                q['年段'] === selectedGrade && 
+                q['版本'] === selectedVersion && 
+                q['章節'] === selectedChapter
+            );
+            
+            const subchapters = [...new Set(filtered.map(q => q['次章節']).filter(Boolean))];
+            const subSelect = document.getElementById('select-subchapter');
+            
+            subSelect.innerHTML = '<option value="全部">全部次章節 (混合抽題)</option>';
+            subchapters.forEach(sc => {
+                let opt = document.createElement('option');
+                opt.value = sc; opt.innerText = sc;
+                subSelect.appendChild(opt);
+            });
+            
+            subSelect.disabled = false;
+            document.getElementById('input-count').disabled = false;
+            document.getElementById('generate-btn').disabled = false;
+        }
+
+        function onSubchapterChange() {
+            // 只要改變次章節，按鈕依然保持可用狀態
+            document.getElementById('generate-btn').disabled = false;
         }
 
         // ==========================================
-        // 4. 傳送指令給 Render 伺服器產出 PDF
+        // 4. 傳送指令給 Render 伺服器
         // ==========================================
         async function triggerRenderCompilation() {
-            const selectedSubj = document.getElementById('select-subject').value;
-            const selectedUnit = document.getElementById('select-unit').value;
+            const selectedGrade = document.getElementById('select-grade').value;
+            const selectedVersion = document.getElementById('select-version').value;
+            const selectedChapter = document.getElementById('select-chapter').value;
+            const selectedSubchapter = document.getElementById('select-subchapter').value;
             let count = parseInt(document.getElementById('input-count').value);
             
             if (count > 20) count = 20;
@@ -378,45 +410,49 @@
 
             setLoadingState("正在驅動雲端編譯器...", "XeLaTeX 引擎排版中，請勿關閉視窗 (約需 10~15 秒)");
 
+            // 更新了傳送給後端 Python 的鍵值，請確保您的 app.py 對齊這些參數
             const payload = {
                 uid: currentUser.uid,
                 name: currentUser.name,
-                subject: selectedSubj,
-                unit: selectedUnit,
+                grade: selectedGrade,
+                version: selectedVersion,
+                chapter: selectedChapter,
+                subchapter: selectedSubchapter,
                 questionCount: count
             };
 
-            // 【未來串接點】：等您的 Render 伺服器上線後，這裡的 fetch 就能直接打過去！
             try {
-                /* 
-                // 真正的串接代碼 (先註解起來，等 Render 寫好再開)
+                // 真正的串接代碼！
                 const res = await fetch(RENDER_SERVER_URL, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload)
                 });
-                const result = await res.json();
-                
-                if(result.pdfUrl) {
-                    alert("考卷產出成功！系統將自動為您下載。");
-                    window.location.href = result.pdfUrl;
-                    liff.closeWindow(); // 產出後自動關閉 LINE 視窗
+
+                if (res.ok) {
+                    const blob = await res.blob();
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `蘇昊題庫_${payload.chapter}.pdf`;
+                    document.body.appendChild(a);
+                    a.click();
+                    a.remove();
+                    window.URL.revokeObjectURL(url);
+                    
+                    alert("組卷產出成功！系統已為您下載。");
+                    liff.closeWindow(); 
+                } else {
+                    const errData = await res.json();
+                    showError("產出失敗：" + (errData.error || "伺服器無回應"));
                 }
-                */
-
-                // 模擬等待編譯的動畫 (測試用)
-                setTimeout(() => {
-                    alert(`【系統測試成功】\n準備送往 Render 的資料：\n學生：${payload.name}\n科目：${payload.subject}\n單元：${payload.unit}\n題數：${payload.questionCount}題\n\n(等待 Render 後端 Python 寫好後即可產出實體 PDF！)`);
-                    hideLoading();
-                }, 2500);
-
             } catch (err) {
                 showError("雲端編譯伺服器無回應，請確認 Render 服務是否已啟動。");
             }
         }
 
         // ==========================================
-        // UI 輔助功能
+        // UI 防護功能
         // ==========================================
         function setLoadingState(mainText, subText) {
             document.getElementById('loading-overlay').style.display = 'flex';
@@ -438,7 +474,6 @@
             `;
         }
 
-        // 防拷貝防右鍵
         document.addEventListener('contextmenu', event => event.preventDefault());
         document.addEventListener('copy', (e) => e.preventDefault());
     </script>
