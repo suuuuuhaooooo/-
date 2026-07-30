@@ -428,10 +428,12 @@
                     showError("伺服器錯誤：" + (errData.error || "無回應"));
                 }
             } catch (err) {
+                console.error("捕捉到錯誤：", err); // 在主控台印出真實原因
                 if (err.name === 'AbortError') {
-                    showError("連線逾時：伺服器處理時間較長（雙卷編譯中），請稍後再試一次。");
+                    showError("連線逾時：伺服器處理時間超過 90 秒，請再試一次。");
                 } else {
-                    showError("系統連線逾時，請確認 Render 服務是否正常。");
+                    // 🔴 這裡把真實的錯誤訊息直接顯示在畫面上，不要被遮蔽！
+                    showError("發生錯誤：" + err.message);
                 }
             }
         }
