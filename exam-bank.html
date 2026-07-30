@@ -225,7 +225,7 @@
             </div>
 
             <div class="input-group">
-                <label>抽卷題數 (上限 50 題)</label>
+                <label>抽卷題數 (上限 25 題)</label>
                 <input type="number" id="input-count" value="10" min="1" max="50" disabled>
             </div>
 
@@ -385,26 +385,32 @@
                 });
 
                 if (res.ok) {
-                    const blob = await res.blob();
-                    const url = window.URL.createObjectURL(blob);
-                    const a = document.createElement('a');
-                    a.href = url;
-                    a.download = `蘇昊題庫_${subject}測驗卷.pdf`;
-                    document.body.appendChild(a);
-                    a.click();
-                    a.remove();
-                    window.URL.revokeObjectURL(url);
+                    const responseData = await res.json();
                     
-                    alert("組卷產出成功！系統已為您下載。");
-                    liff.closeWindow(); 
+                    if (responseData.success && responseData.url) {
+                        // 判斷如果是在 LINE 裡面，就自動發送訊息
+                        if (liff.isInClient()) {
+                            await liff.sendMessages([{
+                                type: 'text',
+                                text: `【雲端考卷產出成功】\n\n同學您好，這是您的 ${subject} 專屬測驗卷！\n\n📄 點擊下方連結立即查看：\n${responseData.url}\n\n(系統保護機制：此連結將於 24 小時後自動銷毀)`
+                            }]);
+                            alert("組卷成功！已自動將考卷連結傳送到聊天室。");
+                            liff.closeWindow(); // 自動關閉網頁
+                        } else {
+                            // 如果用一般瀏覽器開的備用方案
+                            alert("組卷成功！請點擊確定前往考卷。");
+                            window.location.href = responseData.url;
+                        }
+                    } else {
+                        showError("產出失敗：" + (responseData.error || "無法取得雲端連結"));
+                    }
                 } else {
                     const errData = await res.json();
-                    showError("產出失敗：" + (errData.error || "伺服器無回應"));
+                    showError("伺服器錯誤：" + (errData.error || "無回應"));
                 }
             } catch (err) {
-                showError("雲端編譯伺服器無回應，請確認 Render 服務是否已啟動。");
+                showError("系統連線逾時，請確認 Render 服務是否正常。");
             }
-        }
 
         // ==========================================
         // UI 防護功能
