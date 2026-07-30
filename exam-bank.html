@@ -365,8 +365,7 @@
             let count = parseInt(document.getElementById('input-count').value);
             if (count < 1) count = 1;
 
-            // ⚠️ 延長提示文字的心理預期時間
-            setLoadingState("正在驅動雲端編譯器...", "產生測驗卷與解答中，請勿關閉視窗 (約需 20~30 秒)");
+            setLoadingState("正在驅動雲端編譯器...", "產生測驗卷與解答中，請勿關閉視窗 (約需幾 1 ~ 2 分鐘)");
 
             const currentFilters = {
                 "年段": document.getElementById('select-grade').value,
@@ -386,17 +385,23 @@
             };
 
             try {
+                // 建立控制器，將逾時時間延長至 90 秒，避免雙卷編譯被中斷
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 90000);
+
                 const res = await fetch(RENDER_SERVER_URL, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
+                    body: JSON.stringify(payload),
+                    signal: controller.signal
                 });
+
+                clearTimeout(timeoutId); // 成功收到回應，清除計時器
 
                 if (res.ok) {
                     const responseData = await res.json();
                     
                     if (responseData.success) {
-                        // 1. 將條件字典轉換為可閱讀的文字清單
                         let filterText = "";
                         for (let key in responseData.filters) {
                             if (responseData.filters[key] && responseData.filters[key] !== "全部") {
@@ -405,7 +410,6 @@
                         }
                         if (filterText === "") filterText = "▪️ 條件：無 (全範圍隨機抽題)\n";
 
-                        // 2. 組合 LINE 訊息，包含條件與雙連結
                         const lineMessage = `【雲端考卷產出成功】\n\n同學您好，這是為您配置的 ${subject} 專屬題本！\n\n🔍 [篩選條件]\n${filterText}\n📄 測驗卷連結：\n${responseData.exam_url}\n\n📖 解答卷連結：\n${responseData.ans_url}\n\n(系統保護機制：連結將於 24 小時後自動銷毀)`;
 
                         if (liff.isInClient()) {
@@ -413,7 +417,7 @@
                             alert("組卷成功！已自動將考卷與解答傳送到聊天室。");
                             liff.closeWindow();
                         } else {
-                            alert("組卷成功！(瀏覽器模式暫不支援自動傳送，請查看 Console)");
+                            alert("組卷成功！");
                             console.log(lineMessage);
                         }
                     } else {
@@ -424,10 +428,12 @@
                     showError("伺服器錯誤：" + (errData.error || "無回應"));
                 }
             } catch (err) {
-                // 這裡就是您截圖出現的地方，通常是因為伺服器剛啟動等太久
-                showError("系統連線逾時，請確認 Render 服務是否正常 (或是剛剛伺服器正在開機，請再試一次)。");
+                if (err.name === 'AbortError') {
+                    showError("連線逾時：伺服器處理時間較長（雙卷編譯中），請稍後再試一次。");
+                } else {
+                    showError("系統連線逾時，請確認 Render 服務是否正常。");
+                }
             }
-        }
 
         // ==========================================
         // UI 防護功能
