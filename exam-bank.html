@@ -363,12 +363,11 @@
         async function triggerRenderCompilation() {
             const subject = document.getElementById('select-subject').value;
             let count = parseInt(document.getElementById('input-count').value);
-            
             if (count < 1) count = 1;
 
-            setLoadingState("正在驅動雲端編譯器...", "引擎排版中，請勿關閉視窗 (約需 10~15 秒)");
+            // ⚠️ 延長提示文字的心理預期時間
+            setLoadingState("正在驅動雲端編譯器...", "產生測驗卷與解答中，請勿關閉視窗 (約需 20~30 秒)");
 
-            // 將畫面上的選單整合成 filters 字典 (鍵名對齊您 23 欄位的標題)
             const currentFilters = {
                 "年段": document.getElementById('select-grade').value,
                 "段考": document.getElementById('select-exam').value,
@@ -396,31 +395,39 @@
                 if (res.ok) {
                     const responseData = await res.json();
                     
-                    if (responseData.success && responseData.url) {
-                        // 判斷如果是在 LINE 裡面，就自動發送訊息
+                    if (responseData.success) {
+                        // 1. 將條件字典轉換為可閱讀的文字清單
+                        let filterText = "";
+                        for (let key in responseData.filters) {
+                            if (responseData.filters[key] && responseData.filters[key] !== "全部") {
+                                filterText += `▪️ ${key}：${responseData.filters[key]}\n`;
+                            }
+                        }
+                        if (filterText === "") filterText = "▪️ 條件：無 (全範圍隨機抽題)\n";
+
+                        // 2. 組合 LINE 訊息，包含條件與雙連結
+                        const lineMessage = `【雲端考卷產出成功】\n\n同學您好，這是為您配置的 ${subject} 專屬題本！\n\n🔍 [篩選條件]\n${filterText}\n📄 測驗卷連結：\n${responseData.exam_url}\n\n📖 解答卷連結：\n${responseData.ans_url}\n\n(系統保護機制：連結將於 24 小時後自動銷毀)`;
+
                         if (liff.isInClient()) {
-                            await liff.sendMessages([{
-                                type: 'text',
-                                text: `【雲端考卷產出成功】\n\n同學您好，這是您的 ${subject} 專屬測驗卷！\n\n📄 點擊下方連結立即查看：\n${responseData.url}\n\n(系統保護機制：此連結將於 24 小時後自動銷毀)`
-                            }]);
-                            alert("組卷成功！已自動將考卷連結傳送到聊天室。");
-                            liff.closeWindow(); // 自動關閉網頁
+                            await liff.sendMessages([{ type: 'text', text: lineMessage }]);
+                            alert("組卷成功！已自動將考卷與解答傳送到聊天室。");
+                            liff.closeWindow();
                         } else {
-                            // 如果用一般瀏覽器開的備用方案
-                            alert("組卷成功！請點擊確定前往考卷。");
-                            window.location.href = responseData.url;
+                            alert("組卷成功！(瀏覽器模式暫不支援自動傳送，請查看 Console)");
+                            console.log(lineMessage);
                         }
                     } else {
-                        showError("產出失敗：" + (responseData.error || "無法取得雲端連結"));
+                        showError("產出失敗：" + (responseData.error || "未知錯誤"));
                     }
                 } else {
                     const errData = await res.json();
                     showError("伺服器錯誤：" + (errData.error || "無回應"));
                 }
             } catch (err) {
-                showError("系統連線逾時，請確認 Render 服務是否正常。");
+                // 這裡就是您截圖出現的地方，通常是因為伺服器剛啟動等太久
+                showError("系統連線逾時，請確認 Render 服務是否正常 (或是剛剛伺服器正在開機，請再試一次)。");
             }
-        } // 這裡就是剛剛漏掉的大括號！
+        }
 
         // ==========================================
         // UI 防護功能
