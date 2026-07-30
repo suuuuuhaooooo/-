@@ -183,7 +183,7 @@
                 請先選擇科目以載入題庫。
             </div>
 
-            <!-- 新增：科目選擇 (用來決定呼叫哪一個 Sheet) -->
+            <!-- 科目選擇 -->
             <div class="input-group">
                 <label>選擇科目</label>
                 <select id="select-subject" onchange="fetchQuestionBank()">
@@ -253,13 +253,20 @@
         let currentUser = { name: "同學", uid: "" };
 
         // ==========================================
-        // 1. 初始化 LIFF
+        // 1. 初始化 LIFF (加速版)
         // ==========================================
-        window.onload = async function() {
+        document.addEventListener('DOMContentLoaded', async function() {
+            // 加入防呆機制：如果 8 秒後還在轉圈圈，強制解鎖畫面並跳出提示
+            const timeout = setTimeout(() => {
+                hideLoading();
+                alert("LINE 驗證連線較慢，請確認網路狀態或重新整理。");
+            }, 8000);
+
             try {
                 await liff.init({ liffId: MY_LIFF_ID });
                 
                 if (!liff.isInClient()) {
+                    clearTimeout(timeout);
                     showError("為保護權益，題庫系統僅限在 LINE 聊天室內部開啟。");
                     return;
                 }
@@ -278,13 +285,15 @@
                     document.getElementById('user-avatar').src = profile.pictureUrl;
                 }
                 
-                // 初次進來，將載入畫面藏起，等使用者選科目
+                // 成功驗證，提早解除轉圈圈與計時器，等使用者選科目
+                clearTimeout(timeout);
                 hideLoading();
 
             } catch (err) {
+                clearTimeout(timeout);
                 showError("LINE 驗證失敗，請重新開啟此頁面。");
             }
-        };
+        });
 
         // ==========================================
         // 2. 抓取雲端題庫資料 (隨科目動態變更)
@@ -411,6 +420,7 @@
             } catch (err) {
                 showError("系統連線逾時，請確認 Render 服務是否正常。");
             }
+        } // 這裡就是剛剛漏掉的大括號！
 
         // ==========================================
         // UI 防護功能
