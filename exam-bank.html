@@ -115,7 +115,7 @@
             background: #fff;
             box-shadow: 0 0 0 3px rgba(142,151,117,0.1);
         }
-        select:disabled { background-color: #eee; color: #999; cursor: not-allowed; }
+        select:disabled, input[type="number"]:disabled { background-color: #eee; color: #999; cursor: not-allowed; }
 
         .main-btn { 
             background: var(--primary); color: white; border: none; padding: 15px; 
@@ -177,44 +177,56 @@
         
         <div class="filter-card">
             <h2>自訂考卷條件</h2>
-            <p>請選擇您想篩選的條件，系統將透過雲端編譯器為您即時產出 PDF 考卷。</p>
+            <p>請自由組合篩選條件，無須依照順序，系統將自動過濾符合的題目。</p>
             
             <div class="info-box" id="db-info">
-                資料庫連線中，請稍候...
+                請先選擇科目以載入題庫。
             </div>
 
-            <!-- 對齊 image_48be15.jpg 欄位 -->
+            <!-- 新增：科目選擇 (用來決定呼叫哪一個 Sheet) -->
+            <div class="input-group">
+                <label>選擇科目</label>
+                <select id="select-subject" onchange="fetchQuestionBank()">
+                    <option value="" disabled selected>請選擇科目...</option>
+                    <option value="數學">數學</option>
+                    <option value="理化">理化</option>
+                </select>
+            </div>
+
+            <!-- 無階層動態條件選項 -->
             <div class="input-group">
                 <label>選擇年段</label>
-                <select id="select-grade" onchange="onGradeChange()" disabled>
-                    <option value="">請先等待資料同步...</option>
-                </select>
+                <select id="select-grade" disabled><option value="">全部</option></select>
+            </div>
+
+            <div class="input-group">
+                <label>選擇段考</label>
+                <select id="select-exam" disabled><option value="">全部</option></select>
             </div>
 
             <div class="input-group">
                 <label>選擇版本</label>
-                <select id="select-version" onchange="onVersionChange()" disabled>
-                    <option value="">請先選擇年段</option>
-                </select>
+                <select id="select-version" disabled><option value="">全部</option></select>
             </div>
 
             <div class="input-group">
                 <label>選擇章節</label>
-                <select id="select-chapter" onchange="onChapterChange()" disabled>
-                    <option value="">請先選擇版本</option>
-                </select>
+                <select id="select-chapter" disabled><option value="">全部</option></select>
             </div>
 
             <div class="input-group">
-                <label>選擇次章節</label>
-                <select id="select-subchapter" onchange="onSubchapterChange()" disabled>
-                    <option value="">請先選擇章節</option>
-                </select>
+                <label>選擇題型</label>
+                <select id="select-type" disabled><option value="">全部</option></select>
             </div>
 
             <div class="input-group">
-                <label>抽卷題數 (上限 20 題)</label>
-                <input type="number" id="input-count" value="10" min="1" max="20" disabled>
+                <label>選擇難易度</label>
+                <select id="select-difficulty" disabled><option value="">全部</option></select>
+            </div>
+
+            <div class="input-group">
+                <label>抽卷題數 (上限 50 題)</label>
+                <input type="number" id="input-count" value="10" min="1" max="50" disabled>
             </div>
 
             <button class="main-btn" id="generate-btn" onclick="triggerRenderCompilation()" disabled>
@@ -265,8 +277,9 @@
                 if(profile.pictureUrl) {
                     document.getElementById('user-avatar').src = profile.pictureUrl;
                 }
-
-                fetchQuestionBank();
+                
+                // 初次進來，將載入畫面藏起，等使用者選科目
+                hideLoading();
 
             } catch (err) {
                 showError("LINE 驗證失敗，請重新開啟此頁面。");
@@ -274,155 +287,97 @@
         };
 
         // ==========================================
-        // 2. 抓取雲端題庫資料
+        // 2. 抓取雲端題庫資料 (隨科目動態變更)
         // ==========================================
         async function fetchQuestionBank() {
-            setLoadingState("正在同步雲端題庫資料...", "向 Google 資料庫請求中 (約需 2~3 秒)");
+            const subject = document.getElementById('select-subject').value;
+            if (!subject) return;
+
+            setLoadingState("正在同步雲端題庫資料...", `向 Google 請求【${subject}】題庫中 (約需 2~3 秒)`);
             try {
-                const response = await fetch(GAS_API_URL);
+                const response = await fetch(`${GAS_API_URL}&sheet=${subject}`);
                 const data = await response.json();
                 
+                if (data.error) {
+                    throw new Error(data.error);
+                }
+                
                 if (!data || data.length === 0) {
-                    throw new Error("題庫目前沒有資料");
+                    throw new Error(`${subject}題庫目前沒有資料`);
                 }
                 
                 globalQuestions = data;
                 initDropdowns();
 
             } catch (error) {
-                showError("題庫同步失敗，請聯絡管理員。");
+                showError("題庫同步失敗：" + error.message);
                 console.error(error);
             }
         }
 
         // ==========================================
-        // 3. 動態連動選單邏輯
+        // 3. 無階層選單初始化
         // ==========================================
         function initDropdowns() {
-            // 提取所有不重複的「年段」
-            const grades = [...new Set(globalQuestions.map(q => q['年段']).filter(Boolean))];
-            
-            const gradeSelect = document.getElementById('select-grade');
-            gradeSelect.innerHTML = '<option value="" disabled selected>請選擇年段...</option>';
-            grades.forEach(g => {
-                let opt = document.createElement('option');
-                opt.value = g; opt.innerText = g;
-                gradeSelect.appendChild(opt);
-            });
+            // 自動從整份試算表中抓取各種不重複的選項填入選單
+            populateSelect('select-grade', '年段');
+            populateSelect('select-exam', '段考');
+            populateSelect('select-version', '版本');
+            populateSelect('select-chapter', '章節');
+            populateSelect('select-type', '題型');
+            populateSelect('select-difficulty', '難易度');
 
-            gradeSelect.disabled = false;
-            document.getElementById('db-info').innerHTML = `<b>資料庫同步完成</b><br>目前題庫總計收錄：<b>${globalQuestions.length}</b> 題。`;
+            document.getElementById('input-count').disabled = false;
+            document.getElementById('generate-btn').disabled = false;
+            document.getElementById('db-info').innerHTML = `<b>資料庫同步完成</b><br>目前題庫總計收錄：<b>${globalQuestions.length}</b> 題。可以自由混搭條件！`;
             hideLoading();
         }
 
-        function onGradeChange() {
-            const selectedGrade = document.getElementById('select-grade').value;
-            const filtered = globalQuestions.filter(q => q['年段'] === selectedGrade);
+        function populateSelect(elementId, columnKey) {
+            // 從 globalQuestions 中提取該欄位所有不重複且不為空的值
+            const uniqueValues = [...new Set(globalQuestions.map(q => q[columnKey]).filter(Boolean))];
+            const select = document.getElementById(elementId);
             
-            const versions = [...new Set(filtered.map(q => q['版本']).filter(Boolean))];
-            const versionSelect = document.getElementById('select-version');
-            
-            versionSelect.innerHTML = '<option value="" disabled selected>請選擇版本...</option>';
-            versions.forEach(v => {
+            select.innerHTML = '<option value="">全部</option>';
+            uniqueValues.forEach(val => {
                 let opt = document.createElement('option');
-                opt.value = v; opt.innerText = v;
-                versionSelect.appendChild(opt);
+                opt.value = val; 
+                opt.innerText = val;
+                select.appendChild(opt);
             });
-            
-            versionSelect.disabled = false;
-            
-            // 重置下方選單
-            document.getElementById('select-chapter').innerHTML = '<option value="" disabled selected>請先選擇版本</option>';
-            document.getElementById('select-chapter').disabled = true;
-            document.getElementById('select-subchapter').innerHTML = '<option value="" disabled selected>請先選擇章節</option>';
-            document.getElementById('select-subchapter').disabled = true;
-            document.getElementById('input-count').disabled = true;
-            document.getElementById('generate-btn').disabled = true;
-        }
-
-        function onVersionChange() {
-            const selectedGrade = document.getElementById('select-grade').value;
-            const selectedVersion = document.getElementById('select-version').value;
-            const filtered = globalQuestions.filter(q => q['年段'] === selectedGrade && q['版本'] === selectedVersion);
-            
-            const chapters = [...new Set(filtered.map(q => q['章節']).filter(Boolean))];
-            const chapterSelect = document.getElementById('select-chapter');
-            
-            chapterSelect.innerHTML = '<option value="" disabled selected>請選擇章節...</option>';
-            chapters.forEach(c => {
-                let opt = document.createElement('option');
-                opt.value = c; opt.innerText = c;
-                chapterSelect.appendChild(opt);
-            });
-            
-            chapterSelect.disabled = false;
-            
-            // 重置下方選單
-            document.getElementById('select-subchapter').innerHTML = '<option value="" disabled selected>請先選擇章節</option>';
-            document.getElementById('select-subchapter').disabled = true;
-            document.getElementById('input-count').disabled = true;
-            document.getElementById('generate-btn').disabled = true;
-        }
-
-        function onChapterChange() {
-            const selectedGrade = document.getElementById('select-grade').value;
-            const selectedVersion = document.getElementById('select-version').value;
-            const selectedChapter = document.getElementById('select-chapter').value;
-            
-            const filtered = globalQuestions.filter(q => 
-                q['年段'] === selectedGrade && 
-                q['版本'] === selectedVersion && 
-                q['章節'] === selectedChapter
-            );
-            
-            const subchapters = [...new Set(filtered.map(q => q['次章節']).filter(Boolean))];
-            const subSelect = document.getElementById('select-subchapter');
-            
-            subSelect.innerHTML = '<option value="全部">全部次章節 (混合抽題)</option>';
-            subchapters.forEach(sc => {
-                let opt = document.createElement('option');
-                opt.value = sc; opt.innerText = sc;
-                subSelect.appendChild(opt);
-            });
-            
-            subSelect.disabled = false;
-            document.getElementById('input-count').disabled = false;
-            document.getElementById('generate-btn').disabled = false;
-        }
-
-        function onSubchapterChange() {
-            // 只要改變次章節，按鈕依然保持可用狀態
-            document.getElementById('generate-btn').disabled = false;
+            select.disabled = false;
         }
 
         // ==========================================
         // 4. 傳送指令給 Render 伺服器
         // ==========================================
         async function triggerRenderCompilation() {
-            const selectedGrade = document.getElementById('select-grade').value;
-            const selectedVersion = document.getElementById('select-version').value;
-            const selectedChapter = document.getElementById('select-chapter').value;
-            const selectedSubchapter = document.getElementById('select-subchapter').value;
+            const subject = document.getElementById('select-subject').value;
             let count = parseInt(document.getElementById('input-count').value);
             
-            if (count > 20) count = 20;
             if (count < 1) count = 1;
 
-            setLoadingState("正在驅動雲端編譯器...", "XeLaTeX 引擎排版中，請勿關閉視窗 (約需 10~15 秒)");
+            setLoadingState("正在驅動雲端編譯器...", "引擎排版中，請勿關閉視窗 (約需 10~15 秒)");
 
-            // 更新了傳送給後端 Python 的鍵值，請確保您的 app.py 對齊這些參數
+            // 將畫面上的選單整合成 filters 字典 (鍵名對齊您 23 欄位的標題)
+            const currentFilters = {
+                "年段": document.getElementById('select-grade').value,
+                "段考": document.getElementById('select-exam').value,
+                "版本": document.getElementById('select-version').value,
+                "章節": document.getElementById('select-chapter').value,
+                "題型": document.getElementById('select-type').value,
+                "難易度": document.getElementById('select-difficulty').value
+            };
+
             const payload = {
                 uid: currentUser.uid,
                 name: currentUser.name,
-                grade: selectedGrade,
-                version: selectedVersion,
-                chapter: selectedChapter,
-                subchapter: selectedSubchapter,
-                questionCount: count
+                subject: subject,
+                questionCount: count,
+                filters: currentFilters
             };
 
             try {
-                // 真正的串接代碼！
                 const res = await fetch(RENDER_SERVER_URL, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -434,7 +389,7 @@
                     const url = window.URL.createObjectURL(blob);
                     const a = document.createElement('a');
                     a.href = url;
-                    a.download = `蘇昊題庫_${payload.chapter}.pdf`;
+                    a.download = `蘇昊題庫_${subject}測驗卷.pdf`;
                     document.body.appendChild(a);
                     a.click();
                     a.remove();
