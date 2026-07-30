@@ -302,7 +302,7 @@
             const subject = document.getElementById('select-subject').value;
             if (!subject) return;
 
-            setLoadingState("正在同步雲端題庫資料...", `向 Google 請求【${subject}】題庫中 (約需 2~3 秒)`);
+            setLoadingState("正在同步雲端題庫資料...", `向 Google 請求【${subject}】題庫中 (約需 2 ~ 3 分鐘)`);
             try {
                 const response = await fetch(`${GAS_API_URL}&sheet=${subject}`);
                 const data = await response.json();
@@ -410,7 +410,7 @@
                         }
                         if (filterText === "") filterText = "▪️ 條件：無 (全範圍隨機抽題)\n";
 
-                        const lineMessage = `【雲端考卷產出成功】\n\n同學您好，這是為您配置的 ${subject} 專屬題本！\n\n🔍 [篩選條件]\n${filterText}\n📄 測驗卷連結：\n${responseData.exam_url}\n\n📖 解答卷連結：\n${responseData.ans_url}\n\n(系統保護機制：連結將於 24 小時後自動銷毀)`;
+                        const lineMessage = `【雲端組卷產出成功通知】\n\n同學您好，這是為您篩選的 ${subject} 組卷！\n\n🔍 [篩選條件]\n${filterText}\n測驗卷連結：\n${responseData.exam_url}\n\n詳解卷連結：\n${responseData.ans_url}\n\n(系統保護機制：連結將於 24 小時後自動銷毀)`;
 
                         if (liff.isInClient()) {
                             await liff.sendMessages([{ type: 'text', text: lineMessage }]);
