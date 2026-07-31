@@ -443,7 +443,7 @@
                 const controller = new AbortController();
                 const timeoutId = setTimeout(() => controller.abort(), 90000);
 
-                const res = await const res = await fetch(`${RENDER_API_BASE}/generate`, {
+                const res = await fetch(`${RENDER_API_BASE}/generate`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload),
