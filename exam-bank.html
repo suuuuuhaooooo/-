@@ -244,8 +244,7 @@
         // 核心設定與變數
         // ==========================================
         const MY_LIFF_ID = "2010896789-64Pzz9hx";
-        const GAS_API_URL = "https://script.google.com/macros/s/AKfycbwg1reUCaWdmvnjQyxxfOUSNL-6niiiaQlLztgOvSavphpUF2MzAXMVC1fa0TtLsLoC/exec?token=suhao2026";
-        const RENDER_SERVER_URL = "https://question-database-jvfp.onrender.com/generate"; 
+        const RENDER_API_BASE = "https://question-database-jvfp.onrender.com";
 
         let globalQuestions = [];
         let currentUser = { name: "同學", uid: "" };
@@ -296,7 +295,7 @@
         });
         async function loadSubjects() {
             try {
-                const res = await fetch(`${GAS_API_URL}&action=getSubjects`);
+                const res = await fetch(`${RENDER_API_BASE}/api/subjects`);
                 const subjects = await res.json();
                 const select = document.getElementById('select-subject');
                 select.innerHTML = '<option value="" disabled selected>請選擇科目...</option>';
@@ -320,7 +319,7 @@
 
             setLoadingState("正在同步雲端題庫資料...", `向 Google 請求【${subject}】題庫中 (約需 2 ~ 3 分鐘)`);
             try {
-                const response = await fetch(`${GAS_API_URL}&sheet=${subject}`);
+                const response = await fetch(`${RENDER_API_BASE}/api/questions?subject=${subject}`);
                 const data = await response.json();
                 
                 if (data.error) {
@@ -444,7 +443,7 @@
                 const controller = new AbortController();
                 const timeoutId = setTimeout(() => controller.abort(), 90000);
 
-                const res = await fetch(RENDER_SERVER_URL, {
+                const res = await const res = await fetch(`${RENDER_API_BASE}/generate`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload),
