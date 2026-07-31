@@ -256,7 +256,6 @@
         document.addEventListener('DOMContentLoaded', async function() {
             // 加入防呆機制：如果 8 秒後還在轉圈圈，強制解鎖畫面並跳出提示
             const timeout = setTimeout(() => {
-                await loadSubjects();
                 clearTimeout(timeout);
                 hideLoading();
                 alert("LINE 驗證連線較慢，請確認網路狀態或重新整理。");
@@ -286,6 +285,7 @@
                 }
                 
                 // 成功驗證，提早解除轉圈圈與計時器，等使用者選科目
+                await loadSubjects();
                 clearTimeout(timeout);
                 hideLoading();
 
