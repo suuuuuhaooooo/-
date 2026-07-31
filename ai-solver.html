@@ -335,9 +335,16 @@
             apiContents.push({ role: "user", parts: [{ text: userText }] });
 
             try {
+                const payloadData = { 
+                    action: "askGemini", 
+                    taskId: window.activeTaskId,          // ⚡️ 告訴後端目前在哪題
+                    visitorUid: window.visitorUid,        // ⚡️ 告訴後端我是誰 (防偽造)
+                    geminiPayload: { contents: apiContents } // ⚡️ 乾淨的內容，不帶 Prompt
+                };
+
                 const response = await fetch(SCRIPT_URL, { 
                     method: 'POST', headers: { "Content-Type": "text/plain;charset=utf-8" },
-                    body: JSON.stringify({ action: "askGemini", geminiPayload: { system_instruction: { parts: [{ text: SYSTEM_PROMPT }] }, contents: apiContents } }) 
+                    body: JSON.stringify(payloadData) 
                 });
                 const result = await response.json();
                 const aiReply = result?.candidates?.[0]?.content?.parts?.[0]?.text;
