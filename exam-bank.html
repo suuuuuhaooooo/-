@@ -268,14 +268,43 @@
             }, 8000);
 
             try {
+                // 1. 先讓 LIFF 完成初始化
                 await liff.init({ liffId: MY_LIFF_ID });
                 
+                // ⚡️ 2. 初始化完成後，立刻進行網址時效性驗證
+                const urlParams = new URLSearchParams(window.location.search);
+                const exp = urlParams.get('exp');
+                
+                if (exp) {
+                    const currentTime = Math.floor(Date.now() / 1000);
+                    if (currentTime > parseInt(exp)) {
+                        clearTimeout(timeout);
+                        hideLoading();
+                        alert("此連結已逾時失效！請重新在聊天室輸入「我要題庫」索取新連結。");
+                        if (liff.isInClient()) {
+                            liff.closeWindow(); // 若在 LINE 內直接關閉視窗
+                        }
+                        return; // 強制終止後續載入
+                    }
+                } else {
+                    // 防呆：如果網址沒有 exp 參數，代表是舊連結或直接亂打的網址，拒絕進入
+                    clearTimeout(timeout);
+                    hideLoading();
+                    alert("無效的存取連結，請透過官方帳號重新索取。");
+                    if (liff.isInClient()) {
+                        liff.closeWindow();
+                    }
+                    return;
+                }
+                
+                // 3. 檢查是否在 LINE 內部開啟
                 if (!liff.isInClient()) {
                     clearTimeout(timeout);
                     showError("為保護權益，題庫系統僅限在 LINE 聊天室內部開啟。");
                     return;
                 }
                 
+                // 4. 檢查登入狀態
                 if (!liff.isLoggedIn()) {
                     liff.login();
                     return;
@@ -290,7 +319,7 @@
                     document.getElementById('user-avatar').src = profile.pictureUrl;
                 }
                 
-                // 成功驗證，提早解除轉圈圈與計時器，等使用者選科目
+                // 5. 成功驗證與通過時效檢查，載入科目
                 await loadSubjects();
                 clearTimeout(timeout);
                 hideLoading();
@@ -298,6 +327,7 @@
             } catch (err) {
                 clearTimeout(timeout);
                 showError("LINE 驗證失敗，請重新開啟此頁面。");
+                console.error(err);
             }
         });
         async function loadSubjects() {
