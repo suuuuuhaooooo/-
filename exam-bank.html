@@ -191,40 +191,55 @@
                 </select>
             </div>
 
-            <!-- 篩選條件 (加入 onchange 監聽器) -->
+            <!-- 科目選擇 (維持單選) -->
             <div class="input-group">
-                <label>選擇年段</label>
-                <select id="select-grade" onchange="updateAvailableCount()" disabled><option value="">全部</option></select>
+                <label>選擇科目</label>
+                <select id="select-subject" onchange="fetchQuestionBank()">
+                    <option value="" disabled selected>載入科目中...</option>
+                </select>
+            </div>
+
+            <!-- 篩選條件 (加入 multiple 屬性，在手機上會自動變成複選打勾清單) -->
+            <div class="input-group">
+                <label>選擇年段 (可複選，不選代表全部)</label>
+                <select id="select-grade" onchange="updateAvailableCount()" multiple disabled></select>
             </div>
 
             <div class="input-group">
-                <label>選擇段考</label>
-                <select id="select-exam" onchange="updateAvailableCount()" disabled><option value="">全部</option></select>
+                <label>選擇段考 (可複選)</label>
+                <select id="select-exam" onchange="updateAvailableCount()" multiple disabled></select>
             </div>
 
             <div class="input-group">
-                <label>選擇版本</label>
-                <select id="select-version" onchange="updateAvailableCount()" disabled><option value="">全部</option></select>
+                <label>選擇版本 (可複選)</label>
+                <select id="select-version" onchange="updateAvailableCount()" multiple disabled></select>
             </div>
 
             <div class="input-group">
-                <label>選擇章節</label>
-                <select id="select-chapter" onchange="updateAvailableCount()" disabled><option value="">全部</option></select>
+                <label>選擇章節 (可複選)</label>
+                <select id="select-chapter" onchange="updateAvailableCount()" multiple disabled></select>
             </div>
 
             <div class="input-group">
-                <label>選擇題型</label>
-                <select id="select-type" onchange="updateAvailableCount()" disabled><option value="">全部</option></select>
+                <label>選擇題型 (可複選)</label>
+                <select id="select-type" onchange="updateAvailableCount()" multiple disabled></select>
             </div>
 
             <div class="input-group">
-                <label>選擇難易度</label>
-                <select id="select-difficulty" onchange="updateAvailableCount()" disabled><option value="">全部</option></select>
+                <label>選擇難易度 (可複選)</label>
+                <select id="select-difficulty" onchange="updateAvailableCount()" multiple disabled></select>
             </div>
 
+            <!-- 抽卷題數 (改為 100 的因數選單) -->
             <div class="input-group">
-                <label>抽卷題數 (上限 25 題)</label>
-                <input type="number" id="input-count" value="10" min="1" max="50" disabled>
+                <label>抽卷題數 (滿分100分)</label>
+                <select id="input-count" disabled>
+                    <option value="10" selected>10 題 (每題 10 分)</option>
+                    <option value="20">20 題 (每題 5 分)</option>
+                    <option value="25">25 題 (每題 4 分)</option>
+                    <option value="50">50 題 (每題 2 分)</option>
+                    <option value="100">100 題 (每題 1 分)</option>
+                </select>
             </div>
 
             <button class="main-btn" id="generate-btn" onclick="triggerRenderCompilation()" disabled>
@@ -340,8 +355,15 @@
         }
 
         // ==========================================
-        // 3. 無階層選單初始化
+        // 3. 無階層選單初始化與複選邏輯
         // ==========================================
+        // ⚡️ 新增：取得複選選單所有被勾選的值
+        function getSelectedValues(id) {
+            const select = document.getElementById(id);
+            if (!select) return [];
+            return Array.from(select.selectedOptions).map(opt => opt.value);
+        }
+
         function initDropdowns() {
             populateSelect('select-grade', '年段');
             populateSelect('select-exam', '段考');
@@ -352,30 +374,35 @@
 
             document.getElementById('input-count').disabled = false;
             
-            // 改為呼叫新函式來顯示數字
+            // 呼叫新函式來顯示數字
             updateAvailableCount(); 
             
             hideLoading();
         }
-        function updateAvailableCount() {
-            if (!globalQuestions.length) return;
 
+        function updateAvailableCount() {
+            if (!globalQuestions.length) return 0;
+
+            // ⚡️ 改用 getSelectedValues 抓取陣列資料
             const filters = {
-                "年段": document.getElementById('select-grade').value,
-                "段考": document.getElementById('select-exam').value,
-                "版本": document.getElementById('select-version').value,
-                "章節": document.getElementById('select-chapter').value,
-                "題型": document.getElementById('select-type').value,
-                "難易度": document.getElementById('select-difficulty').value
+                "年段": getSelectedValues('select-grade'),
+                "段考": getSelectedValues('select-exam'),
+                "版本": getSelectedValues('select-version'),
+                "章節": getSelectedValues('select-chapter'),
+                "題型": getSelectedValues('select-type'),
+                "難易度": getSelectedValues('select-difficulty')
             };
             
             let matchCount = 0;
             globalQuestions.forEach(q => {
                 let match = true;
                 for (let key in filters) {
-                    if (filters[key] && filters[key] !== "全部") {
+                    // 如果這個條件有被勾選
+                    if (filters[key].length > 0) {
                         let actualVal = String(q[key] || '').trim();
-                        if (actualVal.indexOf(String(filters[key])) === -1) {
+                        // 只要題目符合勾選的「其中一個」就算過關 (OR 邏輯)
+                        let matchedAny = filters[key].some(expected => actualVal.includes(expected));
+                        if (!matchedAny) {
                             match = false;
                             break;
                         }
@@ -395,13 +422,14 @@
             
             // 如果題數為 0，鎖定按鈕防止使用者送出報錯
             document.getElementById('generate-btn').disabled = (matchCount === 0);
+            return matchCount; // 回傳題數給送出按鈕檢查用
         }
+
         function populateSelect(elementId, columnKey) {
-            // 從 globalQuestions 中提取該欄位所有不重複且不為空的值
             const uniqueValues = [...new Set(globalQuestions.map(q => q[columnKey]).filter(Boolean))];
             const select = document.getElementById(elementId);
             
-            select.innerHTML = '<option value="">全部</option>';
+            select.innerHTML = ''; // ⚡️ 複選不需要「全部」選項，清空即可
             uniqueValues.forEach(val => {
                 let opt = document.createElement('option');
                 opt.value = val; 
@@ -419,15 +447,23 @@
             let count = parseInt(document.getElementById('input-count').value);
             if (count < 1) count = 1;
 
+            // ⚡️ 新增：題數不足的防呆檢查
+            let currentMatchCount = updateAvailableCount();
+            if (currentMatchCount < count) {
+                alert(`題數不足！\n\n您設定要抽 ${count} 題，但目前的篩選條件只有 ${currentMatchCount} 題符合。\n請「放寬條件」或「減少抽卷題數」再試一次。`);
+                return;
+            }
+
             setLoadingState("正在驅動雲端編譯器...", "產生測驗卷與解答中，請勿關閉視窗 (約需幾 1 ~ 2 分鐘)");
 
+            // ⚡️ 改用 getSelectedValues 抓取陣列資料打包送給後端
             const currentFilters = {
-                "年段": document.getElementById('select-grade').value,
-                "段考": document.getElementById('select-exam').value,
-                "版本": document.getElementById('select-version').value,
-                "章節": document.getElementById('select-chapter').value,
-                "題型": document.getElementById('select-type').value,
-                "難易度": document.getElementById('select-difficulty').value
+                "年段": getSelectedValues('select-grade'),
+                "段考": getSelectedValues('select-exam'),
+                "版本": getSelectedValues('select-version'),
+                "章節": getSelectedValues('select-chapter'),
+                "題型": getSelectedValues('select-type'),
+                "難易度": getSelectedValues('select-difficulty')
             };
 
             const payload = {
@@ -439,7 +475,6 @@
             };
 
             try {
-                // 建立控制器，將逾時時間延長至 90 秒，避免雙卷編譯被中斷
                 const controller = new AbortController();
                 const timeoutId = setTimeout(() => controller.abort(), 90000);
 
@@ -450,7 +485,7 @@
                     signal: controller.signal
                 });
 
-                clearTimeout(timeoutId); // 成功收到回應，清除計時器
+                clearTimeout(timeoutId);
 
                 if (res.ok) {
                     const responseData = await res.json();
@@ -458,11 +493,11 @@
                     if (responseData.success) {
                         let filterText = "";
                         for (let key in responseData.filters) {
-                            if (responseData.filters[key] && responseData.filters[key] !== "全部") {
-                                filterText += `▪️ ${key}：${responseData.filters[key]}\n`;
+                            if (responseData.filters[key]) {
+                                filterText += `◎ ${key}：${responseData.filters[key]}\n`;
                             }
                         }
-                        if (filterText === "") filterText = "▪️ 條件：無 (全範圍隨機抽題)\n";
+                        if (filterText === "") filterText = "◎ 條件：無 (全範圍隨機抽題)\n";
                         let realName = responseData.student_name || "同學";
                         if (realName !== "同學" && !realName.includes("同學") && !realName.includes("老師")) {
                             realName += " 同學";
@@ -485,7 +520,7 @@
                     showError("伺服器錯誤：" + (errData.error || "無回應"));
                 }
             } catch (err) {
-                console.error("捕捉到錯誤：", err);
+                console.error("錯誤：", err);
                 if (err.name === 'AbortError') {
                     showError("連線逾時：伺服器處理時間超過 90 秒，請再試一次。");
                 } else {
