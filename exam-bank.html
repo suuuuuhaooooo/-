@@ -274,13 +274,13 @@
                 clearTimeout(timeout);
                 hideLoading();
                 alert("LINE 驗證連線較慢，請確認網路狀態或重新整理。");
-            }, 8000);
+            }, 30000);
 
             try {
                 // 1. 先讓 LIFF 完成初始化
                 await liff.init({ liffId: MY_LIFF_ID });
                 
-                // ⚡️ 2. 初始化完成後，立刻進行網址時效性驗證
+                // 2. 初始化完成後，立刻進行網址時效性驗證
                 const urlParams = new URLSearchParams(window.location.search);
                 const exp = urlParams.get('exp');
                 
