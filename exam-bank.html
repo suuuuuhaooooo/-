@@ -222,6 +222,11 @@
             </div>
 
             <div class="input-group">
+                <label>選擇次小節</label>
+                <select id="select-subchapter" onchange="updateAvailableCount()" multiple disabled></select>
+            </div>
+
+            <div class="input-group">
                 <label>選擇題型</label>
                 <select id="select-type" onchange="updateAvailableCount()" multiple disabled></select>
             </div>
@@ -461,7 +466,7 @@
         function populateSelect(elementId, columnKey) {
             const uniqueValues = [...new Set(globalQuestions.map(q => q[columnKey]).filter(Boolean))];
             const select = document.getElementById(elementId);
-            
+            if (!select) return;
             select.innerHTML = ''; // ⚡️ 複選不需要「全部」選項，清空即可
             uniqueValues.forEach(val => {
                 let opt = document.createElement('option');
