@@ -396,30 +396,32 @@
         }
 
         function initDropdowns() {
+            populateSelect('select-year', '學年度');
+            populateSelect('select-semester', '學期');
             populateSelect('select-grade', '年段');
             populateSelect('select-exam', '段考');
             populateSelect('select-version', '版本');
             populateSelect('select-chapter', '章節');
+            populateSelect('select-subchapter', '次小節');
             populateSelect('select-type', '題型');
             populateSelect('select-difficulty', '難易度');
 
             document.getElementById('input-count').disabled = false;
-            
-            // 呼叫新函式來顯示數字
             updateAvailableCount(); 
-            
             hideLoading();
         }
 
         function updateAvailableCount() {
             if (!globalQuestions.length) return 0;
 
-            // ⚡️ 改用 getSelectedValues 抓取陣列資料
             const filters = {
+                "學年度": getSelectedValues('select-year'),
+                "學期": getSelectedValues('select-semester'),
                 "年段": getSelectedValues('select-grade'),
                 "段考": getSelectedValues('select-exam'),
                 "版本": getSelectedValues('select-version'),
                 "章節": getSelectedValues('select-chapter'),
+                "次小節": getSelectedValues('select-subchapter'),
                 "題型": getSelectedValues('select-type'),
                 "難易度": getSelectedValues('select-difficulty')
             };
@@ -487,12 +489,14 @@
 
             setLoadingState("正在驅動雲端編譯器...", "產生測驗卷與解答中，請勿關閉視窗 (約需幾 1 ~ 2 分鐘)");
 
-            // ⚡️ 改用 getSelectedValues 抓取陣列資料打包送給後端
             const currentFilters = {
+                "學年度": getSelectedValues('select-year'),
+                "學期": getSelectedValues('select-semester'),
                 "年段": getSelectedValues('select-grade'),
                 "段考": getSelectedValues('select-exam'),
                 "版本": getSelectedValues('select-version'),
                 "章節": getSelectedValues('select-chapter'),
+                "次小節": getSelectedValues('select-subchapter'),
                 "題型": getSelectedValues('select-type'),
                 "難易度": getSelectedValues('select-difficulty')
             };
