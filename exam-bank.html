@@ -177,7 +177,7 @@
         
         <div class="filter-card">
             <h2>自訂考卷條件</h2>
-            <p>請自由組合篩選條件，無須依照順序，系統將自動過濾符合的題目。</p>
+            <p>請自由組合篩選條件，無須依照順序，系統將自動過濾符合的題目 (可複選，不選代表全部)。</p>
             
             <div class="info-box" id="db-info">
                 請先選擇科目以載入題庫。
@@ -191,34 +191,43 @@
                 </select>
             </div>
 
-            <!-- 篩選條件 (加入 multiple 屬性，在手機上會自動變成複選打勾清單) -->
             <div class="input-group">
-                <label>選擇年段 (可複選，不選代表全部)</label>
+                <label>選擇學年度</label>
+                <select id="select-year" onchange="updateAvailableCount()" multiple disabled></select>
+            </div>
+
+            <div class="input-group">
+                <label>選擇學期</label>
+                <select id="select-semester" onchange="updateAvailableCount()" multiple disabled></select>
+            </div>
+
+            <div class="input-group">
+                <label>選擇年段</label>
                 <select id="select-grade" onchange="updateAvailableCount()" multiple disabled></select>
             </div>
 
             <div class="input-group">
-                <label>選擇段考 (可複選)</label>
+                <label>選擇段考</label>
                 <select id="select-exam" onchange="updateAvailableCount()" multiple disabled></select>
             </div>
 
             <div class="input-group">
-                <label>選擇版本 (可複選)</label>
+                <label>選擇版本</label>
                 <select id="select-version" onchange="updateAvailableCount()" multiple disabled></select>
             </div>
 
             <div class="input-group">
-                <label>選擇章節 (可複選)</label>
+                <label>選擇章節</label>
                 <select id="select-chapter" onchange="updateAvailableCount()" multiple disabled></select>
             </div>
 
             <div class="input-group">
-                <label>選擇題型 (可複選)</label>
+                <label>選擇題型</label>
                 <select id="select-type" onchange="updateAvailableCount()" multiple disabled></select>
             </div>
 
             <div class="input-group">
-                <label>選擇難易度 (可複選)</label>
+                <label>選擇難易度</label>
                 <select id="select-difficulty" onchange="updateAvailableCount()" multiple disabled></select>
             </div>
 
