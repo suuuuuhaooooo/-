@@ -480,10 +480,27 @@
             let count = parseInt(document.getElementById('input-count').value);
             if (count < 1) count = 1;
 
-            // ⚡️ 新增：題數不足的防呆檢查
+            // ⚡️ 題數不足的防呆檢查
             let currentMatchCount = updateAvailableCount();
             if (currentMatchCount < count) {
                 alert(`題數不足！\n\n您設定要抽 ${count} 題，但目前的篩選條件只有 ${currentMatchCount} 題符合。\n請「放寬條件」或「減少抽卷題數」再試一次。`);
+                return;
+            }
+
+            // 🛡️ 1. 從網址列抓取安全參數 (uid, exp, sign)
+            const urlParams = new URLSearchParams(window.location.search);
+            const urlUid = urlParams.get('uid');
+            const urlExp = urlParams.get('exp');
+            const urlSign = urlParams.get('sign');
+            
+            // 🛡️ 本地初步防呆：如果網址被亂改，直接擋下不用浪費資源送後端
+            if (!urlUid || !urlExp || !urlSign) {
+                alert("無效的連結！缺少安全憑證，請從 LINE 官方帳號重新進入。");
+                return;
+            }
+            if (Math.floor(Date.now() / 1000) > parseInt(urlExp)) {
+                alert("連結已逾期失效！請回到 LINE 重新輸入「我要題庫」。");
+                if (liff.isInClient()) liff.closeWindow();
                 return;
             }
 
@@ -501,12 +518,17 @@
                 "難易度": getSelectedValues('select-difficulty')
             };
 
+            // 🛡️ 2. 將參數包裝進 payload 送給 Python
             const payload = {
-                uid: currentUser.uid,
-                name: currentUser.name,
                 subject: subject,
+                name: currentUser.name, // 從 LIFF 抓到的名字
                 questionCount: count,
-                filters: currentFilters
+                filters: currentFilters,
+                
+                // ⚡️ 加上安全憑證給 Python 驗證
+                uid: urlUid,
+                exp: urlExp,
+                sign: urlSign
             };
 
             try {
@@ -546,13 +568,14 @@
                         } else {
                             alert("組卷成功！");
                             console.log(lineMessage);
+                            hideLoading(); // 網頁版解鎖畫面
                         }
                     } else {
                         showError("產出失敗：" + (responseData.error || "未知錯誤"));
                     }
                 } else {
                     const errData = await res.json();
-                    showError("伺服器錯誤：" + (errData.error || "無回應"));
+                    showError("伺服器拒絕：" + (errData.error || "無回應")); // 這裡如果簽章錯誤，會顯示 Python 的 403 報錯
                 }
             } catch (err) {
                 console.error("錯誤：", err);
