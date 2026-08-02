@@ -368,7 +368,7 @@
             const subject = document.getElementById('select-subject').value;
             if (!subject) return;
 
-            setLoadingState("正在同步雲端題庫資料...", `向 Google 請求【${subject}】題庫中 (約需 2 ~ 3 分鐘)`);
+            setLoadingState("正在同步雲端題庫資料...", `向資料庫請求【${subject}】題庫中 (約需 2 ~ 3 分鐘)`);
             try {
                 const response = await fetch(`${RENDER_API_BASE}/api/questions?subject=${subject}`);
                 const data = await response.json();
