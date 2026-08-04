@@ -298,11 +298,15 @@
 
         async function callGeminiFirstTurn(base64Img, tid, uid) {
             try {
+                const lineIdToken = liff.getIDToken(); // 🛡️ 取得憑證
+                
                 const response = await fetch(SCRIPT_URL, {
                     method: 'POST', headers: { "Content-Type": "text/plain;charset=utf-8" },
                     body: JSON.stringify({ 
                         action: "smartSolveImage", 
-                        image: base64ImageClean(base64Img),
+                        taskId: tid,           // 🌟 必須把 taskId 傳給後端去對比資料庫
+                        lineToken: lineIdToken,// 🌟 傳送加密憑證
+                        image: base64ImageClean(base64Img)
                     })
                 });
                 
@@ -324,29 +328,38 @@
             if (!userText || !window.activeTaskId) return;
             
             inputEl.value = ""; inputEl.disabled = true;
-            appendChatBubble('user', userText);
+            
+            // 🛡️ 防禦 XSS：使用者輸入的純文字先進行 HTML 轉義
+            const safeUserText = escapeHTML(userText);
+            appendChatBubble('user', safeUserText);
+            
             const loadingId = appendChatBubble('ai', "<div class='loading-dots' style='margin:0;'><div></div><div></div><div></div></div>");
             scrollToBottom();
-
+        
             let apiContents = [];
             if (window.sessionImage) apiContents.push({ role: "user", parts: [{ text: "題目圖" }, { inline_data: { mime_type: "image/jpeg", data: base64ImageClean(window.sessionImage) } }] });
             apiContents.push({ role: "model", parts: [{ text: window.initialResponse }] });
             window.followUps.forEach(msg => apiContents.push({ role: msg.role === 'user' ? "user" : "model", parts: [{ text: msg.text }] }));
-            apiContents.push({ role: "user", parts: [{ text: userText }] });
-
+            apiContents.push({ role: "user", parts: [{ text: userText }] }); // 傳給 AI 的內容保持原樣即可
+        
             try {
+                // 🛡️ 取得 LINE 簽發的防偽憑證
+                const lineIdToken = liff.getIDToken();
+        
                 const payloadData = { 
                     action: "askGemini", 
-                    taskId: window.activeTaskId,          // ⚡️ 告訴後端目前在哪題
-                    visitorUid: window.visitorUid,        // ⚡️ 告訴後端我是誰 (防偽造)
-                    geminiPayload: { contents: apiContents } // ⚡️ 乾淨的內容，不帶 Prompt
+                    taskId: window.activeTaskId,          
+                    lineToken: lineIdToken,  // 🌟 改傳送加密憑證，不再傳 visitorUid
+                    geminiPayload: { contents: apiContents } 
                 };
-
+        
                 const response = await fetch(SCRIPT_URL, { 
                     method: 'POST', headers: { "Content-Type": "text/plain;charset=utf-8" },
                     body: JSON.stringify(payloadData) 
                 });
                 const result = await response.json();
+                
+                // ... (下方處理結果的程式碼保持不變)
                 const aiReply = result?.candidates?.[0]?.content?.parts?.[0]?.text;
                 document.getElementById(loadingId).remove();
                 if (aiReply) {
@@ -417,6 +430,11 @@
 
         function triggerMathJax() { if (window.MathJax) MathJax.typesetPromise().catch(e => console.log(e.message)); }
         function base64ImageClean(s) { return s.includes(",") ? s.split(",")[1] : s; }
+        function escapeHTML(str) {
+            return str.replace(/[&<>'"]/g, tag => ({
+                '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;'
+            }[tag]));
+        }
         function scrollToBottom() { window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' }); }
         
         document.getElementById('chat-input').addEventListener('keypress', e => { if (e.key === 'Enter') sendFollowUp(); });
