@@ -518,17 +518,38 @@
                     completedRecords = snap.val() || {}; 
                     
                     // 3. GAS 12秒超時防呆
-                    const idToken = await user.getIdToken(); // 取得憑證
+                    // 3. 取得安全憑證
+                    const idToken = await user.getIdToken(); 
 
-                    const fetchPromise = Promise.all([
-                        fetch(SCRIPT_URL + "?token=SuHaoClassroom2026_SecureKey"),
-                        fetch(SCRIPT_URL + "?token=SuHaoClassroom2026_SecureKey&action=getExams&idToken=" + idToken)
-                    ]);
-                    const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('GAS_TIMEOUT')), 30000));
+                    // 🌟 核心解法：改用獨立的 async 函式「依序」抓取資料，並改用 POST 傳遞長憑證
+                    const fetchAllData = async () => {
+                        // 第 1 個請求：先抓學生名單 (原本的 GET 即可，參數很短)
+                        const r1 = await fetch(SCRIPT_URL + "?token=SuHaoClassroom2026_SecureKey");
+                        const studentDataArray = await r1.json();
+
+                        // 第 2 個請求：等前一個抓完後，再抓題庫 (改用 POST 傳輸，解決網址過長與併發鎖死問題)
+                        const r2 = await fetch(SCRIPT_URL, {
+                            method: "POST",
+                            headers: { "Content-Type": "text/plain;charset=utf-8" },
+                            body: JSON.stringify({
+                                token: "SuHaoClassroom2026_SecureKey",
+                                action: "getExams",
+                                idToken: idToken
+                            })
+                        });
+                        const allExamsCatalog = await r2.json();
+
+                        return { studentDataArray, allExamsCatalog };
+                    };
+
+                    // 設定 25 秒超時保險絲
+                    const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('GAS_TIMEOUT')), 25000));
                     
-                    const [studentRes, examRes] = await Promise.race([fetchPromise, timeoutPromise]);
-                    const studentDataArray = await studentRes.json();
-                    const allExamsCatalog = await examRes.json();
+                    // 開始賽跑 (確保 25 秒內要完成上面兩個循序的請求)
+                    const result = await Promise.race([fetchAllData(), timeoutPromise]);
+                    
+                    const studentDataArray = result.studentDataArray;
+                    const allExamsCatalog = result.allExamsCatalog;
                     
                     const myData = studentDataArray.find(i => i.uid === user.uid);
                     if (myData && myData.examIds && myData.examIds.trim() !== "") {
@@ -539,13 +560,13 @@
                     }
                     
                     document.getElementById('loading-screen').style.display = 'none';
-                    showExamList(); 
+                    showExamList();
                     
                 } catch (e) {
                     console.error("系統讀取失敗：", e);
                     document.getElementById('loading-screen').style.display = 'none';
                     if (e.message === 'GAS_TIMEOUT') {
-                        alert("【系統通知】\nGoogle 資料庫連線超時，無法載入試卷，請稍後再試！");
+                        alert("【系統通知】\n資料庫連線超時，無法載入試卷，請稍後再試！");
                     } else {
                         alert("資料庫連線異常，請重新整理頁面。");
                     }
