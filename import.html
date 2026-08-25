@@ -237,7 +237,7 @@
         // ==========================================
         // 請將下方替換成您剛剛部署好的 GAS Web App 網址！
         const GAS_API_URL = "https://script.google.com/macros/s/AKfycbwg1reUCaWdmvnjQyxxfOUSNL-6niiiaQlLztgOvSavphpUF2MzAXMVC1fa0TtLsLoC/exec"; 
-        const SECURE_TOKEN = "suhao2026";
+        let SECURE_TOKEN = "";
 
         let uploadedImageBase64 = null;
         let parsedQuestions = []; // 儲存 AI 解析出來的完整題目陣列
@@ -294,6 +294,15 @@
         // ==========================================
         async function startAIAnalysis() {
             if (!uploadedImageBase64) return;
+        
+            // 🟢 密碼攔截機制：如果還沒輸入過密碼，就彈出視窗詢問
+            if (!SECURE_TOKEN) {
+                SECURE_TOKEN = prompt("請輸入密碼：");
+                if (!SECURE_TOKEN) {
+                    alert("已取消操作。");
+                    return; // 密碼空白或按取消，就終止程式
+                }
+            }
 
             // 準備動態課綱給 AI 參考
             const pub = document.getElementById('common-publisher').value;
@@ -405,6 +414,14 @@
                 return;
             }
 
+            // 🟢 密碼攔截機制：保險起見，寫入資料庫前再檢查一次是否有密碼
+            if (!SECURE_TOKEN) {
+                SECURE_TOKEN = prompt("請輸入密碼：");
+                if (!SECURE_TOKEN) {
+                    alert("已取消操作。");
+                    return; 
+                }
+            }
             // 蒐集上方共通的設定屬性
             const commonData = {
                 科目: document.getElementById('common-subject').value,
