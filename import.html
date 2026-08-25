@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>蘇昊數理｜AI 智能題庫匯入系統</title>
+    <link rel="icon" href="https://suuuuuhaooooo.github.io/-/favicon.png" type="image/png">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;700&display=swap" rel="stylesheet">
+    
+    <style>
+        :root { 
+            --primary: #8e9775; 
+            --dark: #5b6348; 
+            --bg: #f5f5f5; 
+            --white: #ffffff; 
+            --border: #eeeeee; 
+        }
+
+        body {
+            margin: 0; padding: 0;
+            background-color: var(--bg);
+            font-family: "Noto Serif TC", serif;
+            color: #333;
+        }
+
+        .navbar {
+            background: white; padding: 15px 20px; box-shadow: 0 1px 5px rgba(0,0,0,0.05);
+            display: flex; justify-content: space-between; align-items: center;
+            position: fixed; top: 0; left: 0; width: 100%; box-sizing: border-box; z-index: 100;
+            height: 60px;
+        }
+        .brand-title { font-weight: 700; font-size: 16px; color: var(--dark); letter-spacing: 1px; }
+
+        .container {
+            padding: 85px 20px 40px 20px;
+            max-width: 900px;
+            margin: 0 auto;
+            box-sizing: border-box;
+        }
+
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.04);
+            border-top: 5px solid var(--primary);
+            margin-bottom: 20px;
+        }
+
+        h2 { margin-top: 0; color: var(--dark); font-size: 18px; }
+        p { font-size: 13px; color: #666; line-height: 1.5; }
+
+        /* 拖曳上傳區 */
+        .drop-zone {
+            border: 2px dashed var(--primary);
+            border-radius: 8px;
+            padding: 30px;
+            text-align: center;
+            background: #fafafa;
+            cursor: pointer;
+            transition: 0.3s;
+            margin-bottom: 20px;
+        }
+        .drop-zone:hover { background: #f0f3ef; }
+        .drop-zone p { margin: 10px 0 0 0; font-weight: bold; color: var(--dark); }
+
+        /* 設定列 */
+        .row { display: flex; gap: 15px; margin-bottom: 15px; }
+        .col { flex: 1; }
+        label { display: block; font-size: 13px; font-weight: bold; color: #444; margin-bottom: 5px; }
+        select, input[type="text"] {
+            width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px;
+            font-family: "Noto Serif TC", serif; font-size: 14px; box-sizing: border-box;
+        }
+
+        .btn {
+            background: var(--primary); color: white; border: none; padding: 12px 20px;
+            cursor: pointer; font-weight: bold; border-radius: 6px; font-size: 15px;
+            font-family: "Noto Serif TC", serif; width: 100%; transition: 0.3s;
+        }
+        .btn:hover { background: var(--dark); }
+        .btn:disabled { background: #ccc; cursor: not-allowed; }
+
+        /* 預覽表格區 */
+        .table-responsive { width: 100%; overflow-x: auto; margin-top: 20px; }
+        table { width: 100%; border-collapse: collapse; font-size: 13px; background: white; }
+        th, td { border: 1px solid var(--border); padding: 10px; text-align: left; vertical-align: top; }
+        th { background: #f0f3ef; color: var(--dark); font-weight: bold; }
+        td input, td textarea { width: 100%; border: 1px solid #ddd; padding: 5px; font-family: inherit; font-size: 12px; box-sizing: border-box; }
+        td textarea { resize: vertical; height: 50px; }
+
+        .actions { margin-top: 20px; display: flex; gap: 10px; }
+        .btn-danger { background: #c0392b; }
+        .btn-danger:hover { background: #962d22; }
+
+        /* Loading */
+        #loading-overlay { 
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+            background: rgba(255,255,255,0.9); z-index: 9999; 
+            flex-direction: column; justify-content: center; align-items: center; 
+        }
+        .spinner { 
+            border: 4px solid #eef1e6; border-top: 4px solid var(--primary); 
+            border-radius: 50%; width: 45px; height: 45px; animation: spin 1s linear infinite; margin-bottom: 15px; 
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+
+    <div id="loading-overlay">
+        <div class="spinner"></div>
+        <div style="font-weight: bold; color: var(--dark);" id="load-msg">AI 正在深度解析考卷內容，請稍候...</div>
+    </div>
+
+    <nav class="navbar">
+        <div class="brand-title">蘇昊數理｜AI 智能題庫匯入工作站</div>
+    </nav>
+
+    <div class="container">
+        
+        <!-- 步驟一：上傳與參數設定 -->
+        <div class="card">
+            <h2>Step 1：上傳考卷與設定基本屬性</h2>
+            <p>請拖曳考卷圖片或 PDF 截圖至下方虛線框中，並選擇這批考卷所屬的出版社與年段，以利 AI 精準分類章節。</p>
+            
+            <div class="row">
+                <div class="col">
+                    <label>選擇出版社</label>
+                    <select id="publisher">
+                        <option value="康軒">康軒版</option>
+                        <option value="南一">南一版</option>
+                        <option value="翰林">翰林版</option>
+                    </select>
+                </div>
+                <div class="col">
+                    <label>選擇年段學期</label>
+                    <select id="grade-semester">
+                        <option value="三上">三年級上學期</option>
+                        <option value="三下">三年級下學期</option>
+                        <option value="四上" selected>四年級上學期</option>
+                        <option value="四下">四年級下學期</option>
+                        <option value="五上">五年級上學期</option>
+                        <option value="五下">五年級下學期</option>
+                        <option value="六上">六年級上學期</option>
+                        <option value="六下">六年級下學期</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- 拖曳上傳區 -->
+            <div class="drop-zone" id="drop-zone" onclick="document.getElementById('file-input').click()">
+                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#8e9775" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+                <p>點擊或將考卷圖片/PDF拖曳至此上傳</p>
+                <input type="file" id="file-input" style="display: none;" accept="image/*" onchange="handleFileSelect(event)">
+            </div>
+
+            <button class="btn" id="parse-btn" onclick="startAIAnalysis()" disabled>讓 AI 開始解析並轉化結構</button>
+        </div>
+
+        <!-- 步驟二：人工預覽與校對表格 -->
+        <div class="card" id="preview-card" style="display: none;">
+            <h2>Step 2：人工審查與欄位校對</h2>
+            <p>請檢查下方 AI 解析出來的題目結構。若有辨識錯誤的文字可直接在表格內修改；若題目有附圖，請在「附圖連結」欄位填入 Google Drive 圖片 ID。</p>
+            
+            <div class="table-responsive">
+                <table id="result-table">
+                    <thead>
+                        <tr>
+                            <th style="width: 5%;">#</th>
+                            <th style="width: 8%;">題型</th>
+                            <th style="width: 25%;">題目與選項</th>
+                            <th style="width: 20%;">簡答與詳解</th>
+                            <th style="width: 15%;">章節分類</th>
+                            <th style="width: 15%;">附圖連結 (Drive ID)</th>
+                            <th style="width: 12%;">操作</th>
+                        </tr>
+                    </thead>
+                    <tbody id="table-body">
+                        <!-- 動態插入解析後的題目 -->
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="actions">
+                <button class="btn" onclick="batchUploadToDatabase()">確認無誤，批次寫入 Google Sheet 資料庫</button>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        let uploadedImageBase64 = null;
+        let parsedQuestions = [];
+
+        // 處理檔案選擇
+        function handleFileSelect(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    uploadedImageBase64 = e.target.result.split(',')[1]; // 抓取 Base64
+                    document.getElementById('drop-zone').style.borderColor = '#5b6348';
+                    document.getElementById('drop-zone').innerHTML = `<p style="color:var(--dark);">✅ 已成功載入檔案：${file.name}</p>`;
+                    document.getElementById('parse-btn').disabled = false;
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        // 模擬呼叫 Gemini API 進行解析 (之後可替換為實際的 GAS 轉發或前端直接呼叫)
+        async function startAIAnalysis() {
+            if (!uploadedImageBase64) return;
+
+            document.getElementById('loading-overlay').style.display = 'flex';
+
+            // 這裡模擬 AI 回傳的結構化 JSON 資料
+            setTimeout(() => {
+                parsedQuestions = [
+                    {
+                        "題型": "單選",
+                        "題組編號": "",
+                        "共用題幹": "",
+                        "題目": "計算多項式 $4x^2-3x-5$ 除以 $x+2$ 後，所得商式與餘式兩者之和為何？\\n(1) $4x+6$ \\n(2) $4x+10$ \\n(3) $-7x-5$ \\n(4) $-11x-1$",
+                        "簡答": "A",
+                        "詳解": "利用長除法或分離係數法來求商式與餘式。商式為 $4x-11$，餘式為 $17$。兩者之和為 $(4x-11)+17 = 4x+6$。",
+                        "章節": "多項式與其四則運算",
+                        "難易度": "基礎",
+                        "附圖連結": ""
+                    },
+                    {
+                        "題型": "單選",
+                        "題組編號": "",
+                        "共用題幹": "",
+                        "題目": "小彭的農園將收成的文旦根據重量分類，總重量如表所示。 [IMG] 僅將其餘文旦包裝成禮盒，求總共多少公斤？",
+                        "簡答": "B",
+                        "詳解": "扣除良級與大果，剩餘部分加總：$180+270+100+80=630$（公斤）。",
+                        "章節": "統計圖表",
+                        "難易度": "基礎",
+                        "附圖連結": ""
+                    }
+                ];
+
+                renderTable();
+                document.getElementById('loading-overlay').style.display = 'none';
+                document.getElementById('preview-card').style.display = 'block';
+                window.scrollTo({ top: 500, behavior: 'smooth' });
+            }, 2000);
+        }
+
+        // 渲染預覽表格
+        function renderTable() {
+            const tbody = document.getElementById('table-body');
+            tbody.innerHTML = '';
+
+            parsedQuestions.forEach((q, index) => {
+                let tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${index + 1}</td>
+                    <td><input type="text" value="${q.題型}" id="type-${index}"></td>
+                    <td><textarea id="q-${index}">${q.題目}</textarea></td>
+                    <td><input type="text" value="答案: ${q.簡答}" id="ans-${index}" style="margin-bottom:5px;"><textarea id="exp-${index}">${q.詳解}</textarea></td>
+                    <td><input type="text" value="${q.章節}" id="chap-${index}"></td>
+                    <td><input type="text" placeholder="貼入 Drive 檔案 ID" value="${q.附圖連結}" id="img-${index}"></td>
+                    <td><button class="btn btn-danger" style="padding:5px 10px; font-size:12px;" onclick="deleteRow(${index})">刪除</button></td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function deleteRow(index) {
+            parsedQuestions.splice(index, 1);
+            renderTable();
+        }
+
+        // 最終確認批次上傳
+        function batchUploadToDatabase() {
+            alert("模擬成功！此處會將整理好的 JSON 批次送給後端 GAS，寫入 Google Sheet 題庫中。");
+        }
+    </script>
+</body>
+</html>
