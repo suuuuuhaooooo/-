@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>蘇昊數理｜AI 智能題庫匯入系統</title>
+    <title>蘇昊數理｜AI 智能題庫匯入工作站</title>
     <link rel="icon" href="https://suuuuuhaooooo.github.io/-/favicon.png" type="image/png">
     <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;700&display=swap" rel="stylesheet">
     
@@ -33,7 +33,7 @@
 
         .container {
             padding: 85px 20px 40px 20px;
-            max-width: 900px;
+            max-width: 1000px;
             margin: 0 auto;
             box-sizing: border-box;
         }
@@ -65,12 +65,13 @@
         .drop-zone p { margin: 10px 0 0 0; font-weight: bold; color: var(--dark); }
 
         /* 設定列 */
-        .row { display: flex; gap: 15px; margin-bottom: 15px; }
-        .col { flex: 1; }
+        .row { display: flex; gap: 15px; margin-bottom: 15px; flex-wrap: wrap; }
+        .col { flex: 1; min-width: 150px; }
         label { display: block; font-size: 13px; font-weight: bold; color: #444; margin-bottom: 5px; }
         select, input[type="text"] {
             width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px;
             font-family: "Noto Serif TC", serif; font-size: 14px; box-sizing: border-box;
+            background-color: #fafafa;
         }
 
         .btn {
@@ -78,19 +79,24 @@
             cursor: pointer; font-weight: bold; border-radius: 6px; font-size: 15px;
             font-family: "Noto Serif TC", serif; width: 100%; transition: 0.3s;
         }
-        .btn:hover { background: var(--dark); }
+        .btn:hover:not(:disabled) { background: var(--dark); }
         .btn:disabled { background: #ccc; cursor: not-allowed; }
 
         /* 預覽表格區 */
         .table-responsive { width: 100%; overflow-x: auto; margin-top: 20px; }
-        table { width: 100%; border-collapse: collapse; font-size: 13px; background: white; }
+        table { width: 100%; border-collapse: collapse; font-size: 13px; background: white; min-width: 800px; }
         th, td { border: 1px solid var(--border); padding: 10px; text-align: left; vertical-align: top; }
         th { background: #f0f3ef; color: var(--dark); font-weight: bold; }
-        td input, td textarea { width: 100%; border: 1px solid #ddd; padding: 5px; font-family: inherit; font-size: 12px; box-sizing: border-box; }
-        td textarea { resize: vertical; height: 50px; }
+        td input, td textarea { 
+            width: 100%; border: 1px solid #ddd; padding: 6px; 
+            font-family: inherit; font-size: 13px; box-sizing: border-box; 
+            border-radius: 4px; background: #fafafa;
+        }
+        td input:focus, td textarea:focus { border-color: var(--primary); outline: none; background: #fff; }
+        td textarea { resize: vertical; min-height: 60px; }
 
         .actions { margin-top: 20px; display: flex; gap: 10px; }
-        .btn-danger { background: #c0392b; }
+        .btn-danger { background: #c0392b; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; }
         .btn-danger:hover { background: #962d22; }
 
         /* Loading */
@@ -111,6 +117,7 @@
     <div id="loading-overlay">
         <div class="spinner"></div>
         <div style="font-weight: bold; color: var(--dark);" id="load-msg">AI 正在深度解析考卷內容，請稍候...</div>
+        <div style="font-size: 12px; color: #888; margin-top: 8px;">(根據題目多寡，可能需要 15 ~ 45 秒)</div>
     </div>
 
     <nav class="navbar">
@@ -122,133 +129,216 @@
         <!-- 步驟一：上傳與參數設定 -->
         <div class="card">
             <h2>Step 1：上傳考卷與設定基本屬性</h2>
-            <p>請拖曳考卷圖片或 PDF 截圖至下方虛線框中，並選擇這批考卷所屬的出版社與年段，以利 AI 精準分類章節。</p>
+            <p>這批設定將會自動套用到本次解析出的所有題目上，作為資料庫的共用標籤。</p>
             
             <div class="row">
                 <div class="col">
-                    <label>選擇出版社</label>
-                    <select id="publisher">
-                        <option value="康軒">康軒版</option>
-                        <option value="南一">南一版</option>
-                        <option value="翰林">翰林版</option>
+                    <label>匯入目標科目</label>
+                    <input type="text" id="common-subject" value="數學" placeholder="例如：數學、自然">
+                </div>
+                <div class="col">
+                    <label>學年度</label>
+                    <input type="text" id="common-year" value="113" placeholder="例如：113">
+                </div>
+                <div class="col">
+                    <label>學期</label>
+                    <select id="common-semester">
+                        <option value="上">上學期</option>
+                        <option value="下">下學期</option>
                     </select>
                 </div>
                 <div class="col">
-                    <label>選擇年段學期</label>
-                    <select id="grade-semester">
-                        <option value="三上">三年級上學期</option>
-                        <option value="三下">三年級下學期</option>
-                        <option value="四上" selected>四年級上學期</option>
-                        <option value="四下">四年級下學期</option>
-                        <option value="五上">五年級上學期</option>
-                        <option value="五下">五年級下學期</option>
-                        <option value="六上">六年級上學期</option>
-                        <option value="六下">六年級下學期</option>
+                    <label>年段</label>
+                    <select id="common-grade">
+                        <option value="一">一年級</option>
+                        <option value="二">二年級</option>
+                        <option value="三">三年級</option>
+                        <option value="四">四年級</option>
+                        <option value="五">五年級</option>
+                        <option value="六">六年級</option>
+                        <option value="七">七年級</option>
+                        <option value="八">八年級</option>
+                        <option value="九">九年級</option>
                     </select>
+                </div>
+            </div>
+            
+            <div class="row">
+                <div class="col">
+                    <label>版本 (AI 課綱判斷依據)</label>
+                    <select id="common-publisher">
+                        <option value="康軒">康軒版</option>
+                        <option value="南一">南一版</option>
+                        <option value="翰林">翰林版</option>
+                        <option value="通用">通用版(會考/歷屆)</option>
+                    </select>
+                </div>
+                <div class="col">
+                    <label>段考範圍</label>
+                    <select id="common-exam">
+                        <option value="一上">第一次段考</option>
+                        <option value="二上">第二次段考</option>
+                        <option value="三上">第三次段考</option>
+                        <option value="期末">期末考</option>
+                        <option value="複習">複習考/模擬考</option>
+                    </select>
+                </div>
+                <div class="col">
+                    <label>題目出處</label>
+                    <input type="text" id="common-source" placeholder="例如：113年會考、某某國中段考卷">
                 </div>
             </div>
 
             <!-- 拖曳上傳區 -->
             <div class="drop-zone" id="drop-zone" onclick="document.getElementById('file-input').click()">
                 <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#8e9775" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
-                <p>點擊或將考卷圖片/PDF拖曳至此上傳</p>
+                <p id="drop-zone-text">點擊或將考卷圖片拖曳至此上傳</p>
                 <input type="file" id="file-input" style="display: none;" accept="image/*" onchange="handleFileSelect(event)">
             </div>
 
-            <button class="btn" id="parse-btn" onclick="startAIAnalysis()" disabled>讓 AI 開始解析並轉化結構</button>
+            <button class="btn" id="parse-btn" onclick="startAIAnalysis()" disabled>啟動 AI 解析與結構轉化</button>
         </div>
 
         <!-- 步驟二：人工預覽與校對表格 -->
         <div class="card" id="preview-card" style="display: none;">
             <h2>Step 2：人工審查與欄位校對</h2>
-            <p>請檢查下方 AI 解析出來的題目結構。若有辨識錯誤的文字可直接在表格內修改；若題目有附圖，請在「附圖連結」欄位填入 Google Drive 圖片 ID。</p>
+            <p>請檢查下方 AI 解析出來的題目結構。您可以在此處微調文字，或在「附圖連結」填寫 Drive ID。</p>
             
             <div class="table-responsive">
                 <table id="result-table">
                     <thead>
                         <tr>
-                            <th style="width: 5%;">#</th>
+                            <th style="width: 5%;">刪除</th>
                             <th style="width: 8%;">題型</th>
-                            <th style="width: 25%;">題目與選項</th>
-                            <th style="width: 20%;">簡答與詳解</th>
-                            <th style="width: 15%;">章節分類</th>
-                            <th style="width: 15%;">附圖連結 (Drive ID)</th>
-                            <th style="width: 12%;">操作</th>
+                            <th style="width: 25%;">題幹與題目</th>
+                            <th style="width: 20%;">選項 (1~4)</th>
+                            <th style="width: 20%;">解答與詳解</th>
+                            <th style="width: 10%;">AI 章節</th>
+                            <th style="width: 12%;">難易度 / 附圖 ID</th>
                         </tr>
                     </thead>
                     <tbody id="table-body">
-                        <!-- 動態插入解析後的題目 -->
+                        <!-- 動態插入 -->
                     </tbody>
                 </table>
             </div>
 
             <div class="actions">
-                <button class="btn" onclick="batchUploadToDatabase()">確認無誤，批次寫入 Google Sheet 資料庫</button>
+                <button class="btn" onclick="batchUploadToDatabase()">✨ 確認無誤，批次寫入資料庫</button>
             </div>
         </div>
 
     </div>
 
     <script>
-        let uploadedImageBase64 = null;
-        let parsedQuestions = [];
+        // ==========================================
+        // 🚨 系統設定區 🚨
+        // ==========================================
+        // 請將下方替換成您剛剛部署好的 GAS Web App 網址！
+        const GAS_API_URL = "YOUR_GAS_WEB_APP_URL_HERE"; 
+        const SECURE_TOKEN = "suhao2026";
 
-        // 處理檔案選擇
+        let uploadedImageBase64 = null;
+        let parsedQuestions = []; // 儲存 AI 解析出來的完整題目陣列
+
+        // ==========================================
+        // 📚 動態課綱字典 (濃縮版示範，之後可隨時擴充)
+        // ==========================================
+        const syllabusDictionary = {
+            "康軒": {
+                "四上": ["一億以內的數", "整數的乘法", "角度", "整數的除法", "公里", "三角形", "小數", "整數四則計算", "分數", "統計圖"],
+                "四下": ["多位數的乘與除", "四邊形", "概數", "數量規律", "小數乘法", "周長與面積", "等值分數", "簡化計算", "時間的計算", "立方公分"],
+                // ... 可以依照您先前的對照表繼續補上五上、五下...
+            },
+            "南一": {
+                "四上": ["一億以內的數", "乘法", "角度", "除法", "三角形", "分數", "數量關係", "整數四則", "小數", "長度"],
+                "四下": ["多位數的乘與除", "四邊形", "分數的加減和整數倍", "概數", "統計圖表", "小數乘以整數", "周長和面積", "等值分數", "時間的加減", "立方公分"]
+            },
+            "翰林": {
+                "四上": ["一億以內的數", "乘法", "角度", "假分數與帶分數", "公里", "除法", "三角形與全等", "兩步驟問題與併式", "二位小數", "統計圖表"],
+                "四下": ["概數", "四則運算", "垂直、平行與四邊形", "分數", "形體的大小", "小數乘法", "周長與面積", "分數", "時間的計算", "規律"]
+            },
+            "通用": [] // 歷屆考題讓 AI 自由發揮
+        };
+
+        // 處理拖曳與點擊上傳
+        const dropZone = document.getElementById('drop-zone');
+        dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.style.background = '#eef1e6'; });
+        dropZone.addEventListener('dragleave', (e) => { e.preventDefault(); dropZone.style.background = '#fafafa'; });
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.style.background = '#fafafa';
+            if (e.dataTransfer.files.length) {
+                document.getElementById('file-input').files = e.dataTransfer.files;
+                handleFileSelect({ target: { files: e.dataTransfer.files } });
+            }
+        });
+
         function handleFileSelect(event) {
             const file = event.target.files[0];
             if (file) {
                 const reader = new FileReader();
                 reader.onload = function(e) {
-                    uploadedImageBase64 = e.target.result.split(',')[1]; // 抓取 Base64
-                    document.getElementById('drop-zone').style.borderColor = '#5b6348';
-                    document.getElementById('drop-zone').innerHTML = `<p style="color:var(--dark);">✅ 已成功載入檔案：${file.name}</p>`;
+                    uploadedImageBase64 = e.target.result.split(',')[1];
+                    dropZone.style.borderColor = '#5b6348';
+                    document.getElementById('drop-zone-text').innerHTML = `<span style="color:var(--dark);">✅ 已成功載入圖片：${file.name}</span>`;
                     document.getElementById('parse-btn').disabled = false;
                 };
                 reader.readAsDataURL(file);
             }
         }
 
-        // 模擬呼叫 Gemini API 進行解析 (之後可替換為實際的 GAS 轉發或前端直接呼叫)
+        // ==========================================
+        // 🚀 核心一：呼叫 AI 解析
+        // ==========================================
         async function startAIAnalysis() {
             if (!uploadedImageBase64) return;
 
+            // 準備動態課綱給 AI 參考
+            const pub = document.getElementById('common-publisher').value;
+            const grade = document.getElementById('common-grade').value;
+            const semester = document.getElementById('common-semester').value;
+            let syllabusContext = "無指定範圍，請依 108 課綱自由分類";
+            
+            if (syllabusDictionary[pub] && syllabusDictionary[pub][grade + semester]) {
+                syllabusContext = "請限定在以下單元中挑選：\n" + syllabusDictionary[pub][grade + semester].join("、");
+            }
+
             document.getElementById('loading-overlay').style.display = 'flex';
+            document.getElementById('load-msg').innerText = `AI 正在深度解析 ${pub}版 ${grade}${semester} 考卷...`;
 
-            // 這裡模擬 AI 回傳的結構化 JSON 資料
-            setTimeout(() => {
-                parsedQuestions = [
-                    {
-                        "題型": "單選",
-                        "題組編號": "",
-                        "共用題幹": "",
-                        "題目": "計算多項式 $4x^2-3x-5$ 除以 $x+2$ 後，所得商式與餘式兩者之和為何？\\n(1) $4x+6$ \\n(2) $4x+10$ \\n(3) $-7x-5$ \\n(4) $-11x-1$",
-                        "簡答": "A",
-                        "詳解": "利用長除法或分離係數法來求商式與餘式。商式為 $4x-11$，餘式為 $17$。兩者之和為 $(4x-11)+17 = 4x+6$。",
-                        "章節": "多項式與其四則運算",
-                        "難易度": "基礎",
-                        "附圖連結": ""
-                    },
-                    {
-                        "題型": "單選",
-                        "題組編號": "",
-                        "共用題幹": "",
-                        "題目": "小彭的農園將收成的文旦根據重量分類，總重量如表所示。 [IMG] 僅將其餘文旦包裝成禮盒，求總共多少公斤？",
-                        "簡答": "B",
-                        "詳解": "扣除良級與大果，剩餘部分加總：$180+270+100+80=630$（公斤）。",
-                        "章節": "統計圖表",
-                        "難易度": "基礎",
-                        "附圖連結": ""
-                    }
-                ];
+            try {
+                const response = await fetch(GAS_API_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' }, // 避免 CORS 預檢問題
+                    body: JSON.stringify({
+                        token: SECURE_TOKEN,
+                        action: 'parseImage',
+                        image: uploadedImageBase64,
+                        syllabus: syllabusContext
+                    })
+                });
 
-                renderTable();
+                const result = await response.json();
+                
+                if (result.success && Array.isArray(result.data)) {
+                    parsedQuestions = result.data;
+                    renderTable();
+                    document.getElementById('preview-card').style.display = 'block';
+                    window.scrollTo({ top: document.getElementById('preview-card').offsetTop, behavior: 'smooth' });
+                } else {
+                    alert("解析失敗：" + (result.error || "回傳格式錯誤"));
+                }
+            } catch (err) {
+                alert("連線發生錯誤：" + err.message);
+            } finally {
                 document.getElementById('loading-overlay').style.display = 'none';
-                document.getElementById('preview-card').style.display = 'block';
-                window.scrollTo({ top: 500, behavior: 'smooth' });
-            }, 2000);
+            }
         }
 
-        // 渲染預覽表格
+        // ==========================================
+        // 🎨 渲染預覽表格 (雙向綁定)
+        // ==========================================
         function renderTable() {
             const tbody = document.getElementById('table-body');
             tbody.innerHTML = '';
@@ -256,26 +346,113 @@
             parsedQuestions.forEach((q, index) => {
                 let tr = document.createElement('tr');
                 tr.innerHTML = `
-                    <td>${index + 1}</td>
-                    <td><input type="text" value="${q.題型}" id="type-${index}"></td>
-                    <td><textarea id="q-${index}">${q.題目}</textarea></td>
-                    <td><input type="text" value="答案: ${q.簡答}" id="ans-${index}" style="margin-bottom:5px;"><textarea id="exp-${index}">${q.詳解}</textarea></td>
-                    <td><input type="text" value="${q.章節}" id="chap-${index}"></td>
-                    <td><input type="text" placeholder="貼入 Drive 檔案 ID" value="${q.附圖連結}" id="img-${index}"></td>
-                    <td><button class="btn btn-danger" style="padding:5px 10px; font-size:12px;" onclick="deleteRow(${index})">刪除</button></td>
+                    <td style="text-align:center;">
+                        <button class="btn-danger" onclick="deleteRow(${index})">✕</button><br>
+                        <small style="color:#aaa;">${index + 1}</small>
+                    </td>
+                    <td>
+                        <input type="text" value="${q.題型 || ''}" onchange="updateData(${index}, '題型', this.value)" placeholder="單選" style="margin-bottom:5px;">
+                        <input type="text" value="${q.題組編號 || ''}" onchange="updateData(${index}, '題組編號', this.value)" placeholder="題組編號">
+                    </td>
+                    <td>
+                        <textarea onchange="updateData(${index}, '共用題幹', this.value)" placeholder="共用題幹 (若無請留空)" style="margin-bottom:5px; min-height:40px;">${q.共用題幹 || ''}</textarea>
+                        <textarea onchange="updateData(${index}, '題目', this.value)" placeholder="題目敘述" style="min-height:80px;">${q.題目 || ''}</textarea>
+                    </td>
+                    <td>
+                        <input type="text" value="${q.選項1 || ''}" onchange="updateData(${index}, '選項1', this.value)" placeholder="選項 1" style="margin-bottom:4px;">
+                        <input type="text" value="${q.選項2 || ''}" onchange="updateData(${index}, '選項2', this.value)" placeholder="選項 2" style="margin-bottom:4px;">
+                        <input type="text" value="${q.選項3 || ''}" onchange="updateData(${index}, '選項3', this.value)" placeholder="選項 3" style="margin-bottom:4px;">
+                        <input type="text" value="${q.選項4 || ''}" onchange="updateData(${index}, '選項4', this.value)" placeholder="選項 4">
+                    </td>
+                    <td>
+                        <input type="text" value="${q.簡答 || ''}" onchange="updateData(${index}, '簡答', this.value)" placeholder="正確答案" style="margin-bottom:5px;">
+                        <textarea onchange="updateData(${index}, '詳解', this.value)" placeholder="詳解" style="min-height:80px;">${q.詳解 || ''}</textarea>
+                    </td>
+                    <td>
+                        <input type="text" value="${q.章節 || ''}" onchange="updateData(${index}, '章節', this.value)" placeholder="歸屬章節">
+                    </td>
+                    <td>
+                        <select onchange="updateData(${index}, '難易度', this.value)" style="margin-bottom:5px;">
+                            <option value="基礎" ${q.難易度 === '基礎' ? 'selected' : ''}>基礎</option>
+                            <option value="中等" ${q.難易度 === '中等' ? 'selected' : ''}>中等</option>
+                            <option value="困難" ${q.難易度 === '困難' ? 'selected' : ''}>困難</option>
+                        </select>
+                        <input type="text" value="${q.附圖連結 || ''}" onchange="updateData(${index}, '附圖連結', this.value)" placeholder="圖片 Drive ID">
+                    </td>
                 `;
                 tbody.appendChild(tr);
             });
         }
 
-        function deleteRow(index) {
-            parsedQuestions.splice(index, 1);
-            renderTable();
+        function updateData(index, key, value) {
+            parsedQuestions[index][key] = value;
         }
 
-        // 最終確認批次上傳
-        function batchUploadToDatabase() {
-            alert("模擬成功！此處會將整理好的 JSON 批次送給後端 GAS，寫入 Google Sheet 題庫中。");
+        function deleteRow(index) {
+            if (confirm("確定要刪除這題嗎？")) {
+                parsedQuestions.splice(index, 1);
+                renderTable();
+            }
+        }
+
+        // ==========================================
+        // 🚀 核心二：批次寫入資料庫
+        // ==========================================
+        async function batchUploadToDatabase() {
+            if (parsedQuestions.length === 0) {
+                alert("目前沒有題目可以寫入！");
+                return;
+            }
+
+            // 蒐集上方共通的設定屬性
+            const commonData = {
+                科目: document.getElementById('common-subject').value,
+                學年度: document.getElementById('common-year').value,
+                學期: document.getElementById('common-semester').value,
+                年段: document.getElementById('common-grade').value,
+                版本: document.getElementById('common-publisher').value,
+                段考: document.getElementById('common-exam').value,
+                出處: document.getElementById('common-source').value
+            };
+
+            if (!confirm(`準備將 ${parsedQuestions.length} 題寫入【${commonData.科目}】資料庫，確認執行？`)) return;
+
+            document.getElementById('loading-overlay').style.display = 'flex';
+            document.getElementById('load-msg').innerText = "資料庫批次寫入中，請勿關閉視窗...";
+
+            try {
+                const response = await fetch(GAS_API_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                    body: JSON.stringify({
+                        token: SECURE_TOKEN,
+                        action: 'batchInsertQuestions',
+                        commonData: commonData,
+                        questionsData: parsedQuestions
+                    })
+                });
+
+                const result = await response.json();
+                
+                if (result.success) {
+                    alert(`✅ 恭喜！成功將 ${result.count} 題寫入資料庫！`);
+                    // 寫入成功後清空暫存與表格
+                    parsedQuestions = [];
+                    renderTable();
+                    document.getElementById('preview-card').style.display = 'none';
+                    document.getElementById('drop-zone').style.borderColor = 'var(--primary)';
+                    document.getElementById('drop-zone-text').innerHTML = '點擊或將下一份考卷圖片拖曳至此上傳';
+                    document.getElementById('parse-btn').disabled = true;
+                    uploadedImageBase64 = null;
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                } else {
+                    alert("寫入失敗：" + result.error);
+                }
+            } catch (err) {
+                alert("連線發生錯誤：" + err.message);
+            } finally {
+                document.getElementById('loading-overlay').style.display = 'none';
+            }
         }
     </script>
 </body>
