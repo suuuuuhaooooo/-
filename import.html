@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>蘇昊數理｜AI 智能題庫匯入工作站</title>
+    <title>蘇昊數理｜AI 題庫匯入工作站</title>
     <link rel="icon" href="https://suuuuuhaooooo.github.io/-/favicon.png" type="image/png">
     <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;700&display=swap" rel="stylesheet">
     
@@ -194,7 +194,7 @@
             <div class="drop-zone" id="drop-zone" onclick="document.getElementById('file-input').click()">
                 <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#8e9775" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
                 <p id="drop-zone-text">點擊或將考卷圖片拖曳至此上傳</p>
-                <input type="file" id="file-input" style="display: none;" accept="image/*" onchange="handleFileSelect(event)">
+                <input type="file" id="file-input" style="display: none;" accept="image/*, application/pdf" onchange="handleFileSelect(event)">
             </div>
 
             <button class="btn" id="parse-btn" onclick="startAIAnalysis()" disabled>啟動 AI 解析與結構轉化</button>
@@ -2468,28 +2468,36 @@
         }
 
         // ==========================================
-        // 🚀 核心一：呼叫 AI 解析
+        // 🚀 核心一：呼叫 AI 解析 (支援多層級課綱字典)
         // ==========================================
         async function startAIAnalysis() {
-            if (!uploadedImageBase64) return;
-        
-            // 🟢 密碼攔截機制：如果還沒輸入過密碼，就彈出視窗詢問
+            if (!uploadedFileBase64) return;
+
+            // 🟢 密碼攔截機制
             if (!SECURE_TOKEN) {
                 SECURE_TOKEN = prompt("請輸入密碼：");
                 if (!SECURE_TOKEN) {
                     alert("已取消操作。");
-                    return; // 密碼空白或按取消，就終止程式
+                    return;
                 }
             }
 
-            // 準備動態課綱給 AI 參考
+            // 準備動態課綱給 AI 參考 (完美讀取您的巢狀結構)
             const pub = document.getElementById('common-publisher').value;
             const grade = document.getElementById('common-grade').value;
             const semester = document.getElementById('common-semester').value;
             let syllabusContext = "無指定範圍，請依 108 課綱自由分類";
             
             if (syllabusDictionary[pub] && syllabusDictionary[pub][grade + semester]) {
-                syllabusContext = "請限定在以下單元中挑選：\n" + syllabusDictionary[pub][grade + semester].join("、");
+                let selectedSyllabus = syllabusDictionary[pub][grade + semester];
+                let syllabusArray = [];
+                
+                // 將您整理的大章節與小節組合起來，讓 AI 看得懂
+                for (let chapter in selectedSyllabus) {
+                    let subChapters = selectedSyllabus[chapter].join("、");
+                    syllabusArray.push(`【${chapter}】包含小節：${subChapters}`);
+                }
+                syllabusContext = "請限定在以下單元中挑選最適合的一項填入：\n" + syllabusArray.join("\n");
             }
 
             document.getElementById('loading-overlay').style.display = 'flex';
@@ -2498,11 +2506,12 @@
             try {
                 const response = await fetch(GAS_API_URL, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'text/plain;charset=utf-8' }, // 避免 CORS 預檢問題
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
                     body: JSON.stringify({
                         token: SECURE_TOKEN,
                         action: 'parseImage',
-                        image: uploadedImageBase64,
+                        image: uploadedFileBase64,
+                        mimeType: uploadedFileMimeType,
                         syllabus: syllabusContext
                     })
                 });
