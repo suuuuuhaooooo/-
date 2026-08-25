@@ -170,7 +170,7 @@
                         <option value="康軒">康軒版</option>
                         <option value="南一">南一版</option>
                         <option value="翰林">翰林版</option>
-                        <option value="通用">通用版(會考/歷屆)</option>
+                        <option value="通用">通用版(部編/會考/歷屆)</option>
                     </select>
                 </div>
                 <div class="col">
@@ -179,6 +179,7 @@
                         <option value="一上">第一次段考</option>
                         <option value="二上">第二次段考</option>
                         <option value="三上">第三次段考</option>
+                        <option value="期中">期中考</option>
                         <option value="期末">期末考</option>
                         <option value="複習">複習考/模擬考</option>
                     </select>
@@ -224,7 +225,7 @@
             </div>
 
             <div class="actions">
-                <button class="btn" onclick="batchUploadToDatabase()">✨ 確認無誤，批次寫入資料庫</button>
+                <button class="btn" onclick="batchUploadToDatabase()">確認無誤，批次寫入資料庫</button>
             </div>
         </div>
 
@@ -235,7 +236,7 @@
         // 🚨 系統設定區 🚨
         // ==========================================
         // 請將下方替換成您剛剛部署好的 GAS Web App 網址！
-        const GAS_API_URL = "YOUR_GAS_WEB_APP_URL_HERE"; 
+        const GAS_API_URL = "https://script.google.com/macros/s/AKfycbwg1reUCaWdmvnjQyxxfOUSNL-6niiiaQlLztgOvSavphpUF2MzAXMVC1fa0TtLsLoC/exec"; 
         const SECURE_TOKEN = "suhao2026";
 
         let uploadedImageBase64 = null;
