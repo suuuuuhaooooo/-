@@ -2467,6 +2467,27 @@
             }
         }
 
+        let uploadedFileMimeType = "image/jpeg"; 
+
+        function handleFileSelect(event) {
+            const file = event.target.files[0];
+            if (file) {
+                // 自動判斷檔案格式
+                uploadedFileMimeType = file.type || (file.name.endsWith('.pdf') ? 'application/pdf' : 'image/jpeg');
+                
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    // 維持您原本的 uploadedImageBase64 變數名稱！
+                    uploadedImageBase64 = e.target.result.split(',')[1];
+                    dropZone.style.borderColor = '#5b6348';
+                    const icon = uploadedFileMimeType === 'application/pdf' ? '📄' : '🖼️';
+                    document.getElementById('drop-zone-text').innerHTML = `<span style="color:var(--dark); font-weight:bold;">✅ 已載入${icon}：${file.name}</span>`;
+                    document.getElementById('parse-btn').disabled = false;
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+        
         // ==========================================
         // 🚀 核心一：呼叫 AI 解析 (支援多層級課綱字典)
         // ==========================================
