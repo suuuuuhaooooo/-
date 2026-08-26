@@ -2484,7 +2484,7 @@
                 await page.render({ canvasContext: context, viewport: viewport }).promise;
         
                 // 轉為優質 JPEG Base64
-                const jpegDataUrl = canvas.toDataURL('image/jpeg', 0.9);
+                const jpegDataUrl = canvas.toDataURL('image/jpeg', 0.8);
                 uploadedImageBase64 = jpegDataUrl.split(',')[1];
                 uploadedFileMimeType = 'image/jpeg'; // 🌟 強制以圖片形式送給 AI
         
