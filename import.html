@@ -2463,36 +2463,60 @@
         async function handleFileSelect(event) {
             const file = event.target.files[0];
             if (!file) return;
-        
+
             const isPdf = file.type === 'application/pdf' || /\.pdf$/i.test(file.name);
-        
+
             if (isPdf) {
-                document.getElementById('drop-zone-text').innerHTML = `<span style="color:var(--dark);">⏳ 正在將 PDF 轉化為高畫質影像...</span>`;
-        
+                document.getElementById('drop-zone-text').innerHTML = `<span style="color:var(--dark);">⏳ 正在將 PDF 全文合併為高畫質影像，請稍候...</span>`;
+                document.getElementById('parse-btn').disabled = true;
+                
                 const arrayBuffer = await file.arrayBuffer();
                 const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
-        
-                // 讀取第一頁（可擴充為多頁合併）
-                const page = await pdf.getPage(1);
-                const viewport = page.getViewport({ scale: 2.0 }); // 2.0 倍縮放確保文字清晰
-        
-                const canvas = document.createElement('canvas');
-                const context = canvas.getContext('2d');
-                canvas.height = viewport.height;
-                canvas.width = viewport.width;
-        
-                await page.render({ canvasContext: context, viewport: viewport }).promise;
-        
-                // 轉為優質 JPEG Base64
-                const jpegDataUrl = canvas.toDataURL('image/jpeg', 0.8);
+                
+                // 準備陣列裝載每一頁
+                const canvases = [];
+                let totalHeight = 0;
+                let maxWidth = 0;
+
+                // 迴圈讀取 PDF 的「每一頁」
+                for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
+                    const page = await pdf.getPage(pageNum);
+                    const viewport = page.getViewport({ scale: 2.0 }); // 2倍高畫質
+                    
+                    const canvas = document.createElement('canvas');
+                    const context = canvas.getContext('2d');
+                    canvas.height = viewport.height;
+                    canvas.width = viewport.width;
+                    
+                    await page.render({ canvasContext: context, viewport: viewport }).promise;
+                    
+                    canvases.push(canvas);
+                    totalHeight += viewport.height;
+                    if (viewport.width > maxWidth) maxWidth = viewport.width;
+                }
+
+                // 建立一個終極大畫布，把所有頁面垂直拼起來
+                const combinedCanvas = document.createElement('canvas');
+                combinedCanvas.width = maxWidth;
+                combinedCanvas.height = totalHeight;
+                const combinedCtx = combinedCanvas.getContext('2d');
+                
+                let currentY = 0;
+                for (let canvas of canvases) {
+                    combinedCtx.drawImage(canvas, 0, currentY);
+                    currentY += canvas.height;
+                }
+
+                // 轉為優質 JPEG Base64 (0.8畫質兼顧清晰與體積)
+                const jpegDataUrl = combinedCanvas.toDataURL('image/jpeg', 0.8);
                 uploadedImageBase64 = jpegDataUrl.split(',')[1];
-                uploadedFileMimeType = 'image/jpeg'; // 🌟 強制以圖片形式送給 AI
-        
+                uploadedFileMimeType = 'image/jpeg';
+
                 dropZone.style.borderColor = '#5b6348';
-                document.getElementById('drop-zone-text').innerHTML = `<span style="color:var(--dark); font-weight:bold;">✅ 已載入 PDF 轉化影像（共 ${pdf.numPages} 頁）：${file.name}</span>`;
+                document.getElementById('drop-zone-text').innerHTML = `<span style="color:var(--dark); font-weight:bold;">✅ 已載入完整考卷（共 ${pdf.numPages} 頁）：${file.name}</span>`;
                 document.getElementById('parse-btn').disabled = false;
             } else {
-                // 一般圖片直接讀取
+                // 一般圖片的處理
                 uploadedFileMimeType = file.type || 'image/jpeg';
                 const reader = new FileReader();
                 reader.onload = function(e) {
