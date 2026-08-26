@@ -3125,18 +3125,16 @@
         function copyQuestionText(index) {
             let q = parsedQuestions[index];
             
-            // 這裡可以自由排版您複製出來想要長什麼樣子
-            let textToCopy = `【題目】\n`;
-            if (q.共用題幹) textToCopy += `${q.共用題幹}\n`;
-            textToCopy += `${q.題目}\n\n`;
+            // 組合整題內容
+            let text = "【題目】" + (q.共用題幹 ? q.共用題幹 + " " : "") + q.題目 + "\n" +
+                       "【選項】(1) " + q.選項1 + " (2) " + q.選項2 + " (3) " + q.選項3 + " (4) " + q.選項4 + "\n" +
+                       "【解答】" + q.簡答 + "\n" +
+                       "【詳解】" + q.詳解;
+
+            let excelSafeText = '"' + text.replace(/"/g, '""') + '"';
             
-            textToCopy += `【選項】\n(1) ${q.選項1}\n(2) ${q.選項2}\n(3) ${q.選項3}\n(4) ${q.選項4}\n\n`;
-            textToCopy += `【解答】\n${q.簡答}\n\n`;
-            textToCopy += `【詳解】\n${q.詳解}`;
-            
-            // 呼叫瀏覽器內建剪貼簿 API
-            navigator.clipboard.writeText(textToCopy).then(() => {
-                alert("此題內容已成功複製到剪貼簿！");
+            navigator.clipboard.writeText(excelSafeText).then(() => {
+                alert("已複製整題（可直接貼入 Excel 單一儲存格）！");
             }).catch(err => {
                 alert("複製失敗：" + err);
             });
