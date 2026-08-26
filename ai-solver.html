@@ -412,19 +412,52 @@
             updateStatus("發生異常", "#c0392b");
         }
 
-        // 🟢 加強版的 AI 回覆格式化函式 (徹底解決 Markdown 與 LaTeX 衝突)
+        // 🟢 終極版的 AI 回覆格式化函式 (完美相容 Markdown, MathJax 與 TikZJax)
         function formatAIResponse(text) {
-            let processed = text.replace(/\\begin\{tikzpicture\}([\s\S]*?)\\end\{tikzpicture\}/g, m => `<script type="text/tikz">\n${m}\n<\/script>`);
+            // 第一步：保護 TikZ 繪圖區塊 (包含被 Markdown 程式碼區塊包覆的狀態)
+            // 將 ```tikz 或 ```latex 包著的，或是單純的 \begin{tikzpicture} 轉成 TikZJax 專屬腳本
+            let processed = text;
+            
+            // 處理被 ```tikz 包覆的情況
+            processed = processed.replace(/```(?:tikz|latex)[\s\S]*?\\begin\{tikzpicture\}([\s\S]*?)\\end\{tikzpicture\}[\s\S]*?```/g, 
+                (match, tikzBody) => {
+                    return `%%%TIKZ_BLOCK_START%%%\n\\begin{tikzpicture}${tikzBody}\\end{tikzpicture}\n%%%TIKZ_BLOCK_END%%%`;
+                }
+            );
+            
+            // 處理沒有被 ``` 包覆，直接寫出來的情況
+            processed = processed.replace(/\\begin\{tikzpicture\}([\s\S]*?)\\end\{tikzpicture\}/g, 
+                (match, tikzBody) => {
+                    return `%%%TIKZ_BLOCK_START%%%\n\\begin{tikzpicture}${tikzBody}\\end{tikzpicture}\n%%%TIKZ_BLOCK_END%%%`;
+                }
+            );
+
+            // 第二步：保護數學方程式 (避免被 Markdown 誤傷下劃線等符號)
             const mathBlocks = [];
             processed = processed.replace(/(\$\$[\s\S]*?\$\$|\$[\s\S]*?\$)/g, (match) => {
                 mathBlocks.push(match);
                 return `%%%MATH_BLOCK_${mathBlocks.length - 1}%%%`;
             });
+            
+            // 第三步：交給 marked 解析 Markdown 結構
             marked.setOptions({ breaks: true, gfm: true });
             let html = marked.parse(processed);
+            
+            // 第四步：把數學方程式放回來
             html = html.replace(/%%%MATH_BLOCK_(\d+)%%%/g, (match, index) => {
                 return mathBlocks[index];
             });
+
+            // 第五步：把 TikZ 繪圖區塊轉換為 TikZJax 能讀懂的 <script> 標籤
+            // 為什麼要放最後？因為 markdown 解析器可能會把 <script> 標籤弄壞
+            html = html.replace(/%%%TIKZ_BLOCK_START%%%([\s\S]*?)%%%TIKZ_BLOCK_END%%%/g, 
+                (match, tikzCode) => {
+                    // 加上預設的網格顏色與基本設定，確保圖形好看
+                    const cleanCode = tikzCode.replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>');
+                    return `<div style="text-align: center; margin: 15px 0; overflow-x: auto;"><script type="text/tikz">\n${cleanCode}\n<\/script></div>`;
+                }
+            );
+
             return html;
         }
 
