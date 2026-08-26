@@ -25,6 +25,10 @@
             background-color: var(--bg);
             font-family: "Noto Serif TC", serif;
             color: #333;
+            -webkit-user-select: none; /* Safari */
+            -moz-user-select: none;    /* Firefox */
+            -ms-user-select: none;     /* IE10+/Edge */
+            user-select: none;         /* 標準語法 */
         }
 
         .navbar {
@@ -215,11 +219,12 @@
                         <tr>
                             <th style="width: 5%;">刪除</th>
                             <th style="width: 8%;">題型</th>
-                            <th style="width: 25%;">題幹與題目</th>
-                            <th style="width: 20%;">選項 (1~4)</th>
-                            <th style="width: 20%;">解答與詳解</th>
-                            <th style="width: 10%;">AI 章節</th>
-                            <th style="width: 12%;">難易度 / 附圖 ID</th>
+                            <th style="width: 22%;">題幹與題目</th>
+                            <th style="width: 18%;">選項 (1~4)</th>
+                            <th style="width: 18%;">解答與詳解</th>
+                            <th style="width: 10%;">AI 主章節</th>
+                            <th style="width: 10%;">AI 次章節</th>
+                            <th style="width: 9%;">難易度 / 附圖 ID</th>
                         </tr>
                     </thead>
                     <tbody id="table-body">
@@ -2513,7 +2518,7 @@
                 uploadedFileMimeType = 'image/jpeg';
 
                 dropZone.style.borderColor = '#5b6348';
-                document.getElementById('drop-zone-text').innerHTML = `<span style="color:var(--dark); font-weight:bold;">✅ 已載入完整考卷（共 ${pdf.numPages} 頁）：${file.name}</span>`;
+                document.getElementById('drop-zone-text').innerHTML = `<span style="color:var(--dark); font-weight:bold;">已載入完整考卷（共 ${pdf.numPages} 頁）：${file.name}</span>`;
                 document.getElementById('parse-btn').disabled = false;
             } else {
                 // 一般圖片的處理
@@ -2522,7 +2527,7 @@
                 reader.onload = function(e) {
                     uploadedImageBase64 = e.target.result.split(',')[1];
                     dropZone.style.borderColor = '#5b6348';
-                    document.getElementById('drop-zone-text').innerHTML = `<span style="color:var(--dark); font-weight:bold;">✅ 已載入圖片：${file.name}</span>`;
+                    document.getElementById('drop-zone-text').innerHTML = `<span style="color:var(--dark); font-weight:bold;">已載入圖片：${file.name}</span>`;
                     document.getElementById('parse-btn').disabled = false;
                 };
                 reader.readAsDataURL(file);
@@ -2607,8 +2612,9 @@
                 let tr = document.createElement('tr');
                 tr.innerHTML = `
                     <td style="text-align:center;">
-                        <button class="btn-danger" onclick="deleteRow(${index})">✕</button><br>
-                        <small style="color:#aaa;">${index + 1}</small>
+                        <button class="btn-danger" onclick="deleteRow(${index})" title="刪除此題" style="margin-bottom: 5px;">✕</button><br>
+                        <button onclick="copyQuestionText(${index})" style="background: #3498db; color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 12px; margin-bottom: 5px;" title="複製完整題目與詳解">複製</button><br>
+                        <small style="color:#aaa; font-weight: bold;">${index + 1}</small>
                     </td>
                     <td>
                         <input type="text" value="${q.題型 || ''}" onchange="updateData(${index}, '題型', this.value)" placeholder="單選" style="margin-bottom:5px;">
@@ -2629,7 +2635,10 @@
                         <textarea onchange="updateData(${index}, '詳解', this.value)" placeholder="詳解" style="min-height:80px;">${q.詳解 || ''}</textarea>
                     </td>
                     <td>
-                        <input type="text" value="${q.章節 || ''}" onchange="updateData(${index}, '章節', this.value)" placeholder="歸屬章節">
+                        <input type="text" value="${q.主章節 || ''}" onchange="updateData(${index}, '主章節', this.value)" placeholder="例如: ① 10以內的數" style="margin-bottom:5px;">
+                    </td>
+                    <td>
+                        <input type="text" value="${q.次章節 || ''}" onchange="updateData(${index}, '次章節', this.value)" placeholder="例如: 1.1 認識 1～5">
                     </td>
                     <td>
                         <select onchange="updateData(${index}, '難易度', this.value)" style="margin-bottom:5px;">
@@ -2653,6 +2662,29 @@
                 parsedQuestions.splice(index, 1);
                 renderTable();
             }
+        }
+
+        // ==========================================
+        // 📋 輔助功能：一鍵複製該題完整內容
+        // ==========================================
+        function copyQuestionText(index) {
+            let q = parsedQuestions[index];
+            
+            // 這裡可以自由排版您複製出來想要長什麼樣子
+            let textToCopy = `【題目】\n`;
+            if (q.共用題幹) textToCopy += `${q.共用題幹}\n`;
+            textToCopy += `${q.題目}\n\n`;
+            
+            textToCopy += `【選項】\n(1) ${q.選項1}\n(2) ${q.選項2}\n(3) ${q.選項3}\n(4) ${q.選項4}\n\n`;
+            textToCopy += `【解答】\n${q.簡答}\n\n`;
+            textToCopy += `【詳解】\n${q.詳解}`;
+            
+            // 呼叫瀏覽器內建剪貼簿 API
+            navigator.clipboard.writeText(textToCopy).then(() => {
+                alert("此題內容已成功複製到剪貼簿！");
+            }).catch(err => {
+                alert("複製失敗：" + err);
+            });
         }
 
         // ==========================================
@@ -2703,7 +2735,7 @@
                 const result = await response.json();
                 
                 if (result.success) {
-                    alert(`✅ 恭喜！成功將 ${result.count} 題寫入資料庫！`);
+                    alert(`恭喜！成功將 ${result.count} 題寫入資料庫！`);
                     // 寫入成功後清空暫存與表格
                     parsedQuestions = [];
                     renderTable();
@@ -2728,6 +2760,31 @@
         document.addEventListener('contextmenu', function(e) {
             e.preventDefault(); 
             alert("嚴禁翻印，尊重版權");
+        });
+
+        // ==========================================
+        // 🛡️ 系統防護：禁止滑鼠選取、防止 Ctrl+C 複製
+        // ==========================================
+        
+        // 1. 禁止滑鼠拖曳選取文字
+        document.addEventListener('selectstart', function(e) {
+            // 如果是在輸入框或文字輸入區裡面，允許選取
+            if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
+                return true;
+            }
+            e.preventDefault();
+        });
+
+        // 2. 禁止使用快捷鍵複製 (Ctrl+C / Ctrl+X)
+        document.addEventListener('keydown', function(e) {
+            if (e.ctrlKey && (e.key === 'c' || e.key === 'C' || e.key === 'x' || e.key === 'X')) {
+                // 如果焦點剛好在輸入框內，允許複製
+                if (document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'TEXTAREA') {
+                    return true;
+                }
+                e.preventDefault();
+                alert("嚴禁翻印，尊重版權！");
+            }
         });
     </script>
 </body>
