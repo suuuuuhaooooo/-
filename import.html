@@ -2453,9 +2453,10 @@
             }
         });
 
-        // 🌟 確保只有這一個 handleFileSelect，且精準紀錄 mimeType
+        // 🌟 1. 統一宣告全域變數，不再打架
         let uploadedFileMimeType = "image/jpeg"; 
 
+        // 🌟 2. 只保留這個最強的 handleFileSelect 函式
         function handleFileSelect(event) {
             const file = event.target.files[0];
             if (file) {
@@ -2465,6 +2466,7 @@
                 
                 const reader = new FileReader();
                 reader.onload = function(e) {
+                    // 統一使用 uploadedImageBase64 來存 Base64 字串
                     uploadedImageBase64 = e.target.result.split(',')[1];
                     dropZone.style.borderColor = '#5b6348';
                     const icon = isPdf ? '📄 (PDF 考卷)' : '🖼️ (考卷圖片)';
@@ -2479,7 +2481,7 @@
         // 🚀 核心一：呼叫 AI 解析 (支援多層級課綱字典)
         // ==========================================
         async function startAIAnalysis() {
-            // 🌟 這裡也要改成 uploadedImageBase64 才不會罷工！
+            // 🌟 3. 對齊變數名稱！檢查 uploadedImageBase64
             if (!uploadedImageBase64) return;
 
             // 🟢 密碼攔截機制
@@ -2519,8 +2521,8 @@
                     body: JSON.stringify({
                         token: SECURE_TOKEN,
                         action: 'parseImage',
-                        image: uploadedImageBase64,       // 🌟 對齊變數名稱
-                        mimeType: uploadedFileMimeType,   // 🌟 傳送 PDF 或圖片的格式給後端
+                        image: uploadedImageBase64,       // 🌟 4. 傳送正確的 Base64 變數
+                        mimeType: uploadedFileMimeType,   // 傳送檔案格式
                         syllabus: syllabusContext
                     })
                 });
