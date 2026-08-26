@@ -2453,21 +2453,21 @@
             }
         });
 
-        // 🌟 確保只有這一個 handleFileSelect，且紀錄 mimeType
+        // 🌟 確保只有這一個 handleFileSelect，且精準紀錄 mimeType
         let uploadedFileMimeType = "image/jpeg"; 
 
         function handleFileSelect(event) {
             const file = event.target.files[0];
             if (file) {
-                // 自動判斷檔案格式 (支援圖片與 PDF)
-                uploadedFileMimeType = file.type || (file.name.endsWith('.pdf') ? 'application/pdf' : 'image/jpeg');
+                // 精確判斷 MIME Type（支援大寫 .PDF 與各類圖片格式）
+                const isPdf = file.type === 'application/pdf' || /\.pdf$/i.test(file.name);
+                uploadedFileMimeType = isPdf ? 'application/pdf' : (file.type || 'image/jpeg');
                 
                 const reader = new FileReader();
                 reader.onload = function(e) {
-                    // 統一使用 uploadedImageBase64 這個變數
                     uploadedImageBase64 = e.target.result.split(',')[1];
                     dropZone.style.borderColor = '#5b6348';
-                    const icon = uploadedFileMimeType === 'application/pdf' ? '📄' : '🖼️';
+                    const icon = isPdf ? '📄 (PDF 考卷)' : '🖼️ (考卷圖片)';
                     document.getElementById('drop-zone-text').innerHTML = `<span style="color:var(--dark); font-weight:bold;">✅ 已載入${icon}：${file.name}</span>`;
                     document.getElementById('parse-btn').disabled = false;
                 };
