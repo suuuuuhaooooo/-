@@ -3018,7 +3018,7 @@
                 // 將您整理的大章節與小節組合起來，讓 AI 看得懂
                 for (let chapter in selectedSyllabus) {
                     let subChapters = selectedSyllabus[chapter].join("、");
-                    syllabusArray.push(`【${chapter}】包含小節：${subChapters}`);
+                    syllabusArray.push(`${chapter}包含小節：${subChapters}`);
                 }
                 syllabusContext = "請限定在以下單元中挑選最適合的一項填入：\n" + syllabusArray.join("\n");
             }
