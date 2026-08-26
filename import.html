@@ -6,6 +6,10 @@
     <title>蘇昊數理｜AI 題庫匯入工作站</title>
     <link rel="icon" href="https://suuuuuhaooooo.github.io/-/favicon.png" type="image/png">
     <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;700&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <script>
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+    </script>
     
     <style>
         :root { 
@@ -176,11 +180,11 @@
                 <div class="col">
                     <label>段考範圍</label>
                     <select id="common-exam">
-                        <option value="一上">第一次段考</option>
-                        <option value="二上">第二次段考</option>
-                        <option value="三上">第三次段考</option>
-                        <option value="期中">期中考</option>
-                        <option value="期末">期末考</option>
+                        <option value="第一次段考">第一次段考</option>
+                        <option value="第二次段考">第二次段考</option>
+                        <option value="第三次段考">第三次段考</option>
+                        <option value="期中考">期中考</option>
+                        <option value="期末考">期末考</option>
                         <option value="複習">複習考/模擬考</option>
                     </select>
                 </div>
@@ -2456,21 +2460,45 @@
         // 🌟 1. 統一宣告全域變數，不再打架
         let uploadedFileMimeType = "image/jpeg"; 
 
-        // 🌟 2. 只保留這個最強的 handleFileSelect 函式
-        function handleFileSelect(event) {
+        async function handleFileSelect(event) {
             const file = event.target.files[0];
-            if (file) {
-                // 精確判斷 MIME Type（支援大寫 .PDF 與各類圖片格式）
-                const isPdf = file.type === 'application/pdf' || /\.pdf$/i.test(file.name);
-                uploadedFileMimeType = isPdf ? 'application/pdf' : (file.type || 'image/jpeg');
-                
+            if (!file) return;
+        
+            const isPdf = file.type === 'application/pdf' || /\.pdf$/i.test(file.name);
+        
+            if (isPdf) {
+                document.getElementById('drop-zone-text').innerHTML = `<span style="color:var(--dark);">⏳ 正在將 PDF 轉化為高畫質影像...</span>`;
+        
+                const arrayBuffer = await file.arrayBuffer();
+                const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+        
+                // 讀取第一頁（可擴充為多頁合併）
+                const page = await pdf.getPage(1);
+                const viewport = page.getViewport({ scale: 2.0 }); // 2.0 倍縮放確保文字清晰
+        
+                const canvas = document.createElement('canvas');
+                const context = canvas.getContext('2d');
+                canvas.height = viewport.height;
+                canvas.width = viewport.width;
+        
+                await page.render({ canvasContext: context, viewport: viewport }).promise;
+        
+                // 轉為優質 JPEG Base64
+                const jpegDataUrl = canvas.toDataURL('image/jpeg', 0.9);
+                uploadedImageBase64 = jpegDataUrl.split(',')[1];
+                uploadedFileMimeType = 'image/jpeg'; // 🌟 強制以圖片形式送給 AI
+        
+                dropZone.style.borderColor = '#5b6348';
+                document.getElementById('drop-zone-text').innerHTML = `<span style="color:var(--dark); font-weight:bold;">✅ 已載入 PDF 轉化影像（共 ${pdf.numPages} 頁）：${file.name}</span>`;
+                document.getElementById('parse-btn').disabled = false;
+            } else {
+                // 一般圖片直接讀取
+                uploadedFileMimeType = file.type || 'image/jpeg';
                 const reader = new FileReader();
                 reader.onload = function(e) {
-                    // 統一使用 uploadedImageBase64 來存 Base64 字串
                     uploadedImageBase64 = e.target.result.split(',')[1];
                     dropZone.style.borderColor = '#5b6348';
-                    const icon = isPdf ? '📄 (PDF 考卷)' : '🖼️ (考卷圖片)';
-                    document.getElementById('drop-zone-text').innerHTML = `<span style="color:var(--dark); font-weight:bold;">✅ 已載入${icon}：${file.name}</span>`;
+                    document.getElementById('drop-zone-text').innerHTML = `<span style="color:var(--dark); font-weight:bold;">✅ 已載入圖片：${file.name}</span>`;
                     document.getElementById('parse-btn').disabled = false;
                 };
                 reader.readAsDataURL(file);
