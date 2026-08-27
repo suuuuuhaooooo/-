@@ -140,10 +140,10 @@
             <p>這批設定將會自動套用到本次解析出的所有題目上，作為資料庫的共用標籤。</p>
             
             <div class="row">
-                <div class="col">
-                    <label>匯入目標科目</label>
-                    <input type="text" id="common-subject" value="數學" placeholder="例如：數學、自然">
-                </div>
+                <label>匯入目標科目</label>
+                <select id="common-subject">
+                    <option value="" disabled selected>載入中...</option>
+                </select>
                 <div class="col">
                     <label>學年度</label>
                     <input type="text" id="common-year" value="113" placeholder="例如：113">
@@ -247,11 +247,39 @@
         const GAS_API_URL = "https://script.google.com/macros/s/AKfycbwg1reUCaWdmvnjQyxxfOUSNL-6niiiaQlLztgOvSavphpUF2MzAXMVC1fa0TtLsLoC/exec"; 
         let SECURE_TOKEN = "";
 
+        // ==========================================
+        // 頁面載入時自動抓取可用科目
+        // ==========================================
+        document.addEventListener('DOMContentLoaded', async function() {
+            try {
+                // 向您的 Render Python 中繼伺服器要科目清單 (因為您前一個系統已經寫好這個 API 了！)
+                const res = await fetch('https://question-database-jvfp.onrender.com/api/subjects');
+                const subjects = await res.json();
+                
+                const select = document.getElementById('common-subject');
+                select.innerHTML = ''; // 清空載入中
+                
+                if (subjects.length > 0) {
+                    subjects.forEach(sub => {
+                        let opt = document.createElement('option');
+                        opt.value = sub;
+                        opt.innerText = sub;
+                        select.appendChild(opt);
+                    });
+                } else {
+                    select.innerHTML = '<option value="" disabled>資料庫目前無科目</option>';
+                }
+            } catch (e) {
+                console.error("載入科目失敗：", e);
+                document.getElementById('common-subject').outerHTML = '<input type="text" id="common-subject" value="數學" placeholder="連線失敗，請手動輸入">';
+            }
+        });
+
         let uploadedImageBase64 = null;
         let parsedQuestions = []; // 儲存 AI 解析出來的完整題目陣列
 
         // ==========================================
-        // 動態課綱字典 (濃縮版示範，之後可隨時擴充)
+        // 動態課綱字典
         // ==========================================
         const syllabusDictionary = {
 
