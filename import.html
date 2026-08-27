@@ -323,40 +323,39 @@
                 const doc = data[google.picker.Response.DOCUMENTS][0];
                 const fileId = doc[google.picker.Document.ID];
                 const fileName = doc[google.picker.Document.NAME];
+                const mimeType = doc[google.picker.Document.MIME_TYPE];
 
-                setLoadingState("正在走內部通道讀取雲端檔案...", `處理檔案：${fileName}`);
+                // 先把畫面切換成讀取中
+                document.getElementById('drop-zone').style.borderColor = '#4285F4';
+                document.getElementById('drop-zone').style.background = '#eaf1fe';
+                document.getElementById('drop-zone-text').innerHTML = `<span style="color:#1a73e8; font-weight:bold;">正在從雲端硬碟讀取檔案，準備進行轉檔...</span>`;
+                document.getElementById('parse-btn').disabled = true;
 
                 try {
-                    // 呼叫 GAS 後端去抓這個檔案 (需搭配上次給您的 GAS fetchDriveFile 邏輯)
-                    const response = await fetch(GAS_API_URL, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                        body: JSON.stringify({
-                            token: SECURE_TOKEN,
-                            action: 'fetchDriveFile',
-                            fileId: fileId
-                        })
+                    // 直接用前端授權向 Google Drive 拿取原始檔案
+                    const response = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`, {
+                        headers: {
+                            'Authorization': 'Bearer ' + oauthToken
+                        }
                     });
 
-                    const result = await response.json();
-
-                    if (result.success) {
-                        uploadedImageBase64 = result.base64;
-                        uploadedFileMimeType = result.mimeType;
-
-                        // 更新 UI
-                        document.getElementById('drop-zone').style.borderColor = '#4285F4';
-                        document.getElementById('drop-zone').style.background = '#eaf1fe';
-                        document.getElementById('drop-zone-text').innerHTML = `<span style="color:#1a73e8; font-weight:bold;">✅ 已從雲端載入：${fileName}</span>`;
-                        document.getElementById('parse-btn').disabled = false;
-                        
-                    } else {
-                        alert("讀取失敗：" + result.error + "\n(請確認檔案已開啟共用權限)");
+                    if (!response.ok) {
+                        throw new Error("無法下載檔案，請確認權限或檔案大小");
                     }
+
+                    // 1. 將雲端抓下來的資料轉換成 Blob (二進位檔案物件)
+                    const blob = await response.blob();
+                    
+                    // 2. 把它包裝成一個「虛擬的 File 物件」，假裝是使用者從電腦上傳的
+                    const fakeFile = new File([blob], fileName, { type: mimeType || blob.type });
+
+                    // 3. 直接把它丟進您寫好的「本地上傳處理函式」
+                    // 它就會自動判斷是不是 PDF ➔ 自動轉成高畫質長圖片 ➔ 解鎖「啟動解析」按鈕！
+                    await handleFileSelect({ target: { files: [fakeFile] } });
+
                 } catch (err) {
-                    alert("連線發生錯誤：" + err.message);
-                } finally {
-                    hideLoading();
+                    alert("載入發生錯誤：" + err.message);
+                    document.getElementById('drop-zone-text').innerHTML = '載入失敗，請點選重新上傳';
                 }
             }
         }
