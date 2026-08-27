@@ -587,12 +587,27 @@
 
                         if (liff.isInClient()) {
                             await liff.sendMessages([{ type: 'text', text: lineMessage }]);
+                            try {
+                                await fetch(`${RENDER_API_BASE}/api/notify`, {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({
+                                        uid: urlUid,
+                                        exp: urlExp,
+                                        sign: urlSign,
+                                        message: "您的組卷已完成，請點擊上方連結查閱！" 
+                                    })
+                                });
+                            } catch (e) {
+                                console.error("通知發送失敗", e);
+                            }
+
                             alert("組卷成功！已自動將考卷與解答傳送到聊天室。");
                             liff.closeWindow();
                         } else {
                             alert("組卷成功！");
                             console.log(lineMessage);
-                            hideLoading(); // 網頁版解鎖畫面
+                            hideLoading(); 
                         }
                     } else {
                         showError("產出失敗：" + (responseData.error || "未知錯誤"));
