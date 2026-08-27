@@ -293,12 +293,20 @@
         // 建立並顯示雲端硬碟視窗
         function createPicker() {
             if (pickerApiLoaded && oauthToken) {
-                // 設定只能選 PDF 或圖片
-                const view = new google.picker.View(google.picker.ViewId.DOCS);
-                view.setMimeTypes("application/pdf,image/png,image/jpeg");
+                // 1. 我的雲端硬碟
+                const myDriveView = new google.picker.DocsView(google.picker.ViewId.DOCS)
+                    .setMimeTypes("application/pdf,image/png,image/jpeg")
+                    .setIncludeFolders(true);
+
+                // 2. 共用雲端硬碟
+                const sharedDriveView = new google.picker.DocsView(google.picker.ViewId.DOCS)
+                    .setMimeTypes("application/pdf,image/png,image/jpeg")
+                    .setEnableDrives(true)
+                    .setIncludeFolders(true);
 
                 const picker = new google.picker.PickerBuilder()
-                    .addView(view)
+                    .addView(myDriveView)
+                    .addView(sharedDriveView)
                     .setOAuthToken(oauthToken)
                     .setDeveloperKey(DEVELOPER_KEY)
                     .setAppId(APP_ID)
