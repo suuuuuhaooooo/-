@@ -7,6 +7,8 @@
     <link rel="icon" href="https://suuuuuhaooooo.github.io/-/favicon.png" type="image/png">
     <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;700&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <script async defer src="https://apis.google.com/js/api.js"></script>
+    <script async defer src="https://accounts.google.com/gsi/client"></script>
     <script>
         pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
     </script>
@@ -199,9 +201,17 @@
             </div>
 
             <!-- 拖曳上傳區 -->
+            <!-- 從 Google 雲端硬碟選取 -->
+            <button class="btn" style="background: #4285F4; margin-bottom: 15px; display: flex; align-items: center; justify-content: center; gap: 10px;" onclick="loadPicker()">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"></path></svg>
+                登入並從 Google 雲端硬碟挑選考卷
+            </button>
+            <div style="text-align: center; color: #888; font-size: 12px; margin-bottom: 15px;">───── 或 ─────</div>
+
+            <!-- 拖曳上傳區 (原本的本地上傳維持不動) -->
             <div class="drop-zone" id="drop-zone" onclick="document.getElementById('file-input').click()">
                 <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#8e9775" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
-                <p id="drop-zone-text">點擊或將考卷圖片拖曳至此上傳</p>
+                <p id="drop-zone-text">點擊或將考卷圖片/PDF 拖曳至此上傳 (本機)</p>
                 <input type="file" id="file-input" style="display: none;" accept="image/*, application/pdf" onchange="handleFileSelect(event)">
             </div>
 
@@ -241,6 +251,107 @@
     </div>
 
     <script>
+        // ==========================================
+        // Google Picker API (雲端硬碟選檔器)
+        // ==========================================
+        const DEVELOPER_KEY = 'AIzaSyBYqmgBwaquvZi5xpF54vf1SHHQ7JKKyHA';
+        const CLIENT_ID = '1064597074259-j9k350o4083ah457jat4tqs5mubfpp29.apps.googleusercontent.com';
+        const APP_ID = 'importupload';
+        const SCOPES = 'https://www.googleapis.com/auth/drive.readonly';
+        
+        let pickerApiLoaded = false;
+        let oauthToken;
+
+        // 載入 Picker 核心
+        function onPickerApiLoad() { pickerApiLoaded = true; }
+        // 網頁載入時初始化 Google API
+        window.onload = function() {
+            gapi.load('picker', { 'callback': onPickerApiLoad });
+        }
+
+        // 點擊按鈕：觸發登入與授權
+        function loadPicker() {
+            if (!SECURE_TOKEN) {
+                SECURE_TOKEN = prompt("請先輸入系統通關密碼：");
+                if (!SECURE_TOKEN) return;
+            }
+
+            const tokenClient = google.accounts.oauth2.initTokenClient({
+                client_id: CLIENT_ID,
+                scope: SCOPES,
+                callback: (tokenResponse) => {
+                    if (tokenResponse && tokenResponse.access_token) {
+                        oauthToken = tokenResponse.access_token;
+                        createPicker();
+                    }
+                }
+            });
+            // 彈出 Google 登入視窗
+            tokenClient.requestAccessToken();
+        }
+
+        // 建立並顯示雲端硬碟視窗
+        function createPicker() {
+            if (pickerApiLoaded && oauthToken) {
+                // 設定只能選 PDF 或圖片
+                const view = new google.picker.View(google.picker.ViewId.DOCS);
+                view.setMimeTypes("application/pdf,image/png,image/jpeg");
+
+                const picker = new google.picker.PickerBuilder()
+                    .addView(view)
+                    .setOAuthToken(oauthToken)
+                    .setDeveloperKey(DEVELOPER_KEY)
+                    .setAppId(APP_ID)
+                    .setCallback(pickerCallback)
+                    .setTitle("請選擇考卷 (PDF 或圖片)")
+                    .build();
+                picker.setVisible(true);
+            }
+        }
+
+        // 當使用者選好檔案後觸發
+        async function pickerCallback(data) {
+            if (data[google.picker.Response.ACTION] === google.picker.Action.PICKED) {
+                const doc = data[google.picker.Response.DOCUMENTS][0];
+                const fileId = doc[google.picker.Document.ID];
+                const fileName = doc[google.picker.Document.NAME];
+
+                setLoadingState("正在走內部通道讀取雲端檔案...", `處理檔案：${fileName}`);
+
+                try {
+                    // 呼叫 GAS 後端去抓這個檔案 (需搭配上次給您的 GAS fetchDriveFile 邏輯)
+                    const response = await fetch(GAS_API_URL, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                        body: JSON.stringify({
+                            token: SECURE_TOKEN,
+                            action: 'fetchDriveFile',
+                            fileId: fileId
+                        })
+                    });
+
+                    const result = await response.json();
+
+                    if (result.success) {
+                        uploadedImageBase64 = result.base64;
+                        uploadedFileMimeType = result.mimeType;
+
+                        // 更新 UI
+                        document.getElementById('drop-zone').style.borderColor = '#4285F4';
+                        document.getElementById('drop-zone').style.background = '#eaf1fe';
+                        document.getElementById('drop-zone-text').innerHTML = `<span style="color:#1a73e8; font-weight:bold;">✅ 已從雲端載入：${fileName}</span>`;
+                        document.getElementById('parse-btn').disabled = false;
+                        
+                    } else {
+                        alert("讀取失敗：" + result.error + "\n(請確認檔案已開啟共用權限)");
+                    }
+                } catch (err) {
+                    alert("連線發生錯誤：" + err.message);
+                } finally {
+                    hideLoading();
+                }
+            }
+        }
         // ==========================================
         // 系統設定區
         // ==========================================
