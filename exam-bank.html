@@ -583,7 +583,7 @@
                         if (realName !== "同學" && !realName.includes("同學") && !realName.includes("老師")) {
                             realName += " 同學";
                         }
-                        const lineMessage = `【雲端組卷產出成功通知】\n\n${realName}您好，這是為您篩選的 ${subject} 組卷！\n\n🔍 [篩選條件]\n${filterText}\n測驗卷連結：\n${responseData.exam_url}\n\n詳解卷連結：\n${responseData.ans_url}\n\n(系統保護機制：連結將於 24 小時後自動銷毀)`;
+                        const lineMessage = `【雲端組卷產出成功通知】\n\n${realName}您好，這是為您篩選的 ${subject} 組卷！\n\n🔍 [篩選條件]\n${filterText}\n測驗卷連結：\n${responseData.exam_url}\n\n詳解卷連結：\n${responseData.ans_url}\n\n(本系統設有保護機制，連結將於 24 小時後自動銷毀。若發現任何題目有疑義或錯誤，請立即回報，並註明對應的題目編號。)`;
 
                         if (liff.isInClient()) {
                             await liff.sendMessages([{ type: 'text', text: lineMessage }]);
