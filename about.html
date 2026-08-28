@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>關於庫口袋｜CoolPocket</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;700&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --primary: #8e9775;
+            --dark: #5b6348;
+            --bg: #f5f5f5;
+            --white: #ffffff;
+        }
+
+        body {
+            margin: 0; padding: 0;
+            background-color: var(--bg);
+            font-family: "Noto Serif TC", serif;
+            color: #333;
+            line-height: 1.8;
+            -webkit-font-smoothing: antialiased;
+            /* 禁用文字選取 */
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        .container {
+            max-width: 500px;
+            margin: 40px auto;
+            padding: 0 20px;
+            box-sizing: border-box;
+        }
+
+        .card {
+            background: var(--white);
+            border-radius: 12px;
+            padding: 35px 25px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.04);
+            border-top: 5px solid var(--primary);
+        }
+
+        h1 {
+            color: var(--dark);
+            font-size: 22px;
+            text-align: center;
+            margin-top: 0;
+            margin-bottom: 30px;
+            letter-spacing: 2px;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 15px;
+        }
+
+        h2 {
+            font-size: 18px;
+            color: var(--primary);
+            margin-top: 0;
+            margin-bottom: 15px;
+            letter-spacing: 1px;
+        }
+
+        p {
+            margin-bottom: 15px;
+            font-size: 15px;
+            color: #555;
+            text-align: justify;
+        }
+
+        .highlight {
+            font-weight: bold;
+            color: var(--dark);
+        }
+
+        /* 凸顯核心概念的區塊 */
+        .quote-box {
+            background: #eef1e6;
+            border-left: 4px solid var(--primary);
+            padding: 20px 15px;
+            margin: 25px 0;
+            border-radius: 0 8px 8px 0;
+            font-weight: bold;
+            color: var(--dark);
+            text-align: center;
+            font-size: 16px;
+            letter-spacing: 1.5px;
+            line-height: 2;
+        }
+
+        /* 結尾金句 */
+        .motto {
+            text-align: center;
+            font-size: 18px;
+            font-weight: bold;
+            color: var(--primary);
+            margin-top: 40px;
+            line-height: 1.8;
+            letter-spacing: 2px;
+        }
+
+        /* 返回按鈕 */
+        .back-btn {
+            display: block;
+            width: 100%;
+            text-align: center;
+            background: #eee;
+            color: #555;
+            text-decoration: none;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 35px;
+            font-weight: bold;
+            letter-spacing: 2px;
+            transition: 0.3s;
+            box-sizing: border-box;
+            border: none;
+            cursor: pointer;
+        }
+
+        .back-btn:hover {
+            background: #ddd;
+        }
+
+        .footer {
+            text-align: center;
+            font-size: 10px;
+            color: #bbb;
+            margin-top: 20px;
+            letter-spacing: 1px;
+            font-family: Arial, sans-serif;
+        }
+    </style>
+</head>
+<!-- 在 body 標籤加入禁用右鍵選單 -->
+<body oncontextmenu="return false;">
+
+    <div class="container">
+        <div class="card">
+            <h1>庫口袋｜CoolPocket</h1>
+            
+            <h2>為什麼叫「庫口袋」？</h2>
+            
+            <p>「庫」取自「題庫」的「庫」，象徵著我們所累積的每一道題目、每一份資源；</p>
+            <p>「口袋」則代表著隨身、方便，以及隨時取用。</p>
+            <p>我們希望，題庫不再只是存放大量題目的「資料庫」，而是能真正被帶著走、隨時拿出來使用的工具。</p>
+            
+            <p>於是，</p>
+            
+            <div class="quote-box">
+                題庫的「庫」＋ 裝著一切的「口袋」<br>
+                成為了—— 庫口袋
+            </div>
+            
+            <p>而它的英文名稱，我們叫做：<span class="highlight">CoolPocket</span></p>
+            
+            <p>「Cool」除了與「庫」有著有趣的諧音，也代表我們希望它成為一個好用、直覺、現代且有點酷的題庫工具。</p>
+            
+            <p><span class="highlight">CoolPocket</span>，不只是一個 Pocket。</p>
+            <p>裡面裝的，是老師需要的題目、學生需要的練習，以及每一次學習所需要的可能性。</p>
+            
+            <div class="motto">
+                把題庫放進口袋，<br>
+                把需要的題目，隨時帶在身邊。
+            </div>
+
+            <!-- 點擊這個按鈕會自動回到上一頁 (也就是你的組卷系統) -->
+            <button onclick="history.back()" class="back-btn">返回組卷系統</button>
+        </div>
+
+        <div class="footer">
+            &copy; 2026 蘇昊數理 Su-Hao Math/Science.
+        </div>
+    </div>
+
+    <!-- 加入防止右鍵與防止複製的腳本 -->
+    <script>
+        document.addEventListener('contextmenu', event => event.preventDefault());
+        document.addEventListener('copy', (e) => e.preventDefault());
+    </script>
+</body>
+</html>
