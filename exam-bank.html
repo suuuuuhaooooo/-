@@ -8,7 +8,7 @@
     <link rel="icon" href="https://suuuuuhaooooo.github.io/-/favicon.png" type="image/png">
     
     <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;700&display=swap" rel="stylesheet">
-    
+    <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
     <!-- 引入 LINE LIFF SDK -->
     <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
     <style>
@@ -263,7 +263,9 @@
                     <option value="100">100 題 (每題 1 分)</option>
                 </select>
             </div>
-
+            <div class="input-group" style="display: flex; justify-content: center;">
+                <div class="cf-turnstile" data-sitekey="0x4AAAAAAEfgoovT7GdOe8gC" data-theme="light"></div>
+            </div>
             <button class="main-btn" id="generate-btn" onclick="triggerRenderCompilation()" disabled>
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
                 開始雲端組卷
@@ -543,8 +545,13 @@
                 if (liff.isInClient()) liff.closeWindow();
                 return;
             }
-
-            setLoadingState("正在驅動雲端編譯器...", "產生測驗卷與解答中，請勿關閉視窗 (約需幾 1 ~ 2 分鐘)");
+            const turnstileResponse = document.querySelector('[name="cf-turnstile-response"]').value;
+            if (!turnstileResponse) {
+                alert("請先完成下方的機器人安全驗證！");
+                return;
+            }
+            
+            setLoadingState("正在驅動雲端編譯器...", "產生測驗卷與解答中，請勿關閉視窗 (約需幾 2 ~ 3 分鐘)");
 
             const currentFilters = {
                 "學年度": getSelectedValues('select-year'),
@@ -564,11 +571,10 @@
                 name: currentUser.name, // 從 LIFF 抓到的名字
                 questionCount: count,
                 filters: currentFilters,
-                
-                // ⚡️ 加上安全憑證給 Python 驗證
                 uid: urlUid,
                 exp: urlExp,
-                sign: urlSign
+                sign: urlSign,
+                cf_token: turnstileResponse
             };
 
             try {
