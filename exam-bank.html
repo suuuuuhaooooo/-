@@ -501,7 +501,18 @@
         }
 
         function populateSelect(elementId, columnKey) {
-            const uniqueValues = [...new Set(globalQuestions.map(q => q[columnKey]).filter(Boolean))];
+            let uniqueValues = [...new Set(globalQuestions.map(q => q[columnKey]).filter(Boolean))];
+            
+            // ⚡️ 加上排序邏輯（支援數字與中文筆畫排序）
+            uniqueValues.sort((a, b) => {
+                let numA = parseFloat(a);
+                let numB = parseFloat(b);
+                if (!isNaN(numA) && !isNaN(numB)) {
+                    return numA - numB;
+                }
+                return String(a).localeCompare(String(b), 'zh-Hant');
+            });
+
             const select = document.getElementById(elementId);
             if (!select) return;
             select.innerHTML = ''; // ⚡️ 複選不需要「全部」選項，清空即可
