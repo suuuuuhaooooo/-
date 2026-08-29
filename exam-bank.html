@@ -404,22 +404,19 @@
         async function fetchQuestionBank() {
             const subject = document.getElementById('select-subject').value;
             if (!subject) return;
+
             // 從目前網址列抓取安全憑證
             const urlParams = new URLSearchParams(window.location.search);
             const uid = urlParams.get('uid') || "";
             const exp = urlParams.get('exp') || "";
             const sign = urlParams.get('sign') || "";
 
-            setLoadingState("同步題庫架構中", "這可能需要數十秒的連線時間。");
+            setLoadingState("正在同步雲端題庫資料...", `向資料庫請求【${subject}】題庫中 (這可能需要數十秒的連線時間)`);
+            
             try {
                 // 將憑證加入請求網址中
                 const fetchUrl = `${RENDER_API_BASE}/api/questions?subject=${subject}&uid=${uid}&exp=${exp}&sign=${sign}`;
                 const response = await fetch(fetchUrl);
-                const data = await response.json();
-                
-            setLoadingState("正在同步雲端題庫資料...", `向資料庫請求【${subject}】題庫中 (約需 2 ~ 3 分鐘)`);
-            try {
-                const response = await fetch(`${RENDER_API_BASE}/api/questions?subject=${subject}`);
                 const data = await response.json();
                 
                 if (data.error) {
@@ -438,7 +435,6 @@
                 console.error(error);
             }
         }
-
         // ==========================================
         // 3. 無階層選單初始化與複選邏輯
         // ==========================================
