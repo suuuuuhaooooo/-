@@ -349,7 +349,7 @@
                 if (urlUid && currentUser.uid !== urlUid) {
                     clearTimeout(timeout);
                     hideLoading();
-                    alert("偵測到違規轉傳連結！\n請從您自己的 LINE 官方帳號重新獲取出卷連結。");
+                    alert("偵測到違規轉傳連結！\n請從 LINE 官方帳號重新獲取出卷連結。");
                     
                     // 銷毀網頁內容，徹底鎖死操作介面
                     document.body.innerHTML = `
