@@ -562,7 +562,7 @@
                 return;
             }
             
-            setLoadingState("正在驅動雲端編譯器...", "產生測驗卷與解答中，請勿關閉視窗 (約需幾 2 ~ 3 分鐘)");
+            setLoadingState("正在建立資料夾...", "即將完成申請組卷流程，請稍候。");
 
             const currentFilters = {
                 "學年度": getSelectedValues('select-year'),
@@ -605,59 +605,45 @@
                     const responseData = await res.json();
                     
                     if (responseData.success) {
+                        let waitTime = Math.ceil(responseData.queue_position * 1.5);
+                        
                         let filterText = "";
-                        for (let key in responseData.filters) {
-                            if (responseData.filters[key]) {
-                                filterText += `◎ ${key}：${responseData.filters[key]}\n`;
+                        if (responseData.filters && Object.keys(responseData.filters).length > 0) {
+                            for (let key in responseData.filters) {
+                                if (responseData.filters[key]) {
+                                    filterText += `[${key}] ${responseData.filters[key]}\n`;
+                                }
                             }
                         }
-                        if (filterText === "") filterText = "◎ 條件：無 (全範圍隨機抽題)\n";
-                        let realName = responseData.student_name || "同學";
-                        if (realName !== "同學" && !realName.includes("同學") && !realName.includes("老師")) {
+                        if (filterText === "") filterText = "[範圍] 全範圍隨機組卷\n";
+                        
+                        let realName = responseData.student_name || "學員";
+                        if (realName !== "學員" && !realName.includes("同學") && !realName.includes("老師")) {
                             realName += " 同學";
                         }
-                        const lineMessage = `【雲端組卷產出成功通知】\n\n${realName}您好，這是為您篩選的 ${subject} 組卷！\n\n🔍 [篩選條件]\n${filterText}\n測驗卷連結：\n${responseData.exam_url}\n\n詳解卷連結：\n${responseData.ans_url}\n\n(本系統設有保護機制，連結將於 24 小時後自動銷毀。若發現任何題目有疑義或錯誤，請立即回報，並註明對應的題目編號。)`;
+
+                        const msgText = `【庫口袋｜雲端題庫申請組卷通知】\n\n` +
+                                      `申請人：${realName}\n` +
+                                      `測驗科目：${subject}\n` +
+                                      `組卷條件：\n` +
+                                      `${filterText}` +
+                                      `----------------------\n` +
+                                      `排隊順位：第 ${responseData.queue_position} 位\n` +
+                                      `預估時間：約 ${waitTime} 分鐘\n\n` +
+                                      `資料夾連結：\n${responseData.folder_url}\n\n` +
+                                      `(系統已於背景執行編譯作業，請於預估時間後點擊上方連結檢視檔案。若資料夾內出現編譯失敗警告，請通知管理人員處理。本系統設有保護機制，連結將於 24 小時後自動銷毀。如發現任何題目有疑義或錯誤，請立即回報，並註明對應的題目編號。)`;
 
                         if (liff.isInClient()) {
-                            await liff.sendMessages([{ type: 'text', text: lineMessage }]);
-                            try {
-                                await fetch(`${RENDER_API_BASE}/api/notify`, {
-                                    method: 'POST',
-                                    headers: { 'Content-Type': 'application/json' },
-                                    body: JSON.stringify({
-                                        uid: urlUid,
-                                        exp: urlExp,
-                                        sign: urlSign,
-                                        message: "您的組卷已完成，請點擊上方連結查閱！" 
-                                    })
-                                });
-                            } catch (e) {
-                                console.error("通知發送失敗", e);
-                            }
-
-                            alert("組卷成功！已自動將考卷與解答傳送到聊天室。");
+                            await liff.sendMessages([{ type: 'text', text: msgText }]);
                             liff.closeWindow();
                         } else {
-                            alert("組卷成功！");
-                            console.log(lineMessage);
+                            alert("申請已建立。\n\n資料夾連結：\n" + responseData.folder_url);
+                            console.log(msgText);
                             hideLoading(); 
                         }
                     } else {
-                        showError("產出失敗：" + (responseData.error || "未知錯誤"));
+                        showError("執行失敗：" + (responseData.error || "發生未知的錯誤"));
                     }
-                } else {
-                    const errData = await res.json();
-                    showError("伺服器拒絕：" + (errData.error || "無回應")); // 這裡如果簽章錯誤，會顯示 Python 的 403 報錯
-                }
-            } catch (err) {
-                console.error("錯誤：", err);
-                if (err.name === 'AbortError') {
-                    showError("連線逾時：伺服器處理時間超過 90 秒，請再試一次。");
-                } else {
-                    showError("發生錯誤：" + err.message);
-                }
-            }
-        }
         // ==========================================
         // UI 防護功能
         // ==========================================
