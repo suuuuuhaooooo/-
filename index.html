@@ -421,12 +421,21 @@
         container.appendChild(physics);
         document.body.appendChild(container); // 自動將動物放進網頁中
 
-        // 綁定獨立狀態庫，讓牠們的步伐、抓取、叫聲互不干擾
+        // 取得目前螢幕寬度
+        const screenW = window.innerWidth;
+        
+        // 1. 隨機起始位置：在螢幕最左邊 (-50) 到最右邊之間隨機降落
+        const randomX = (Math.random() * screenW) - 50;
+        
+        // 2. 隨機起始方向：50% 機率往右 (1)，50% 機率往左 (-1)
+        const randomDir = Math.random() > 0.5 ? 1 : -1;
+
+        // 綁定獨立狀態庫
         const state = {
             data, container, physics, bubble, img,
-            x: -100 - (index * 150), // 刻意錯開每隻動物的出發點
+            x: randomX,  // 套用隨機 X 座標
             y: 0,
-            dir: 1, // 1:往右走, -1:往左走
+            dir: randomDir, // 套用隨機方向
             isDragging: false,
             hasDragged: false,
             isLongPress: false,
@@ -434,6 +443,11 @@
             bubbleTimeout: null,
             startX: 0, startY: 0, initialX: 0, initialY: 0
         };
+        
+        // 3. 確保一出生時，面向的方向是正確的
+        let currentScale = state.dir;
+        if (state.data.reverseFlip) currentScale *= -1; 
+        state.img.style.transform = `scaleX(${currentScale})`;
 
         // 綁定點擊/觸控事件
         img.addEventListener('mousedown', (e) => onPointerDown(e, state));
