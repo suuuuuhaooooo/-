@@ -372,7 +372,7 @@
             src: 'https://suuuuuhaooooo.github.io/-/cow.gif', 
             speed: 45, width: 70, reverseFlip: false,
             short: ["Moo~", "Mooo!", "(chewing...)", "還我牛!!", "哞~", "哞!"], 
-            jump: ["MOOOOOOO!!!", "Holy cow!"] 
+            jump: ["MOOOOOOO!!!", "Holy cow!", "飛牛墓場"] 
         },
         { 
             src: 'https://suuuuuhaooooo.github.io/-/horse.gif', 
@@ -383,14 +383,14 @@
         { 
             src: 'https://suuuuuhaooooo.github.io/-/pig.gif', 
             speed: 35, width: 55, reverseFlip: false, 
-            short: ["Oink~", "Oink oink!"], 
-            jump: ["WHEEE!", "Mud bath!"] 
+            short: ["Oink~", "Oink oink!", "不豬到"], 
+            jump: ["WHEEE!", "Mud bath!", "豬豬那麼可愛!"] 
         },
         { 
             src: 'https://suuuuuhaooooo.github.io/-/chicken.gif', 
             speed: 55, width: 45, reverseFlip: false, 
-            short: ["Cluck~", "Bawk bawk!", "古咕咕"], 
-            jump: ["Cock-a-doodle-doo!", "Flap flap!"] 
+            short: ["Cluck~", "Bawk bawk!", "古咕咕", "不雞到"], 
+            jump: ["Cock-a-doodle-doo!", "Flap flap!", "雞飛咕跳!"] 
         }
     ];
 
@@ -494,7 +494,7 @@
                 state.isLongPress = true;
                 state.physics.classList.add('is-jumping');
                 showMessage(state, state.data.jump, 2000);
-                setTimeout(() => state.physics.classList.remove('is-jumping'), 250);
+                setTimeout(() => state.physics.classList.remove('is-jumping'), 260);
             }
         }, 500);
     }
