@@ -208,30 +208,38 @@
             bottom: 15px;
             left: 0;
             z-index: 999;
-            pointer-events: none; /* 容器滑鼠穿透 */
-            transform: translate(-80px, 0px); /* 初始位置 */
-            will-change: transform; /* 提升硬體加速效能 */
+            pointer-events: none; 
+            transform: translate(-80px, 0px); 
+            will-change: transform; 
+        }
+
+        /* 統一控制跳躍的物理層，讓裡面的牛和對話框一起動 */
+        .cow-physics {
+            position: relative;
+            transition: transform 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        
+        /* 觸發跳躍時，整個外殼往上拉 80px */
+        .cow-physics.is-jumping {
+            transform: translateY(-80px);
         }
 
         .cow-sprite {
             width: 70px;
             height: auto;
-            pointer-events: auto; /* 身體開放互動 */
-            cursor: grab;         /* 顯示可抓取的游標 */
+            pointer-events: auto; 
+            cursor: grab;         
             filter: drop-shadow(0 2px 4px rgba(0,0,0,0.15));
             
-            /* 獨立控制轉向(--face)與跳躍(--jump)，與拖曳的位移互不干擾 */
-            --face: 1; /* 預設頭朝右 */
-            --jump: 0px;
-            transform: scaleX(var(--face)) translateY(var(--jump));
-            transition: transform 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            /* 牛牛現在只負責轉向，跳躍交給 cow-physics 負責了 */
+            --face: 1; 
+            transform: scaleX(var(--face));
         }
 
-        .cow-sprite:active { cursor: grabbing; } /* 抓取時游標變化 */
+        .cow-sprite:active { cursor: grabbing; } 
         .cow-sprite.face-left { --face: -1; }
-        .cow-sprite.is-jumping { --jump: -80px; }
 
-        /* 浮動對話框 */
+        /* 浮動對話框 (保持不變) */
         .cow-bubble {
             position: absolute;
             bottom: 75px; 
@@ -341,10 +349,13 @@
     <footer>
         &copy; 2026 蘇昊數理 SUHAO MATH & SCIENCE. All rights reserved.
     </footer>
-</div> <div class="cow-container" id="cow-container">
-    <div class="cow-bubble" id="cow-bubble">Moo~</div>
-    <img class="cow-sprite" id="cow" src="https://suuuuuhaooooo.github.io/-/cow.gif" alt="牛牛">
-</div>
+
+    <div class="cow-container" id="cow-container">
+        <div class="cow-physics" id="cow-physics">
+            <div class="cow-bubble" id="cow-bubble">Moo~</div>
+            <img class="cow-sprite" id="cow" src="https://suuuuuhaooooo.github.io/-/cow.gif" alt="牛牛">
+        </div>
+    </div>
 
 <script>
     // ==========================================
@@ -420,29 +431,26 @@
     // ==========================================
     const cow = document.getElementById('cow');
     const cowContainer = document.getElementById('cow-container');
+    const cowPhysics = document.getElementById('cow-physics'); // 抓取新的物理外層
     const cowBubble = document.getElementById('cow-bubble');
     
-    // 物理與位置變數
-    let cowX = -80;       // X 軸位置
-    let cowY = 0;         // Y 軸位置 (相對於 bottom: 15px)
-    let cowDir = 1;       // 1 = 往右, -1 = 往左
+    let cowX = -80;       
+    let cowY = 0;         
+    let cowDir = 1;       
     let lastTime = 0;
-    const SPEED = 45;     // 走路速度 (數字越大走越快，每秒像素)
+    const SPEED = 45;     
 
-    // 互動變數
     let isDragging = false;
     let hasDragged = false;
     let isLongPress = false;
     let pressTimer, bubbleTimeout;
     
-    // 拖曳暫存座標
     let startMouseX = 0, startMouseY = 0;
     let initialCowX = 0, initialCowY = 0;
 
     const shortMessages = ["Moo~", "Mooo!", "Moo moo~", "(chewing...)", "Moooo~"];
-    const jumpMessages  = ["MOOOOOOO!!!", "Moo?!", "Yahooo~"];
+    const jumpMessages  = ["MOOOOOOO!!! 🐮", "Holy cow!", "Moo?!", "Yahooo~"];
 
-    // 顯示對話框
     function showCowMessage(msgs, duration) {
         const msg = msgs[Math.floor(Math.random() * msgs.length)];
         cowBubble.innerText = msg;
@@ -451,34 +459,30 @@
         bubbleTimeout = setTimeout(() => cowBubble.classList.remove('show'), duration);
     }
 
-    // 1. 遊戲迴圈 (負責平滑走路)
+    // 負責平滑走路
     function gameLoop(time) {
         if (!lastTime) lastTime = time;
-        const dt = (time - lastTime) / 1000; // 計算影格時間差
+        const dt = (time - lastTime) / 1000; 
         lastTime = time;
 
-        // 如果沒有被抓著，就繼續走路
         if (!isDragging) {
             cowX += SPEED * cowDir * dt;
             
-            // 邊界碰撞偵測 (走到盡頭自動回頭)
             const screenW = window.innerWidth;
             if (cowX > screenW + 20) {
-                cowDir = -1; // 改往左
+                cowDir = -1; 
                 cow.classList.add('face-left'); 
             } else if (cowX < -80) {
-                cowDir = 1;  // 改往右
+                cowDir = 1;  
                 cow.classList.remove('face-left');
             }
             
-            // 套用新座標
             cowContainer.style.transform = `translate(${cowX}px, ${cowY}px)`;
         }
         requestAnimationFrame(gameLoop);
     }
-    requestAnimationFrame(gameLoop); // 啟動引擎
+    requestAnimationFrame(gameLoop); 
 
-    // 2. 統一獲取滑鼠與手指的座標
     function getPointerPos(e) {
         return {
             x: e.touches ? e.touches[0].clientX : e.clientX,
@@ -486,7 +490,6 @@
         };
     }
 
-    // 3. 開始按壓 (抓取牛牛)
     function onPointerDown(e) {
         if (e.cancelable) e.preventDefault();
         const pos = getPointerPos(e);
@@ -500,35 +503,34 @@
         initialCowX = cowX;
         initialCowY = cowY;
         
-        // 設定長按計時器 (超過 500 毫秒且沒拖曳，視為長按)
         pressTimer = setTimeout(() => {
             if (!hasDragged) {
                 isLongPress = true;
-                cow.classList.add('is-jumping');
+                // 一起跳躍，對話框會跟著飛上去
+                cowPhysics.classList.add('is-jumping'); 
                 showCowMessage(jumpMessages, 2000);
-                setTimeout(() => cow.classList.remove('is-jumping'), 1000);
+                // 1秒後掉回地上
+                setTimeout(() => cowPhysics.classList.remove('is-jumping'), 1000);
             }
         }, 500);
 
-        // 在全畫面監聽移動，避免滑鼠滑出牛牛身上就中斷
         document.addEventListener('mousemove', onPointerMove, { passive: false });
         document.addEventListener('mouseup', onPointerUp);
         document.addEventListener('touchmove', onPointerMove, { passive: false });
         document.addEventListener('touchend', onPointerUp);
     }
 
-    // 4. 拖曳中
     function onPointerMove(e) {
         if (!isDragging) return;
         const pos = getPointerPos(e);
         const dx = pos.x - startMouseX;
         const dy = pos.y - startMouseY;
         
-        // 移動超過 5 像素才判定為真正的「拖曳」
         if (Math.abs(dx) > 5 || Math.abs(dy) > 5) {
             hasDragged = true;
-            clearTimeout(pressTimer); // 已經在拖曳了，取消長按判定
+            clearTimeout(pressTimer); 
             
+            // 跟隨拖曳位置
             cowX = initialCowX + dx;
             cowY = initialCowY + dy;
             cowContainer.style.transform = `translate(${cowX}px, ${cowY}px)`;
@@ -536,22 +538,18 @@
         if (e.cancelable) e.preventDefault();
     }
 
-    // 5. 放開牛牛
     function onPointerUp(e) {
         isDragging = false;
         clearTimeout(pressTimer);
         
-        // 移除監聽器
         document.removeEventListener('mousemove', onPointerMove);
         document.removeEventListener('mouseup', onPointerUp);
         document.removeEventListener('touchmove', onPointerMove);
         document.removeEventListener('touchend', onPointerUp);
         
-        // 如果沒有拖曳、也不是長按，就是「短按」
         if (!hasDragged && !isLongPress) {
             showCowMessage(shortMessages, 1500);
             
-            // 瞬間反轉方向
             cowDir *= -1;
             if (cowDir === 1) {
                 cow.classList.remove('face-left');
@@ -561,7 +559,6 @@
         }
     }
 
-    // 綁定事件到牛牛身上
     cow.addEventListener('mousedown', onPointerDown);
     cow.addEventListener('touchstart', onPointerDown, { passive: false });
     /*
