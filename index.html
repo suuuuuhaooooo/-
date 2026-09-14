@@ -230,7 +230,7 @@
             filter: drop-shadow(0 2px 4px rgba(0,0,0,0.15));
             
             /* 使用 CSS 變數來獨立控制「轉向」與「跳躍高度」 */
-            --face: 1;
+            --face: -1;
             --jump: 0px;
             transform: scaleX(var(--face)) translateY(var(--jump));
             /* 加入彈性動畫，讓跳躍跟轉身很平滑可愛 */
@@ -238,7 +238,7 @@
         }
 
         /* 轉向與跳躍的觸發器 */
-        .cow-sprite.face-left { --face: -1; }
+        .cow-sprite.face-left { --face: 1; }
         .cow-sprite.is-jumping { --jump: -80px; }
 
         /* 浮動對話框 */
@@ -351,6 +351,9 @@
     <footer>
         &copy; 2026 蘇昊數理 SUHAO MATH & SCIENCE. All rights reserved.
     </footer>
+</div> <div class="cow-container" id="cow-container">
+    <div class="cow-bubble" id="cow-bubble">Moo~</div>
+    <img class="cow-sprite" id="cow" src="https://suuuuuhaooooo.github.io/-/cow.gif" alt="牛牛">
 </div>
 
 <script>
@@ -545,10 +548,5 @@
      `-/+ossyyyysso+/:-./++//.             .---` `.-:/+oossssoo++/:-`           
 */
 </script>
-    <!-- 牛牛 -->
-    <div class="cow-container" id="cow-container">
-        <div class="cow-bubble" id="cow-bubble">Moo~</div>
-        <img class="cow-sprite" id="cow" src="https://suuuuuhaooooo.github.io/-/cow.gif" alt="牛牛">
-    </div>
 </body>
 </html>
