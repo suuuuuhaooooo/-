@@ -18,7 +18,7 @@
         @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;700&family=Noto+Sans+TC:wght@300;500&display=swap');
 
         :root {
-            --primary: #8e9775; /* 莫蘭迪綠 */
+            --primary: #8e9775;
             --dark: #5b6348;
             --bg: #f8f8f6;
             --white: #ffffff;
@@ -72,7 +72,6 @@
             transition: 0.3s;
         }
 
-        /* 身份選擇大卡片樣式 */
         .identity-card {
             background: var(--white);
             padding: 45px 20px;
@@ -109,7 +108,6 @@
             letter-spacing: 1px;
         }
 
-        /* 官方 LINE 小按鈕樣式 */
         .line-link-card {
             background: #fff;
             padding: 15px;
@@ -136,7 +134,6 @@
             box-shadow: 0 8px 20px rgba(6, 199, 85, 0.1);
         }
 
-        /* 次選單容器樣式 */
         .sub-menu {
             display: none;
             flex-direction: column;
@@ -165,23 +162,10 @@
             transform: scale(1.02);
         }
 
-        /* 特殊樣式：雲端教室亮點 */
-        .classroom-btn {
-            background: var(--primary);
-            color: white;
-            border-color: var(--primary);
-            font-weight: 500;
-        }
+        .classroom-btn { background: var(--primary); color: white; border-color: var(--primary); font-weight: 500; }
         .classroom-btn:hover { background: var(--dark); color: white; }
+        .highlight-btn { background: #fdfaf3; border: 1px dashed #d4c09d !important; font-weight: 500; }
 
-        /* 特殊：預約試教按鈕 */
-        .highlight-btn {
-            background: #fdfaf3;
-            border: 1px dashed #d4c09d !important;
-            font-weight: 500;
-        }
-
-        /* 返回按鈕 */
         .back-btn {
             margin-top: 25px;
             font-size: 13px;
@@ -193,58 +177,50 @@
         }
         .back-btn:hover { color: var(--primary); }
 
-        footer {
-            margin-top: 50px;
-            font-size: 11px;
-            color: #ccc;
-            letter-spacing: 1px;
-        }
+        footer { margin-top: 50px; font-size: 11px; color: #ccc; letter-spacing: 1px; }
+
+        @keyframes fadeInDown { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes fadeIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
 
         /* ==========================================
-           牛牛
+           🐾 雲端動物園 (共用物理層設定)
            ========================================== */
-        .cow-container {
+        .animal-container {
             position: fixed;
             bottom: 15px;
             left: 0;
             z-index: 999;
             pointer-events: none; 
-            transform: translate(-80px, 0px); 
+            transform: translate(-100px, 0px); 
             will-change: transform; 
         }
 
-        /* 統一控制跳躍的物理層，讓裡面的牛和對話框一起動 */
-        .cow-physics {
+        .animal-physics {
             position: relative;
             transition: transform 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
         }
         
-        /* 觸發跳躍時，整個外殼往上拉 80px */
-        .cow-physics.is-jumping {
+        .animal-physics.is-jumping {
             transform: translateY(-80px);
         }
 
-        .cow-sprite {
-            width: 70px;
-            height: auto;
+        .animal-sprite {
             pointer-events: auto; 
             cursor: grab;         
             filter: drop-shadow(0 2px 4px rgba(0,0,0,0.15));
-            
-            /* 牛牛現在只負責轉向，跳躍交給 cow-physics 負責了 */
-            --face: 1; 
-            transform: scaleX(var(--face));
+            /* 讓動物轉身時平滑翻轉 */
+            transition: transform 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
+        .animal-sprite:active { cursor: grabbing; } 
 
-        .cow-sprite:active { cursor: grabbing; } 
-        .cow-sprite.face-left { --face: -1; }
-
-        /* 浮動對話框 (保持不變) */
-        .cow-bubble {
+        .animal-bubble {
             position: absolute;
-            bottom: 75px; 
-            left: 50%;
-            transform: translateX(-50%) scale(0.8);
+            bottom: 100%; /* 🌟 動態適應任何動物高度，永遠貼齊頭頂 */
+            margin-bottom: 5px; 
             background: var(--white);
             color: var(--dark);
             padding: 6px 12px;
@@ -257,9 +233,10 @@
             opacity: 0;
             visibility: hidden;
             transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            transform: scale(0.8);
         }
 
-        .cow-bubble::after {
+        .animal-bubble::after {
             content: '';
             position: absolute;
             bottom: -7px;
@@ -270,11 +247,11 @@
             border-color: var(--primary) transparent transparent transparent;
         }
 
-        .cow-bubble.show {
+        .animal-bubble.show {
             opacity: 1;
             visibility: visible;
-            transform: translateX(-50%) scale(1);
-            bottom: 85px; 
+            transform: scale(1);
+            margin-bottom: 15px; /* 顯示時往上彈跳一點 */
         }
     </style>
 </head>
@@ -291,12 +268,10 @@
             <h2>我是學生</h2>
             <span>For Students</span>
         </div>
-
         <div class="identity-card" onclick="showMenu('parent')">
             <h2>我是家長</h2>
             <span>For Parents</span>
         </div>
-
         <a href="https://line.me/ti/p/~@000gwomo" class="line-link-card">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M24 10.304c0-5.232-5.383-9.486-12-9.486s-12 4.254-12 9.486c0 4.69 4.269 8.608 10.024 9.333.39.085.92.257 1.054.59.12.301.079.77.039 1.073l-.171 1.027c-.053.313-.251 1.225 1.076.669 1.327-.556 7.163-4.218 9.774-7.218 1.931-2.181 2.204-3.766 2.204-5.478zm-15.546 4.75h-1.933c-.27 0-.489-.219-.489-.489v-4.103c0-.27.219-.489.489-.489.271 0 .489.219.489.489v3.614h1.444c.27 0 .489.219.489.489 0 .27-.219.489-.489.489zm2.463 0c-.271 0-.489-.219-.489-.489v-4.103c0-.27.219-.489.489-.489.271 0 .489.219.489.489v4.103c0 .27-.218.489-.489.489zm3.76 0h-1.803l-1.448-2.029v1.54c0 .27-.219.489-.489.489-.271 0-.489-.219-.489-.489v-4.103c0-.27.219-.489.489-.489h1.803l1.448 2.03v-1.541c0-.27.219-.489.489-.489.271 0 .489.219.489.489v4.103c0 .27-.219.489-.489.489zm3.567-1.025c0 .27-.219.489-.489.489h-1.933c-.27 0-.489-.219-.489-.489v-4.103c0-.27.219-.489.489-.489h1.933c.271 0 .489.219.489.489 0 .27-.218.489-.489.489h-1.444v1.074h1.444c.27 0 .489.219.489.489 0 .27-.218.489-.489.489h-1.444v1.073h1.444c.271 0 .489.219.489.489z"/></svg>
             即時聯繫官方 LINE
@@ -304,34 +279,27 @@
     </div>
 
     <div id="student-menu" class="sub-menu">
-    <a href="https://suuuuuhaooooo.github.io/-/classroom.html" class="sub-link classroom-btn">進入雲端教室</a>
-    <a href="https://sales.iopenmall.tw/119309/" class="sub-link">☆★蘇昊小舖★☆</a>
-    <a href="https://drive.google.com/file/d/1pilLrm4Y7VQSOJtzDN2PcHZlXH4nVDeL/view?usp=drive_link" class="sub-link">學習的本質與提問的藝術</a>
-    <a href="https://drive.google.com/file/d/1p2BO3knb8aYU5TuYX0eVbfXDddX37fBt/view?usp=sharing" class="sub-link">一對一家教課程服務契約書暨課程規範</a>
-    <a href="https://line.me/ti/p/~@000gwomo" class="sub-link" style="color:var(--line-green);">聯絡老師解題</a>
-    
-
-    <div class="sub-link" style="border-style: dotted; padding: 10px; display: block; text-align: center; box-sizing: border-box; width: 100%; white-space: normal; word-wrap: break-word;">
-        <a href="https://drive.google.com/file/d/1oQI57eyL2Tc0taPGJ46QFgCmjoBchPGV/view?usp=drive_link" target="_blank" style="text-decoration: none; color: inherit; display: block; line-height: 1.4;">
-            國中教育會考 103～114 數學科精選歷試
-        </a>
-        <div style="font-size: 12px; color: #777; margin-top: 6px; line-height: 1.2;">
-            私訊官方 LINE 領取更多
+        <a href="https://suuuuuhaooooo.github.io/-/classroom.html" class="sub-link classroom-btn">進入雲端教室</a>
+        <a href="https://sales.iopenmall.tw/119309/" class="sub-link">☆★蘇昊小舖★☆</a>
+        <a href="https://drive.google.com/file/d/1pilLrm4Y7VQSOJtzDN2PcHZlXH4nVDeL/view?usp=drive_link" class="sub-link">學習的本質與提問的藝術</a>
+        <a href="https://drive.google.com/file/d/1p2BO3knb8aYU5TuYX0eVbfXDddX37fBt/view?usp=sharing" class="sub-link">一對一家教課程服務契約書暨課程規範</a>
+        <a href="https://line.me/ti/p/~@000gwomo" class="sub-link" style="color:var(--line-green);">聯絡老師解題</a>
+        
+        <div class="sub-link" style="border-style: dotted; padding: 10px; display: block; text-align: center; box-sizing: border-box; width: 100%; white-space: normal; word-wrap: break-word;">
+            <a href="https://drive.google.com/file/d/1oQI57eyL2Tc0taPGJ46QFgCmjoBchPGV/view?usp=drive_link" target="_blank" style="text-decoration: none; color: inherit; display: block; line-height: 1.4;">
+                國中教育會考 103～114 數學科精選歷試
+            </a>
+            <div style="font-size: 12px; color: #777; margin-top: 6px; line-height: 1.2;">私訊官方 LINE 領取更多</div>
         </div>
-    </div>
-    
-
-    <div class="sub-link" style="border-style: dotted; padding: 10px; display: block; text-align: center; box-sizing: border-box; width: 100%; white-space: normal; word-wrap: break-word;">
-        <a href="https://drive.google.com/file/d/17UKdSmlndfkY1VfDCZV3aTaiYhywS_vg/view?usp=drive_link" target="_blank" style="text-decoration: none; color: inherit; display: block; line-height: 1.4;">
-            國中教育會考 115 數學科歷試詳解
-        </a>
-        <div style="font-size: 12px; color: #777; margin-top: 6px; line-height: 1.2;">
-            私訊官方 LINE 領取更多
+        
+        <div class="sub-link" style="border-style: dotted; padding: 10px; display: block; text-align: center; box-sizing: border-box; width: 100%; white-space: normal; word-wrap: break-word;">
+            <a href="https://drive.google.com/file/d/17UKdSmlndfkY1VfDCZV3aTaiYhywS_vg/view?usp=drive_link" target="_blank" style="text-decoration: none; color: inherit; display: block; line-height: 1.4;">
+                國中教育會考 115 數學科歷試詳解
+            </a>
+            <div style="font-size: 12px; color: #777; margin-top: 6px; line-height: 1.2;">私訊官方 LINE 領取更多</div>
         </div>
+        <div class="sub-link" style="color: #ccc; cursor: default; border-style: dotted;">更多功能開發中...</div>
     </div>
-    
-    <div class="sub-link" style="color: #ccc; cursor: default; border-style: dotted;">更多功能開發中...</div>
-</div>
 
     <div id="parent-menu" class="sub-menu">
         <a href="https://sales.iopenmall.tw/119309/" class="sub-link">☆★蘇昊小舖★☆</a>
@@ -349,49 +317,23 @@
     <footer>
         &copy; 2026 蘇昊數理 SUHAO MATH & SCIENCE. All rights reserved.
     </footer>
-
-    <div class="cow-container" id="cow-container">
-        <div class="cow-physics" id="cow-physics">
-            <div class="cow-bubble" id="cow-bubble">Moo~</div>
-            <img class="cow-sprite" id="cow" src="https://suuuuuhaooooo.github.io/-/cow.gif" alt="牛牛">
-        </div>
-    </div>
-
+</div>
 <script>
     // ==========================================
     // 反開發者工具與右鍵保護機制
     // ==========================================
-    
-    // 1. 禁止滑鼠右鍵選單
-    document.addEventListener('contextmenu', function(event) {
-        event.preventDefault();
-    });
-
-    // 2. 攔截開發者常用快捷鍵 (F12, Ctrl+Shift+I, Ctrl+U 等)
+    document.addEventListener('contextmenu', function(event) { event.preventDefault(); });
     document.addEventListener('keydown', function(event) {
-        // F12
-        if (event.keyCode === 123) {
+        if (event.keyCode === 123 || (event.ctrlKey && event.shiftKey && (event.keyCode === 73 || event.keyCode === 74)) || (event.ctrlKey && event.keyCode === 85)) {
             event.preventDefault();
-            alert("【警告】\n\n嚴禁開啟開發者工具！");
-        }
-        // Ctrl+Shift+I (開發人員工具) / Ctrl+Shift+J (主控台)
-        if (event.ctrlKey && event.shiftKey && (event.keyCode === 73 || event.keyCode === 74)) {
-            event.preventDefault();
-            alert("【警告】\n\n嚴禁開啟開發者工具！");
-        }
-        // Ctrl+U (檢視原始碼)
-        if (event.ctrlKey && event.keyCode === 85) {
-            event.preventDefault();
-            alert("【警告】\n\n嚴禁檢視網頁原始碼！");
+            alert("【警告】\n\n嚴禁開啟開發者工具或檢視網頁原始碼！");
         }
     });
 
-    // 3. 陷阱機制：如果有人真的打開了開發者工具，會被 debugger 卡住
     setInterval(function() {
         const before = new Date().getTime();
         debugger; 
         const after = new Date().getTime();
-        // 如果執行 debugger 的時間差大於 100 毫秒，代表開發者工具是被打開的
         if (after - before > 100) {
             console.clear();
             console.log("%c版權所有，嚴禁任何盜用行為。", "color: red; font-size: 20px; font-weight: bold;");
@@ -399,10 +341,7 @@
     }, 1000);
     
     function showMenu(role) {
-        // 隱藏初始區域
         document.getElementById('selection-zone').style.display = 'none';
-        
-        // 顯示對應選單與返回按鈕
         if(role === 'student') {
             document.getElementById('student-menu').style.display = 'flex';
             document.getElementById('sub-title').innerText = '我是學生';
@@ -410,79 +349,109 @@
             document.getElementById('parent-menu').style.display = 'flex';
             document.getElementById('sub-title').innerText = '我是家長';
         }
-        
         document.querySelector('.back-btn').style.display = 'inline-block';
         document.querySelector('.logo-text').style.fontSize = '30px';
     }
 
     function showSelection() {
-        // 返回初始狀態
         document.getElementById('selection-zone').style.display = 'block';
         document.getElementById('student-menu').style.display = 'none';
         document.getElementById('parent-menu').style.display = 'none';
         document.querySelector('.back-btn').style.display = 'none';
-        
-        // 還原 Header 文字
         document.querySelector('.logo-text').style.fontSize = '36px';
         document.getElementById('sub-title').innerText = '家教數位入口網';
     }
+
     // ==========================================
-    // 牛牛互動
+    // 🐾 雲端可愛動物園物理引擎 (支援無限動物、獨立互動)
     // ==========================================
-    const cow = document.getElementById('cow');
-    const cowContainer = document.getElementById('cow-container');
-    const cowPhysics = document.getElementById('cow-physics'); // 抓取新的物理外層
-    const cowBubble = document.getElementById('cow-bubble');
     
-    let cowX = -80;       
-    let cowY = 0;         
-    let cowDir = 1;       
-    let lastTime = 0;
-    const SPEED = 45;     
-
-    let isDragging = false;
-    let hasDragged = false;
-    let isLongPress = false;
-    let pressTimer, bubbleTimeout;
-    
-    let startMouseX = 0, startMouseY = 0;
-    let initialCowX = 0, initialCowY = 0;
-
-    const shortMessages = ["Moo~", "Mooo!", "Moo moo~", "(chewing...)", "Moooo~", "哞", "還我牛!"];
-    const jumpMessages  = ["MOOOOOOO!!!", "Moo?!", "Yahooo~"];
-
-    function showCowMessage(msgs, duration) {
-        const msg = msgs[Math.floor(Math.random() * msgs.length)];
-        cowBubble.innerText = msg;
-        cowBubble.classList.add('show');
-        clearTimeout(bubbleTimeout);
-        bubbleTimeout = setTimeout(() => cowBubble.classList.remove('show'), duration);
-    }
-
-    // 負責平滑走路
-    function gameLoop(time) {
-        if (!lastTime) lastTime = time;
-        const dt = (time - lastTime) / 1000; 
-        lastTime = time;
-
-        if (!isDragging) {
-            cowX += SPEED * cowDir * dt;
-            
-            const screenW = window.innerWidth;
-            if (cowX > screenW + 20) {
-                cowDir = -1; 
-                cow.classList.add('face-left'); 
-            } else if (cowX < -80) {
-                cowDir = 1;  
-                cow.classList.remove('face-left');
-            }
-            
-            cowContainer.style.transform = `translate(${cowX}px, ${cowY}px)`;
+    // 🌟 在這裡設定您的動物夥伴 (只要新增到陣列就會自動出生在畫面上！)
+    const animalConfig = [
+        { 
+            src: 'https://suuuuuhaooooo.github.io/-/cow.gif', 
+            speed: 45, width: 70, reverseFlip: true, // 💡 如果這隻動物預設倒退走，將 reverseFlip 改成 true 即可修正
+            short: ["Moo~", "Mooo!", "(chewing...)"], 
+            jump: ["MOOOOOOO!!! 🐮", "Holy cow!"] 
+        },
+        { 
+            src: 'https://suuuuuhaooooo.github.io/-/horse.gif', 
+            speed: 65, width: 85, reverseFlip: false, 
+            short: ["Neigh~", "*snort*", "(trotting...)"], 
+            jump: ["Yeehaw! 🐴", "Giddy up!"] 
+        },
+        { 
+            src: 'https://suuuuuhaooooo.github.io/-/pig.gif', 
+            speed: 35, width: 55, reverseFlip: false, 
+            short: ["Oink~", "Oink oink!"], 
+            jump: ["WHEEE! 🐷", "Mud bath!"] 
+        },
+        { 
+            src: 'https://suuuuuhaooooo.github.io/-/chicken.gif', 
+            speed: 55, width: 45, reverseFlip: false, 
+            short: ["Cluck~", "Bawk bawk!"], 
+            jump: ["Cock-a-doodle-doo! 🐔", "Flap flap!"] 
         }
-        requestAnimationFrame(gameLoop);
-    }
-    requestAnimationFrame(gameLoop); 
+    ];
 
+    const activeAnimals = [];
+    let currentlyDragging = null;
+    let lastTime = 0;
+
+    // 1. 引擎初始化：自動為陣列裡的每一隻動物生成專屬的 HTML 與狀態
+    animalConfig.forEach((data, index) => {
+        const container = document.createElement('div');
+        container.className = 'animal-container';
+        container.style.zIndex = 999 - index; // 避免重疊時打架，陣列前面的優先層級高
+        
+        const physics = document.createElement('div');
+        physics.className = 'animal-physics';
+        
+        const bubble = document.createElement('div');
+        bubble.className = 'animal-bubble';
+        
+        const img = document.createElement('img');
+        img.className = 'animal-sprite';
+        img.src = data.src;
+        img.style.width = data.width + 'px';
+        img.draggable = false;
+        
+        physics.appendChild(bubble);
+        physics.appendChild(img);
+        container.appendChild(physics);
+        document.body.appendChild(container); // 自動將動物放進網頁中
+
+        // 綁定獨立狀態庫，讓牠們的步伐、抓取、叫聲互不干擾
+        const state = {
+            data, container, physics, bubble, img,
+            x: -100 - (index * 150), // 刻意錯開每隻動物的出發點
+            y: 0,
+            dir: 1, // 1:往右走, -1:往左走
+            isDragging: false,
+            hasDragged: false,
+            isLongPress: false,
+            pressTimer: null,
+            bubbleTimeout: null,
+            startX: 0, startY: 0, initialX: 0, initialY: 0
+        };
+
+        // 綁定專屬點擊/觸控事件
+        img.addEventListener('mousedown', (e) => onPointerDown(e, state));
+        img.addEventListener('touchstart', (e) => onPointerDown(e, state), { passive: false });
+        
+        activeAnimals.push(state);
+    });
+
+    // 小幫手：顯示氣泡對話框
+    function showMessage(state, msgs, duration) {
+        const msg = msgs[Math.floor(Math.random() * msgs.length)];
+        state.bubble.innerText = msg;
+        state.bubble.classList.add('show');
+        clearTimeout(state.bubbleTimeout);
+        state.bubbleTimeout = setTimeout(() => state.bubble.classList.remove('show'), duration);
+    }
+
+    // 處理電腦滑鼠與手機觸控的座標差異
     function getPointerPos(e) {
         return {
             x: e.touches ? e.touches[0].clientX : e.clientX,
@@ -490,93 +459,121 @@
         };
     }
 
-    function onPointerDown(e) {
+    // 當動物被點擊/按住時
+    function onPointerDown(e, state) {
         if (e.cancelable) e.preventDefault();
         const pos = getPointerPos(e);
         
-        isDragging = true;
-        hasDragged = false;
-        isLongPress = false;
+        currentlyDragging = state; // 鎖定目前被抓起來的動物
+        state.isDragging = true;
+        state.hasDragged = false;
+        state.isLongPress = false;
         
-        startMouseX = pos.x;
-        startMouseY = pos.y;
-        initialCowX = cowX;
-        initialCowY = cowY;
+        state.startX = pos.x;
+        state.startY = pos.y;
+        state.initialX = state.x;
+        state.initialY = state.y;
         
-        pressTimer = setTimeout(() => {
-            if (!hasDragged) {
-                isLongPress = true;
-                // 一起跳躍，對話框會跟著飛上去
-                cowPhysics.classList.add('is-jumping'); 
-                showCowMessage(jumpMessages, 2000);
-                // 1秒後掉回地上
-                setTimeout(() => cowPhysics.classList.remove('is-jumping'), 1000);
+        // 長按偵測 (超過 500 毫秒沒移動就當作長按跳躍)
+        state.pressTimer = setTimeout(() => {
+            if (!state.hasDragged) {
+                state.isLongPress = true;
+                state.physics.classList.add('is-jumping');
+                showMessage(state, state.data.jump, 2000);
+                setTimeout(() => state.physics.classList.remove('is-jumping'), 1000);
             }
         }, 500);
-
-        document.addEventListener('mousemove', onPointerMove, { passive: false });
-        document.addEventListener('mouseup', onPointerUp);
-        document.addEventListener('touchmove', onPointerMove, { passive: false });
-        document.addEventListener('touchend', onPointerUp);
     }
 
+    // 拖曳物理行為 (註冊在全域 document 上避免滑太快斷線)
+    document.addEventListener('mousemove', onPointerMove, { passive: false });
+    document.addEventListener('mouseup', onPointerUp);
+    document.addEventListener('touchmove', onPointerMove, { passive: false });
+    document.addEventListener('touchend', onPointerUp);
+
     function onPointerMove(e) {
-        if (!isDragging) return;
+        if (!currentlyDragging) return;
+        const state = currentlyDragging;
         const pos = getPointerPos(e);
-        const dx = pos.x - startMouseX;
-        const dy = pos.y - startMouseY;
+        const dx = pos.x - state.startX;
+        const dy = pos.y - state.startY;
         
+        // 移動超過 5 像素才判定為真正的「拖曳」
         if (Math.abs(dx) > 5 || Math.abs(dy) > 5) {
-            hasDragged = true;
-            clearTimeout(pressTimer); 
+            state.hasDragged = true;
+            clearTimeout(state.pressTimer); // 已經在拖曳了，取消長按判定
             
-            // 跟隨拖曳位置
-            cowX = initialCowX + dx;
-            cowY = initialCowY + dy;
-            cowContainer.style.transform = `translate(${cowX}px, ${cowY}px)`;
+            state.x = state.initialX + dx;
+            state.y = state.initialY + dy;
+            state.container.style.transform = `translate(${state.x}px, ${state.y}px)`;
         }
         if (e.cancelable) e.preventDefault();
     }
 
     function onPointerUp(e) {
-        isDragging = false;
-        clearTimeout(pressTimer);
+        if (!currentlyDragging) return;
+        const state = currentlyDragging;
         
-        document.removeEventListener('mousemove', onPointerMove);
-        document.removeEventListener('mouseup', onPointerUp);
-        document.removeEventListener('touchmove', onPointerMove);
-        document.removeEventListener('touchend', onPointerUp);
+        state.isDragging = false;
+        clearTimeout(state.pressTimer);
         
-        if (!hasDragged && !isLongPress) {
-            showCowMessage(shortMessages, 1500);
-            
-            cowDir *= -1;
-            if (cowDir === 1) {
-                cow.classList.remove('face-left');
-            } else {
-                cow.classList.add('face-left');
-            }
+        // 如果沒有拖曳也沒長按，判定為【短按】
+        if (!state.hasDragged && !state.isLongPress) {
+            showMessage(state, state.data.short, 1500);
+            state.dir *= -1; // 碰一下就轉身走人
         }
+        currentlyDragging = null; // 釋放控制權
     }
 
-    cow.addEventListener('mousedown', onPointerDown);
-    cow.addEventListener('touchstart', onPointerDown, { passive: false });
+    // 🎮 遊戲與物理主迴圈 (控制所有動物走路與碰撞邊界)
+    function gameLoop(time) {
+        if (!lastTime) lastTime = time;
+        const dt = (time - lastTime) / 1000;
+        lastTime = time;
+        const screenW = window.innerWidth;
+
+        activeAnimals.forEach(state => {
+            // 只有沒被抓起來的動物才會自己走路
+            if (!state.isDragging) {
+                state.x += state.data.speed * state.dir * dt;
+                
+                // 邊界碰撞折返判定
+                if (state.x > screenW + 50) {
+                    state.dir = -1; // 碰到右邊緣往左走
+                } else if (state.x < -100) {
+                    state.dir = 1;  // 碰到左邊緣往右走
+                }
+                
+                // 更新位移
+                state.container.style.transform = `translate(${state.x}px, ${state.y}px)`;
+                
+                // 修正與更新面向 (解決倒退走問題)
+                let currentScale = state.dir;
+                if (state.data.reverseFlip) currentScale *= -1; 
+                state.img.style.transform = `scaleX(${currentScale})`;
+            }
+        });
+
+        requestAnimationFrame(gameLoop); // 請求下一影格
+    }
+    requestAnimationFrame(gameLoop); // 發動引擎
+
     /*
-                               `-+syhddmmmddhyo+:`                              
-                            .+hmmdddddddddddddddmmds/`      ``...`              
-                         `/hmddddddddddddddddddddddddmy++osyhyyyhhs.            
+                               `-+syhddmmmddhyo+:`                             
+                            .+hmmdddddddddddddddmmds/`      ``...`             
+                         `/hmddddddddddddddddddddddddmy++osyhyyyhhs.           
                        `ommddddddddddddddddddddddddddddmmdys+++syhhh:           
-           .`         /mmddddddddddddddddddddddddddddddddmmhyyyyyyyyh/          
+           .`         /mmddddddddddddddddddddddddddddddddmmhyyyyyyyyh/         
        `:sdNy`      .ymddddddddddddddddddddddddddddddddddddmdhhhyyyyyh-         
    `.+hmmmddmo     -mmddddddddddddddddddddddddddddddddddddddmmhhhhhhhh+         
-  odmmdddddddms` `+mmddddddddddddddddddddddddddddddddddddddddmmddhhhhh+         
-  ymdmmmmmmmmdmmdmmdddddddddddddmmddddddddddddddddddddddddddddmd:ydhhd:         
-  :Nmmmmmmmmmmmmmmddy+::+ydddms/:::/+osydmdddddddddddddddddddddN-`:+o:          
+ odmmdddddddms` `+mmddddddddddddddddddddddddddddddddddddddddmmddhhhhh+         
+ ymdmmmmmmmmdmmdmmdddddddddddddmmddddddddddddddddddddddddddddmd:ydhhd:         
+ :Nmmmmmmmmmmmmmmddy+::+ydddms/:::/+osydmdddddddddddddddddddddN-`:+o:          
    ymmmmmmmmmmmmmmdo.`.``/hmm/+hdd/``````-+ydmdddddddddddddddddmy               
-   .mmmmmmmmmmmmmmh:`-o+`:hm/`-o:.```````os/./ymddddddddddddddddN`              
-    /Nmmmmmmmmmmmmh:..::-od/``dMs````````/hNm:`-ymddddddddddddddN-              
-     sNmmmmmmmmmmmd+-:/-.`..`.hh:`...``:hh..:```:NdmmmmmmmdmddddN/              
-  `::/dmmmmmmmmmmmmdo:```./d/````-..:`-mdd.````.dmdmmmmmmmmmmmdmmy              
+   .mmmmmmmmmmmmmmh:`-o+`:hm/`-o:.```````os/./ymddddddddddddddddN`             
+    /Nmmmmmmmmmmmmh:..::-od/``dMs````````/hNm:`-ymddddddddddddddN-             
+     sNmmmmmmmmmmmd+-:/-.`..`.hh:`...``:hh..:```:NdmmmmmmmdmddddN/             
+  `::/dmmmmmmmmmmmmdo:```./d/````-..:`-mdd.````.dmdmmmmmmmmmmmdmmy             
 ./::-..+dmmmmmmmmmmh/````-dNms-```..``.+/`````-dmds/:-:ohmmmmmmmmN.             
 -/.``--`/dmmmdysydmy.````omNd+.-::-...-:os:..`-hs-``.``./hmmmmmmmmd.       .os` 
 /:---.`.`-/sy:```omy-````hddo` `s.``/NNNNo...`````-+o/``/dmmmmmmmmmms:..:+ymmN: 
@@ -598,10 +595,10 @@
                       /hsysyyyyd-.+yyyssyyssyh-                                 
           -/+oo++/-`   +hhyhhhso`  .ohyyyyyyhho:`   `-:/++++/:.                 
        -+ooooooooooso+/ssss.yy:      `//+ds/oysss+ossoooooooo+os/.              
-    `:o+:/oooooooooooooooossyh:          oyyssooooooooooooooo+/:os+`            
-   -ssoooooooooooooooooosssssy+          .hyssssssooooooooooooooooss-           
-   /syysssssssssssssssyyyyyyyh-           shyyyysyyysssssssssssssssyy           
-     `-/+ossyyyysso+/:-./++//.             .---` `.-:/+oossssoo++/:-`           
+        `:o+:/oooooooooooooooossyh:          oyyssooooooooooooooo+/:os+`            
+       -ssoooooooooooooooooosssssy+          .hyssssssooooooooooooooooss-           
+       /syysssssssssssssssyyyyyyyh-           shyyyysyyysssssssssssssssyy           
+         `-/+ossyyyysso+/:-./++//.             .---` `.-:/+oossssoo++/:-`           
 */
 </script>
 </body>
