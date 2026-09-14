@@ -528,8 +528,9 @@
     // 遊戲與物理主迴圈 (控制所有動物走路與碰撞邊界)
     function gameLoop(time) {
         if (!lastTime) lastTime = time;
-        const dt = (time - lastTime) / 1000;
+        let dt = (time - lastTime) / 1000;
         lastTime = time;
+        if (dt > 0.1) dt = 0.016;
         const screenW = window.innerWidth;
 
         activeAnimals.forEach(state => {
