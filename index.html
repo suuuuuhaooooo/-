@@ -184,7 +184,7 @@
         @keyframes fadeIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
 
         /* ==========================================
-           🐾 雲端動物園 (共用物理層設定)
+           雲端動物園
            ========================================== */
         .animal-container {
             position: fixed;
@@ -219,7 +219,7 @@
 
         .animal-bubble {
             position: absolute;
-            bottom: 100%; /* 🌟 動態適應任何動物高度，永遠貼齊頭頂 */
+            bottom: 100%; /* 動態適應任何動物高度，永遠貼齊頭頂 */
             margin-bottom: 5px; 
             background: var(--white);
             color: var(--dark);
@@ -363,34 +363,34 @@
     }
 
     // ==========================================
-    // 🐾 雲端可愛動物園物理引擎 (支援無限動物、獨立互動)
+    // 動物園
     // ==========================================
     
-    // 🌟 在這裡設定您的動物夥伴 (只要新增到陣列就會自動出生在畫面上！)
+    // 設定動物夥伴
     const animalConfig = [
         { 
             src: 'https://suuuuuhaooooo.github.io/-/cow.gif', 
-            speed: 45, width: 70, reverseFlip: true, // 💡 如果這隻動物預設倒退走，將 reverseFlip 改成 true 即可修正
-            short: ["Moo~", "Mooo!", "(chewing...)"], 
-            jump: ["MOOOOOOO!!! 🐮", "Holy cow!"] 
+            speed: 45, width: 70, reverseFlip: false,
+            short: ["Moo~", "Mooo!", "(chewing...)", "還我牛!!", "哞~", "哞!"], 
+            jump: ["MOOOOOOO!!!", "Holy cow!"] 
         },
         { 
             src: 'https://suuuuuhaooooo.github.io/-/horse.gif', 
-            speed: 65, width: 85, reverseFlip: false, 
-            short: ["Neigh~", "*snort*", "(trotting...)"], 
-            jump: ["Yeehaw! 🐴", "Giddy up!"] 
+            speed: 65, width: 70, reverseFlip: false, 
+            short: ["Neigh~", "*snort*", "(trotting...)", "(trotting...)", "讓我們騰雲駕霧吧! 紅心~", "我是馬，不是驢"], 
+            jump: ["Yeehaw!", "Giddy up!"] 
         },
         { 
             src: 'https://suuuuuhaooooo.github.io/-/pig.gif', 
             speed: 35, width: 55, reverseFlip: false, 
             short: ["Oink~", "Oink oink!"], 
-            jump: ["WHEEE! 🐷", "Mud bath!"] 
+            jump: ["WHEEE!", "Mud bath!"] 
         },
         { 
             src: 'https://suuuuuhaooooo.github.io/-/chicken.gif', 
             speed: 55, width: 45, reverseFlip: false, 
-            short: ["Cluck~", "Bawk bawk!"], 
-            jump: ["Cock-a-doodle-doo! 🐔", "Flap flap!"] 
+            short: ["Cluck~", "Bawk bawk!", "古咕咕"], 
+            jump: ["Cock-a-doodle-doo!", "Flap flap!"] 
         }
     ];
 
@@ -398,7 +398,7 @@
     let currentlyDragging = null;
     let lastTime = 0;
 
-    // 1. 引擎初始化：自動為陣列裡的每一隻動物生成專屬的 HTML 與狀態
+    // 1. 自動為陣列裡的每一隻動物生成的 HTML 與狀態
     animalConfig.forEach((data, index) => {
         const container = document.createElement('div');
         container.className = 'animal-container';
@@ -435,7 +435,7 @@
             startX: 0, startY: 0, initialX: 0, initialY: 0
         };
 
-        // 綁定專屬點擊/觸控事件
+        // 綁定點擊/觸控事件
         img.addEventListener('mousedown', (e) => onPointerDown(e, state));
         img.addEventListener('touchstart', (e) => onPointerDown(e, state), { passive: false });
         
@@ -480,7 +480,7 @@
                 state.isLongPress = true;
                 state.physics.classList.add('is-jumping');
                 showMessage(state, state.data.jump, 2000);
-                setTimeout(() => state.physics.classList.remove('is-jumping'), 1000);
+                setTimeout(() => state.physics.classList.remove('is-jumping'), 350);
             }
         }, 500);
     }
@@ -525,7 +525,7 @@
         currentlyDragging = null; // 釋放控制權
     }
 
-    // 🎮 遊戲與物理主迴圈 (控制所有動物走路與碰撞邊界)
+    // 遊戲與物理主迴圈 (控制所有動物走路與碰撞邊界)
     function gameLoop(time) {
         if (!lastTime) lastTime = time;
         const dt = (time - lastTime) / 1000;
