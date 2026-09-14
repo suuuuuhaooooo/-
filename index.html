@@ -204,6 +204,36 @@
         @keyframes fadeInDown { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
         @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
         @keyframes fadeIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+        /* ==========================================
+           來回走動的動態 GIF 牛牛
+           ========================================== */
+        .cow-container {
+            position: fixed;
+            bottom: 15px; /* 調整牛牛距離螢幕底部的距離 */
+            left: 0;
+            z-index: 999; /* 確保牛牛走在最上層 */
+            pointer-events: none; /* 讓滑鼠穿透牛牛，不會干擾家長點擊按鈕 */
+            animation: walkAcross 25s linear infinite; /* 25秒走完一趟，無限循環 */
+        }
+
+        .cow-sprite {
+            width: 70px; /* 調整牛牛大小 */
+            height: auto;
+            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.15)); /* 加上微微的陰影更生動 */
+        }
+
+        /* 
+           💡 動畫轉向邏輯：
+           這裡假設您下載的 GIF 圖片，預設是「頭朝右」。
+           (如果您的 GIF 預設是「頭朝左」，請將所有的 scaleX(1) 改成 scaleX(-1)，反之亦然)
+        */
+        @keyframes walkAcross {
+            0%   { transform: translateX(-80px) scaleX(1); }  /* 從左邊螢幕外出發，頭朝右 */
+            49%  { transform: translateX(105vw) scaleX(1); }  /* 走到右邊螢幕外 */
+            50%  { transform: translateX(105vw) scaleX(-1); } /* 轉頭 (變成頭朝左) */
+            99%  { transform: translateX(-80px) scaleX(-1); } /* 走回左邊螢幕外 */
+            100% { transform: translateX(-80px) scaleX(1); }  /* 轉頭 (頭朝右)，準備下一趟 */
+        }
     </style>
 </head>
 <body>
@@ -391,5 +421,9 @@
      `-/+ossyyyysso+/:-./++//.             .---` `.-:/+oossssoo++/:-`           
 */
 </script>
+    <!-- 動態牛牛 -->
+    <div class="cow-container">
+        <img class="cow-sprite" src="https://suuuuuhaooooo.github.io/-/cow.gif" alt="走路牛牛">
+    </div>
 </body>
 </html>
