@@ -200,39 +200,83 @@
             letter-spacing: 1px;
         }
 
-        /* 動畫 */
-        @keyframes fadeInDown { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
-        @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-        @keyframes fadeIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
         /* ==========================================
-           來回走動的動態 GIF 牛牛
+           牛牛
            ========================================== */
         .cow-container {
             position: fixed;
-            bottom: 15px; /* 調整牛牛距離螢幕底部的距離 */
+            bottom: 15px;
             left: 0;
-            z-index: 999; /* 確保牛牛走在最上層 */
-            pointer-events: none; /* 讓滑鼠穿透牛牛，不會干擾家長點擊按鈕 */
-            animation: walkAcross 25s linear infinite; /* 25秒走完一趟，無限循環 */
+            z-index: 999;
+            pointer-events: none; /* 讓滑鼠穿透容器，保護網頁按鈕 */
+            /* 使用 alternate 讓牠走到螢幕邊緣自動折返 */
+            animation: walkAcross 20s linear infinite alternate; 
+        }
+
+        /* 根據不同螢幕大小，自動調整合適的走路時間 */
+        @media screen and (min-width: 768px) { .cow-container { animation-duration: 45s; } }
+        @media screen and (min-width: 1200px) { .cow-container { animation-duration: 70s; } }
+
+        @keyframes walkAcross {
+            0%   { transform: translateX(-80px); }
+            100% { transform: translateX(105vw); }
         }
 
         .cow-sprite {
-            width: 70px; /* 調整牛牛大小 */
+            width: 70px;
             height: auto;
-            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.15)); /* 加上微微的陰影更生動 */
+            pointer-events: auto; /* 只有牛的身體可以被點擊 */
+            cursor: pointer;
+            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.15));
+            
+            /* 使用 CSS 變數來獨立控制「轉向」與「跳躍高度」 */
+            --face: 1;
+            --jump: 0px;
+            transform: scaleX(var(--face)) translateY(var(--jump));
+            /* 加入彈性動畫，讓跳躍跟轉身很平滑可愛 */
+            transition: transform 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
 
-        /* 
-           💡 動畫轉向邏輯：
-           這裡假設您下載的 GIF 圖片，預設是「頭朝右」。
-           (如果您的 GIF 預設是「頭朝左」，請將所有的 scaleX(1) 改成 scaleX(-1)，反之亦然)
-        */
-        @keyframes walkAcross {
-            0%   { transform: translateX(-80px) scaleX(1); }  /* 從左邊螢幕外出發，頭朝右 */
-            49%  { transform: translateX(105vw) scaleX(1); }  /* 走到右邊螢幕外 */
-            50%  { transform: translateX(105vw) scaleX(-1); } /* 轉頭 (變成頭朝左) */
-            99%  { transform: translateX(-80px) scaleX(-1); } /* 走回左邊螢幕外 */
-            100% { transform: translateX(-80px) scaleX(1); }  /* 轉頭 (頭朝右)，準備下一趟 */
+        /* 轉向與跳躍的觸發器 */
+        .cow-sprite.face-left { --face: -1; }
+        .cow-sprite.is-jumping { --jump: -80px; }
+
+        /* 浮動對話框 */
+        .cow-bubble {
+            position: absolute;
+            bottom: 75px; 
+            left: 50%;
+            transform: translateX(-50%) scale(0.8);
+            background: var(--white);
+            color: var(--dark);
+            padding: 6px 12px;
+            border-radius: 12px;
+            font-size: 13px;
+            font-weight: bold;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            border: 2px solid var(--primary);
+            white-space: nowrap;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+        }
+
+        .cow-bubble::after {
+            content: '';
+            position: absolute;
+            bottom: -7px;
+            left: 50%;
+            transform: translateX(-50%);
+            border-width: 7px 7px 0;
+            border-style: solid;
+            border-color: var(--primary) transparent transparent transparent;
+        }
+
+        .cow-bubble.show {
+            opacity: 1;
+            visibility: visible;
+            transform: translateX(-50%) scale(1);
+            bottom: 85px; 
         }
     </style>
 </head>
@@ -378,6 +422,86 @@
         document.querySelector('.logo-text').style.fontSize = '36px';
         document.getElementById('sub-title').innerText = '家教數位入口網';
     }
+    // ==========================================
+    // 牛牛互動
+    // ==========================================
+    const cow = document.getElementById('cow');
+    const cowContainer = document.getElementById('cow-container');
+    const cowBubble = document.getElementById('cow-bubble');
+    
+    let pressTimer;
+    let isLongPress = false;
+    let bubbleTimeout;
+    
+    // 全英文的無厘頭牛叫聲
+    const shortMessages = ["Moo~", "Mooo!", "Moo moo~", "(chewing...)", "Moooo~"];
+    const jumpMessages  = ["MOOOOOOO!!!", "Moo?!", "Yahooo~"];
+
+    function showCowMessage(msgs, duration) {
+        const msg = msgs[Math.floor(Math.random() * msgs.length)];
+        cowBubble.innerText = msg;
+        cowBubble.classList.add('show');
+        clearTimeout(bubbleTimeout);
+        bubbleTimeout = setTimeout(() => {
+            cowBubble.classList.remove('show');
+        }, duration);
+    }
+
+    // 1. 自動偵測邊界：當牛牛走到螢幕邊緣自動折返時，翻轉身體
+    cowContainer.addEventListener('animationiteration', () => {
+        cow.classList.toggle('face-left');
+    });
+
+    // 2. 處理按下動作 (偵測長按)
+    function startPress(e) {
+        if (e.cancelable) e.preventDefault(); // 防止手機長按跳出圖片選單
+        isLongPress = false;
+        
+        // 設定長按計時器 (超過 500 毫秒就算長按)
+        pressTimer = setTimeout(() => {
+            isLongPress = true;
+            
+            // 【長按發動】：跳躍！
+            cow.classList.add('is-jumping');
+            showCowMessage(jumpMessages, 2000);
+            
+            // 1秒後掉回地上
+            setTimeout(() => {
+                cow.classList.remove('is-jumping');
+            }, 1000);
+            
+        }, 500);
+    }
+
+    // 3. 處理放開動作 (偵測短按)
+    function endPress(e) {
+        if (e.cancelable) e.preventDefault();
+        clearTimeout(pressTimer);
+        
+        if (!isLongPress) {
+            // 【短按發動】：叫一聲 + 轉身 + 反方向走！
+            showCowMessage(shortMessages, 1500);
+            
+            // 利用 Web API 瞬間反轉走路動畫的方向
+            const anims = cowContainer.getAnimations();
+            if (anims.length > 0) {
+                anims[0].reverse();
+            }
+            
+            // 讓牛頭轉向
+            cow.classList.toggle('face-left');
+        }
+    }
+
+    // 綁定電腦滑鼠事件
+    cow.addEventListener('mousedown', startPress);
+    cow.addEventListener('mouseup', endPress);
+    cow.addEventListener('mouseleave', () => clearTimeout(pressTimer));
+
+    // 綁定手機觸控事件
+    cow.addEventListener('touchstart', startPress, { passive: false });
+    cow.addEventListener('touchend', endPress);
+    cow.addEventListener('touchcancel', () => clearTimeout(pressTimer));
     /*
                                `-+syhddmmmddhyo+:`                              
                             .+hmmdddddddddddddddmmds/`      ``...`              
@@ -421,9 +545,10 @@
      `-/+ossyyyysso+/:-./++//.             .---` `.-:/+oossssoo++/:-`           
 */
 </script>
-    <!-- 動態牛牛 -->
-    <div class="cow-container">
-        <img class="cow-sprite" src="https://suuuuuhaooooo.github.io/-/cow.gif" alt="走路牛牛">
+    <!-- 牛牛 -->
+    <div class="cow-container" id="cow-container">
+        <div class="cow-bubble" id="cow-bubble">Moo~</div>
+        <img class="cow-sprite" id="cow" src="https://suuuuuhaooooo.github.io/-/cow.gif" alt="牛牛">
     </div>
 </body>
 </html>
