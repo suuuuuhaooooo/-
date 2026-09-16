@@ -1825,8 +1825,30 @@
                             loadingEl.innerText = "資料同步中...";
                         }
                     }
-                    const r = await fetch(SCRIPT_URL + "?token=SuHaoClassroom2026_SecureKey");
-                    const data = await r.json();
+                    // 替換成這段：加入記憶體快取與 25 秒超時保護
+                    const fetchAllData = async () => {
+                        const cachedStudents = sessionStorage.getItem('suhao_students');
+                        const cacheTime = sessionStorage.getItem('suhao_cache_time');
+                        const now = Date.now();
+                    
+                        // 若 15 分鐘內抓過，直接從記憶體瞬間讀出，不卡頓
+                        if (cachedStudents && cacheTime && (now - parseInt(cacheTime) < 900000)) {
+                            return JSON.parse(cachedStudents);
+                        }
+                    
+                        const r = await fetch(SCRIPT_URL + "?token=SuHaoClassroom2026_SecureKey");
+                        const studentDataArray = await r.json();
+                    
+                        // 寫入快取
+                        sessionStorage.setItem('suhao_students', JSON.stringify(studentDataArray));
+                        sessionStorage.setItem('suhao_cache_time', now.toString());
+                    
+                        return studentDataArray;
+                    };
+                    
+                    // 啟動 25 秒超時保險絲
+                    const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('GAS_TIMEOUT')), 25000));
+                    const data = await Promise.race([fetchAllData(), timeoutPromise]);
                     const my = data.find(i => i.uid === user.uid);                        
                     
                     if (my) {
@@ -1943,6 +1965,9 @@
                 } catch (e) { 
                     console.error(e);
                     document.getElementById('loading-screen').style.display = 'none';
+                    if (e.message === 'GAS_TIMEOUT') {
+                        alert("【系統通知】資料庫連線超時，請檢查網路狀態或稍後重新整理。");
+                    }
                 }
             } else {
                 document.getElementById('login-ui').style.display = 'flex';
