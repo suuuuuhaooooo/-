@@ -521,23 +521,50 @@
                     // 3. 取得安全憑證
                     const idToken = await user.getIdToken(); 
 
-                    // 🌟 核心解法：改用獨立的 async 函式「依序」抓取資料，並改用 POST 傳遞長憑證
+                    // 改用獨立的 async 函式「依序」抓取資料，並改用 POST 傳遞長憑證
                     const fetchAllData = async () => {
-                        // 第 1 個請求：先抓學生名單 (原本的 GET 即可，參數很短)
-                        const r1 = await fetch(SCRIPT_URL + "?token=SuHaoClassroom2026_SecureKey");
-                        const studentDataArray = await r1.json();
-
-                        // 第 2 個請求：等前一個抓完後，再抓題庫 (改用 POST 傳輸，解決網址過長與併發鎖死問題)
-                        const r2 = await fetch(SCRIPT_URL, {
-                            method: "POST",
-                            headers: { "Content-Type": "text/plain;charset=utf-8" },
-                            body: JSON.stringify({
-                                token: "SuHaoClassroom2026_SecureKey",
-                                action: "getExams",
-                                idToken: idToken
-                            })
-                        });
-                        const allExamsCatalog = await r2.json();
+                        // 替換成這段：加入記憶體快取與 25 秒超時保護
+                        const fetchAllData = async () => {
+                            const cachedStudents = sessionStorage.getItem('suhao_students');
+                            const cachedExams = sessionStorage.getItem('suhao_exams');
+                            const cacheTime = sessionStorage.getItem('suhao_cache_time');
+                            const now = Date.now();
+                        
+                            // 如果在雲端教室已經抓過，直接從記憶體瞬間讀出，不再卡頓！
+                            if (cachedStudents && cachedExams && cacheTime && (now - parseInt(cacheTime) < 900000)) {
+                                console.log("使用本地快取載入試務資料");
+                                return {
+                                    studentDataArray: JSON.parse(cachedStudents),
+                                    allExamsCatalog: JSON.parse(cachedExams)
+                                };
+                            }
+                        
+                            // 如果沒快取，才向 Google 請求
+                            const r1 = await fetch(SCRIPT_URL + "?token=SuHaoClassroom2026_SecureKey");
+                            const studentDataArray = await r1.json();
+                        
+                            const idToken = await user.getIdToken();
+                            const r2 = await fetch(SCRIPT_URL, {
+                                method: "POST",
+                                headers: { "Content-Type": "text/plain;charset=utf-8" },
+                                body: JSON.stringify({ token: "SuHaoClassroom2026_SecureKey", action: "getExams", idToken: idToken })
+                            });
+                            const allExamsCatalog = await r2.json();
+                        
+                            // 寫入快取
+                            sessionStorage.setItem('suhao_students', JSON.stringify(studentDataArray));
+                            sessionStorage.setItem('suhao_exams', JSON.stringify(allExamsCatalog));
+                            sessionStorage.setItem('suhao_cache_time', now.toString());
+                        
+                            return { studentDataArray, allExamsCatalog };
+                        };
+                        
+                        // 啟動 25 秒超時保險絲
+                        const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('GAS_TIMEOUT')), 25000));
+                        const result = await Promise.race([fetchAllData(), timeoutPromise]);
+                        
+                        const studentDataArray = result.studentDataArray;
+                        const allExamsCatalog = result.allExamsCatalog;
 
                         return { studentDataArray, allExamsCatalog };
                     };
