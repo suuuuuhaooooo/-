@@ -172,7 +172,27 @@
         <div class="loading-text" id="loading-text">系統初始化中...</div>
         <div class="loading-subtext" id="loading-subtext">正在驗證您的 LINE 帳號</div>
     </div>
-
+    <!-- 版權宣告視窗 (預設隱藏) -->
+    <div id="copyright-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 10001; justify-content: center; align-items: center; backdrop-filter: blur(3px);">
+        <div style="background: white; padding: 30px; border-radius: 12px; width: 85%; max-width: 400px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); border-top: 6px solid var(--primary); display: flex; flex-direction: column;">
+            <h2 style="color: var(--dark); margin-top: 0; font-size: 20px; border-bottom: 2px solid #eee; padding-bottom: 10px; margin-bottom: 15px;">智慧財產權與免責聲明</h2>
+            
+            <div style="font-size: 14px; color: #555; line-height: 1.6; text-align: justify; margin-bottom: 20px; flex-grow: 1; overflow-y: auto; max-height: 50vh;">
+                <p>歡迎使用「庫口袋 Cool Pocket」雲端組卷系統。在您開始產出考卷前，請詳閱並同意以下聲明：</p>
+                <ol style="padding-left: 20px; margin-bottom: 0;">
+                    <li style="margin-bottom: 8px;"><strong>題目來源：</strong>本題庫系統內所收錄之題目，部分為歷年各校公開之考題（含會考、段考等），部分為蘇昊老師及本團隊自行編寫之原創題目。</li>
+                    <li style="margin-bottom: 8px;"><strong>使用限制：</strong>本系統產出之試卷及解答，僅供您個人學習、複習與評量使用。</li>
+                    <li style="margin-bottom: 8px;"><strong>禁止商業用途：</strong>嚴禁將本系統產出之任何內容（包含原創與非原創題目），用於任何形式的商業營利行為、出版、散佈或上傳至其他公開平台。</li>
+                    <li style="margin-bottom: 0;"><strong>版權保護：</strong>若經查獲有侵犯原創題目著作權之情事，本團隊將保留法律追訴權，並立即終止您的帳號權限。</li>
+                </ol>
+            </div>
+            
+            <div style="display: flex; gap: 10px;">
+                <button onclick="closeCopyrightModal()" style="flex: 1; padding: 12px; border: 1px solid #ddd; border-radius: 8px; background: #fafafa; color: #666; font-weight: bold; cursor: pointer; transition: 0.2s;">取消</button>
+                <button onclick="acceptAndGenerate()" style="flex: 1; padding: 12px; border: none; border-radius: 8px; background: var(--primary); color: white; font-weight: bold; cursor: pointer; transition: 0.2s;">我已詳閱並同意</button>
+            </div>
+        </div>
+    </div>
     <nav class="navbar">
         <!-- 1. Logo 區塊 -->
         <div class="brand-title">
@@ -266,7 +286,7 @@
             <div class="input-group" style="display: flex; justify-content: center;">
                 <div class="cf-turnstile" data-sitekey="0x4AAAAAAEfhvS3JAsPN-kkR" data-theme="light"></div>
             </div>
-            <button class="main-btn" id="generate-btn" onclick="triggerRenderCompilation()" disabled>
+            <button class="main-btn" id="generate-btn" onclick="checkBeforeGenerate()" disabled>
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
                 開始雲端組卷
             </button>
@@ -313,7 +333,7 @@
                     if (currentTime > parseInt(exp)) {
                         clearTimeout(timeout);
                         hideLoading();
-                        alert("此連結已逾時失效！請重新在聊天室輸入「我要題庫」索取新連結。");
+                        alert("此連結已逾時失效！請重新在聊天室輸入關鍵字索取新連結。");
                         if (liff.isInClient()) {
                             liff.closeWindow(); // 若在 LINE 內直接關閉視窗
                         }
@@ -523,7 +543,7 @@
 
             const select = document.getElementById(elementId);
             if (!select) return;
-            select.innerHTML = ''; // ⚡️ 複選不需要「全部」選項，清空即可
+            select.innerHTML = ''; // 複選不需要「全部」選項，清空即可
             uniqueValues.forEach(val => {
                 let opt = document.createElement('option');
                 opt.value = val; 
@@ -534,43 +554,75 @@
         }
 
         // ==========================================
-        // 4. 傳送指令給 Render 伺服器
+        // 版權宣告視窗控制邏輯
         // ==========================================
-        async function triggerRenderCompilation() {
-            const subject = document.getElementById('select-subject').value;
+        function checkBeforeGenerate() {
+            // 1. 檢查網址時效性 (避免使用者停留在畫面太久，網址過期了還彈出版權視窗)
+            const urlParams = new URLSearchParams(window.location.search);
+            const urlUid = urlParams.get('uid');
+            const urlExp = urlParams.get('exp');
+            const urlSign = urlParams.get('sign');
+            
+            if (!urlUid || !urlExp || !urlSign) {
+                alert("無效的連結！缺少安全憑證，請從 LINE 官方帳號重新進入。");
+                return;
+            }
+            if (Math.floor(Date.now() / 1000) > parseInt(urlExp)) {
+                alert("連結已逾期失效！請回到 LINE 重新索取。");
+                if (liff.isInClient()) liff.closeWindow();
+                return;
+            }
+
+            // 2. 檢查題數是否足夠
             let count = parseInt(document.getElementById('input-count').value);
             if (count < 1) count = 1;
 
-            // ⚡️ 題數不足的防呆檢查
             let currentMatchCount = updateAvailableCount();
             if (currentMatchCount < count) {
                 alert(`題數不足！\n\n您設定要抽 ${count} 題，但目前的篩選條件只有 ${currentMatchCount} 題符合。\n請「放寬條件」或「減少抽卷題數」再試一次。`);
                 return;
             }
 
-            // 🛡️ 1. 從網址列抓取安全參數 (uid, exp, sign)
-            const urlParams = new URLSearchParams(window.location.search);
-            const urlUid = urlParams.get('uid');
-            const urlExp = urlParams.get('exp');
-            const urlSign = urlParams.get('sign');
-            
-            // 🛡️ 本地初步防呆：如果網址被亂改，直接擋下不用浪費資源送後端
-            if (!urlUid || !urlExp || !urlSign) {
-                alert("無效的連結！缺少安全憑證，請從 LINE 官方帳號重新進入。");
-                return;
-            }
-            if (Math.floor(Date.now() / 1000) > parseInt(urlExp)) {
-                alert("連結已逾期失效！請回到 LINE 重新輸入「我要題庫」。");
-                if (liff.isInClient()) liff.closeWindow();
-                return;
-            }
-            const turnstileResponse = document.querySelector('[name="cf-turnstile-response"]').value;
+            // 3. 檢查 Cloudflare 機器人驗證 (加上安全防呆，避免 DOM 沒載入時報錯)
+            const cfElement = document.querySelector('[name="cf-turnstile-response"]');
+            const turnstileResponse = cfElement ? cfElement.value : '';
             if (!turnstileResponse) {
                 alert("請先完成下方的機器人安全驗證！");
                 return;
             }
-            
-            setLoadingState("正在驅動雲端編譯器...", "產生測驗卷與解答中，請勿關閉視窗 (約需幾 2 ~ 3 分鐘)");
+
+            // 4. 全部檢查通過，顯示版權宣告視窗
+            document.getElementById('copyright-modal').style.display = 'flex';
+        }
+
+        function closeCopyrightModal() {
+            document.getElementById('copyright-modal').style.display = 'none';
+        }
+
+        function acceptAndGenerate() {
+            // 5. 使用者同意，關閉視窗並開始組卷
+            closeCopyrightModal();
+            triggerRenderCompilation(); 
+        }
+
+        // ==========================================
+        // 傳送指令給 Render 伺服器
+        // ==========================================
+        async function triggerRenderCompilation() {
+            // 這裡不再需要前面的 alert 檢查了，因為已經在 checkBeforeGenerate 嚴格把關過
+            const subject = document.getElementById('select-subject').value;
+            let count = parseInt(document.getElementById('input-count').value);
+            if (count < 1) count = 1;
+
+            // 抓取要送給後端的必要參數
+            const urlParams = new URLSearchParams(window.location.search);
+            const urlUid = urlParams.get('uid');
+            const urlExp = urlParams.get('exp');
+            const urlSign = urlParams.get('sign');
+            const cfElement = document.querySelector('[name="cf-turnstile-response"]');
+            const turnstileResponse = cfElement ? cfElement.value : '';
+
+            setLoadingState("正在驅動雲端編譯器...", "產生測驗卷與解答中，請勿關閉視窗 (約需 2 ~ 3 分鐘)");
 
             const currentFilters = {
                 "學年度": getSelectedValues('select-year'),
@@ -584,10 +636,10 @@
                 "難易度": getSelectedValues('select-difficulty')
             };
 
-            // 🛡️ 2. 將參數包裝進 payload 送給 Python
+            // 將參數包裝進 payload 送給 Python
             const payload = {
                 subject: subject,
-                name: currentUser.name, // 從 LIFF 抓到的名字
+                name: currentUser.name, 
                 questionCount: count,
                 filters: currentFilters,
                 uid: urlUid,
@@ -615,15 +667,17 @@
                     if (responseData.success) {
                         let filterText = "";
                         for (let key in responseData.filters) {
-                            if (responseData.filters[key]) {
+                            if (responseData.filters[key] && responseData.filters[key].length > 0) {
                                 filterText += `◎ ${key}：${responseData.filters[key]}\n`;
                             }
                         }
                         if (filterText === "") filterText = "◎ 條件：無 (全範圍隨機抽題)\n";
+                        
                         let realName = responseData.student_name || "同學";
                         if (realName !== "同學" && !realName.includes("同學") && !realName.includes("老師")) {
                             realName += " 同學";
                         }
+                        
                         const lineMessage = `【雲端組卷產出成功通知】\n\n${realName}您好，這是為您篩選的 ${subject} 組卷！\n\n🔍 [篩選條件]\n${filterText}\n測驗卷連結：\n${responseData.exam_url}\n\n詳解卷連結：\n${responseData.ans_url}\n\n(本系統設有保護機制，連結將於 24 小時後自動銷毀。若發現任何題目有疑義或錯誤，請立即回報，並註明對應的題目編號。)`;
 
                         if (liff.isInClient()) {
@@ -655,7 +709,7 @@
                     }
                 } else {
                     const errData = await res.json();
-                    showError("伺服器拒絕：" + (errData.error || "無回應")); // 這裡如果簽章錯誤，會顯示 Python 的 403 報錯
+                    showError("伺服器拒絕：" + (errData.error || "無回應")); 
                 }
             } catch (err) {
                 console.error("錯誤：", err);
