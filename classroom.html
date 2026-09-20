@@ -1576,6 +1576,8 @@
                     
                     localStorage.removeItem('login_fail_count');
                     localStorage.removeItem('login_lock_until');
+                    const cleanUrl = window.location.origin + window.location.pathname;
+                    window.history.replaceState({}, document.title, cleanUrl);
                 } else {
                     document.getElementById('loading-screen').style.display = 'none';
                     alert(result.message);
@@ -1754,18 +1756,20 @@
             const user = auth.currentUser;
             if(user) db.ref('presence/' + user.uid).remove();
 
-            // 1. 先清除 Firebase 與本地儲存空間
-            auth.signOut().then(() => { 
+            auth.signOut().finally(() => { 
                 localStorage.clear(); 
                 sessionStorage.clear();
 
-                // 2. 強制登出 LINE 官方的授權快取
-                if (typeof liff !== 'undefined' && liff.isInClient && liff.isInClient()) {
-                    // 如果是在 LINE 內部開啓，執行 LIFF 登出
-                    liff.logout();
+                // 1. 強制讓 LIFF 登出，清除 LINE 授權快取
+                if (typeof liff !== 'undefined' && liff.logout) {
+                    try { liff.logout(); } catch(e) {}
                 }
 
-                // 3. 重新整理頁面回到乾淨的登入畫面
+                // 2. 清除網址列上的所有暫存參數（如 ?liff.state=...），回到乾淨的網址
+                const cleanUrl = window.location.origin + window.location.pathname;
+                window.history.replaceState({}, document.title, cleanUrl);
+
+                // 3. 重新載入頁面
                 location.reload(); 
             });
         }
@@ -2619,7 +2623,7 @@
                 const idToken = await user.getIdToken();
                 const currentIp = document.getElementById('login-ip').innerText.replace('IP: ', '').trim();
         
-                // 🛡️ 改用 POST 傳輸，密碼藏在 body 裡，不會在網址列外洩
+                // 改用 POST 傳輸，密碼藏在 body 裡，不會在網址列外洩
                 const payloadData = {
                     action: "changePassword",
                     idToken: idToken, // 傳送憑證
