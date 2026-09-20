@@ -256,20 +256,34 @@
             /* 導覽列改為頂部固定 */
             .sidebar { width: 100%; padding: 0; position: sticky; top: 0; z-index: 1000; box-shadow: 0 4px 15px rgba(0,0,0,0.04); border-right: none; height: auto; background: white; }
             
-            /* Logo與漢堡按鈕對齊 */
-            .sidebar-brand { padding: 15px 20px; margin-bottom: 0; border-bottom: none; display: flex; justify-content: space-between; align-items: center; }
-            .mobile-toggle { display: block; }
+            /* Logo與漢堡按鈕對齊 (加入旋轉動畫) */
+            .sidebar-brand { padding: 15px 20px; margin-bottom: 0; border-bottom: none; display: flex; justify-content: space-between; align-items: center; background: white; position: relative; z-index: 10; }
+            .mobile-toggle { display: block; transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+            .sidebar.open .mobile-toggle { transform: rotate(90deg); color: #c0392b; }
             
-            /* 下拉選單隱藏與顯示邏輯 */
+            /* 下拉選單隱藏與顯示邏輯 (滑順淡入淡出特效) */
             .sidebar-menu-wrapper { 
-                display: none; 
                 position: absolute; 
                 top: 100%; left: 0; width: 100%; 
                 background: white; 
-                box-shadow: 0 10px 20px rgba(0,0,0,0.1); 
+                box-shadow: 0 15px 25px rgba(0,0,0,0.08); 
                 border-top: 1px solid #eee; 
+                
+                /* 動畫核心：用透明度與位移取代 display:none */
+                visibility: hidden;
+                opacity: 0;
+                transform: translateY(-15px);
+                transition: all 0.35s cubic-bezier(0.2, 0.8, 0.2, 1);
+                
+                /* 確保手機螢幕太小時可以滾動 */
+                max-height: calc(100vh - 65px);
+                overflow-y: auto;
             }
-            .sidebar.open .sidebar-menu-wrapper { display: flex; }
+            .sidebar.open .sidebar-menu-wrapper { 
+                visibility: visible;
+                opacity: 1;
+                transform: translateY(0);
+            }
 
             /* 選單項目改為直排 */
             .nav-group { display: block; padding: 0; border-bottom: 1px solid #eee; }
