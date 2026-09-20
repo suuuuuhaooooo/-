@@ -173,6 +173,28 @@
         .fc-correct-btn { background: #d4edda !important; border-color: #27ae60 !important; color: #155724 !important; font-weight: bold; }
         .fc-wrong-btn { background: #f8d7da !important; border-color: #c0392b !important; color: #721c24 !important; font-weight: bold; }
         .fc-btn { transition: 0.3s; }
+        /* 測驗進階功能 UI */
+        .test-controls { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        .flag-btn { background: #fff; border: 2px solid #ddd; color: #777; padding: 6px 12px; border-radius: 20px; font-size: 13px; font-weight: bold; cursor: pointer; transition: 0.2s; display: flex; align-items: center; gap: 5px; }
+        .flag-btn.active { border-color: #e74c3c; color: #c0392b; background: #fdf2f0; }
+        
+        .note-area { width: 100%; box-sizing: border-box; padding: 12px; border-radius: 8px; border: 2px solid #eee; margin-top: 15px; font-family: inherit; font-size: 14px; resize: vertical; min-height: 80px; background: #fafafa; transition: 0.2s; outline: none; }
+        .note-area:focus { border-color: var(--primary); background: #fff; }
+
+        .nav-buttons { display: flex; gap: 10px; margin-top: 20px; }
+        .nav-btn-secondary { background: #e0e0e0; color: #555; }
+        .nav-btn-secondary:hover:not(:disabled) { background: #d0d0d0; }
+
+        /* 答案卡 UI */
+        .answer-sheet-wrapper { margin-top: 30px; background: #fff; padding: 20px; border-radius: 8px; border: 1px solid #eee; }
+        .answer-sheet-title { font-size: 14px; font-weight: bold; color: var(--dark); border-bottom: 2px solid #f0f0f0; padding-bottom: 10px; margin-bottom: 15px; }
+        .answer-sheet { display: flex; flex-wrap: wrap; gap: 10px; }
+        .ans-circle { width: 38px; height: 38px; border-radius: 50%; border: 2px solid #ddd; display: flex; align-items: center; justify-content: center; font-weight: bold; cursor: pointer; color: #777; background: #fff; transition: 0.2s; font-size: 14px; }
+        .ans-circle:hover { border-color: var(--primary); }
+        .ans-circle.answered { background: var(--primary); color: white; border-color: var(--primary); }
+        .ans-circle.flagged { border-color: #e74c3c; color: #c0392b; background: #fdf2f0; }
+        .ans-circle.answered.flagged { background: #e74c3c; color: white; border-color: #c0392b; }
+        .ans-circle.active { box-shadow: 0 0 0 4px rgba(142,151,117,0.2); border-color: var(--dark); transform: scale(1.1); }
         /* =========================================
            手機端介面優化 (RWD) 
            ========================================= */
@@ -240,7 +262,7 @@
             <strong style="color: #c0392b; font-size: 15px;">考前須知：</strong>
             <ul style="color: #c0392b; font-size: 13px; margin: 8px 0 0; padding-left: 20px; line-height: 1.6;">
                 <li>點選「開始測驗」即視同正式進場，無法取消或重考。</li>
-                <li>本系統採取「單向作答」模式。點選「確認並下一題」後，將無法返回修改前一題答案。</li>
+                <li>支援自由跳題、標記不確定的題目，並可在下方「答案卡」查看作答狀況。</li>
                 <li>中途嚴禁「重新整理」或「離開網頁」，否則系統將強制收卷。</li>
                 <li>若違規跳出，系統將強制收卷，未作答題目一律以 0 分計算。</li>
             </ul>
@@ -256,9 +278,25 @@
                 <div class="quiz-header" id="quiz-progress">題目 1 / X</div>
                 <div class="timer-display" id="timer-display">時間還剩 30:00</div>
             </div>
+            
+            <div class="test-controls">
+                <button id="flag-btn" class="flag-btn" onclick="toggleFlag()">🚩 標記本題</button>
+            </div>
+
             <div class="question-text" id="question-text">載入題目中...</div>
             <div id="options-container"></div>
-            <button id="next-btn" class="main-btn" onclick="nextQuestion()" disabled>確認並下一題</button>
+            
+            <textarea id="note-area" class="note-area" placeholder="在此輸入您的個人筆記或計算思路 (僅供自己參考)..." oninput="saveNote(this.value)"></textarea>
+
+            <div class="nav-buttons">
+                <button id="prev-btn" class="main-btn nav-btn-secondary" onclick="prevQuestion()" disabled>上一題</button>
+                <button id="next-btn" class="main-btn" onclick="nextQuestion()">下一題</button>
+            </div>
+
+            <div class="answer-sheet-wrapper">
+                <div class="answer-sheet-title">作答狀況與答案卡 (點擊圓圈可快速跳題)</div>
+                <div id="answer-sheet" class="answer-sheet"></div>
+            </div>
         </div>
     </div>
 
@@ -781,6 +819,8 @@
         let currentExam = null;
         let currentQuestionIndex = 0;
         let userAnswers = [];
+        let flaggedQuestions = [];
+        let questionNotes = [];
         let examStartTime = 0; // 記錄測驗開始時間
         let allocatedTime = 0; // 記錄這份考卷的總時長
         let frozenTimeSpent = null; // 用來凍結作答時間
@@ -795,7 +835,11 @@
             });
             currentExam.questions = shuffleQuestions(currentExam.questions);
             currentQuestionIndex = 0;
+            
+            // 初始化陣列
             userAnswers = new Array(currentExam.questions.length).fill(null);
+            flaggedQuestions = new Array(currentExam.questions.length).fill(false);
+            questionNotes = new Array(currentExam.questions.length).fill("");
 
             db.ref('exam_records/' + currentUserUid + '/' + examId).update({ score: 0, date: new Date().toISOString() });
             completedRecords[examId] = { score: 0 };
@@ -803,16 +847,15 @@
             document.getElementById('test-ui').style.display = 'block';
             document.getElementById('active-exam-title').innerText = currentExam.title;
             
-            // 題數 × 2 分鐘 × 60 秒
             allocatedTime = currentExam.questions.length * 2 * 60;
             timeRemaining = allocatedTime; 
-            frozenTimeSpent = null; // 每次開考前重置凍結時間
+            frozenTimeSpent = null; 
             
             updateTimerDisplay();
             clearInterval(timerInterval);
             cheatWarnings = 0;
             isExamActive = true;
-            examStartTime = Date.now(); // 記錄當下的毫秒數
+            examStartTime = Date.now(); 
             window.history.pushState('exam_active', null, '');
             
             timerInterval = setInterval(() => {
@@ -822,7 +865,6 @@
                 updateTimerDisplay();
                 if (timeRemaining <= 0) { 
                     clearInterval(timerInterval); 
-                    // 在跳出警告視窗前，立刻把作答時間鎖死為「總時長」
                     frozenTimeSpent = allocatedTime; 
                     alert("測驗時間到！系統即將自動為您交卷結算。"); 
                     finishAndShowResults(); 
@@ -876,6 +918,20 @@
             const qData = currentExam.questions[currentQuestionIndex];
             document.getElementById('quiz-progress').innerText = `題目 ${currentQuestionIndex + 1} / ${currentExam.questions.length}`;
             document.getElementById('question-text').innerHTML = qData.question;
+            
+            // 恢復筆記狀態
+            document.getElementById('note-area').value = questionNotes[currentQuestionIndex];
+            
+            // 恢復標記狀態
+            const flagBtn = document.getElementById('flag-btn');
+            if (flaggedQuestions[currentQuestionIndex]) {
+                flagBtn.classList.add('active');
+                flagBtn.innerText = "🚩 取消標記";
+            } else {
+                flagBtn.classList.remove('active');
+                flagBtn.innerText = "🚩 標記本題";
+            }
+
             const optionsContainer = document.getElementById('options-container');
             optionsContainer.innerHTML = ""; 
             qData.options.forEach((opt, index) => {
@@ -886,23 +942,82 @@
                 if (userAnswers[currentQuestionIndex] === index) btn.classList.add('selected');
                 optionsContainer.appendChild(btn);
             });
+            
+            // 更新按鈕狀態 (解鎖限制，允許未作答跳題)
+            document.getElementById('prev-btn').disabled = (currentQuestionIndex === 0);
             const nextBtn = document.getElementById('next-btn');
-            nextBtn.disabled = userAnswers[currentQuestionIndex] === null;
-            nextBtn.innerText = currentQuestionIndex === currentExam.questions.length - 1 ? "交卷並看成績" : "確認並下一題";
+            nextBtn.disabled = false;
+            nextBtn.innerText = currentQuestionIndex === currentExam.questions.length - 1 ? "完成並交卷" : "下一題";
+            
+            renderAnswerSheet(); // 同步更新下方答案卡
+
             if (window.MathJax) { setTimeout(() => { MathJax.typesetPromise(); }, 100); }
         }
 
         function selectOption(index) {
-            // 1. 紀錄學生的選擇
             userAnswers[currentQuestionIndex] = index; 
             
-            // 2. 更新畫面 UI
             const buttons = document.querySelectorAll('.option-btn');
             buttons.forEach(btn => btn.classList.remove('selected'));
             buttons[index].classList.add('selected'); 
             
-            // 3. 解鎖「確認並下一題」按鈕
-            document.getElementById('next-btn').disabled = false; 
+            renderAnswerSheet(); // 點擊選項後立即更新答案卡顏色
+        }
+
+        // 新增：上一題
+        function prevQuestion() {
+            if (currentQuestionIndex > 0) {
+                currentQuestionIndex--;
+                renderQuestion();
+            }
+        }
+
+        // 修改：下一題 (支援最後一題觸發交卷)
+        function nextQuestion() {
+            if (currentQuestionIndex < currentExam.questions.length - 1) {
+                currentQuestionIndex++; 
+                renderQuestion();
+            } else { 
+                const unanswered = userAnswers.filter(ans => ans === null).length;
+                let confirmMsg = "確定要交卷嗎？";
+                if (unanswered > 0) confirmMsg = `您還有 ${unanswered} 題未作答，確定要交卷嗎？`;
+                if (confirm(confirmMsg)) { finishAndShowResults(); }
+            }
+        }
+
+        // 新增：跳轉指定題目
+        function jumpToQuestion(idx) {
+            currentQuestionIndex = idx;
+            renderQuestion();
+        }
+
+        // 新增：切換標記狀態
+        function toggleFlag() {
+            flaggedQuestions[currentQuestionIndex] = !flaggedQuestions[currentQuestionIndex];
+            renderQuestion();
+        }
+
+        // 新增：儲存筆記
+        function saveNote(val) {
+            questionNotes[currentQuestionIndex] = val;
+        }
+
+        // 新增：渲染答案卡
+        function renderAnswerSheet() {
+            const sheet = document.getElementById('answer-sheet');
+            sheet.innerHTML = "";
+            for (let i = 0; i < currentExam.questions.length; i++) {
+                const circle = document.createElement('div');
+                circle.className = 'ans-circle';
+                
+                if (i === currentQuestionIndex) circle.classList.add('active');
+                if (userAnswers[i] !== null) circle.classList.add('answered');
+                if (flaggedQuestions[i]) circle.classList.add('flagged');
+                
+                circle.innerText = i + 1;
+                circle.onclick = () => jumpToQuestion(i);
+                sheet.appendChild(circle);
+            }
         }
 
         function nextQuestion() {
@@ -936,23 +1051,38 @@
                 const timeSpentStr = Math.floor(timeSpentSec / 60) + "分" + (timeSpentSec % 60) + "秒";
                 
                 const studentName = localStorage.getItem('studentName') || "雲端同學";
+                
                 let orderedAnswers = new Array(currentExam.questions.length).fill(null);
                 let shuffledIndices = [];
-                let studentRealViewLog = `\n\n=== 學生當下作答順序 ===\n`;
+                
+                // 🌟 更新：將標記與筆記資訊一起整理，讓老師在後台收信時能看到學生的思考過程
+                let studentRealViewLog = `\n\n=== 學生當下作答狀況與筆記 ===\n`;
+                
                 for (let i = 0; i < currentExam.questions.length; i++) {
                     let origIdx = currentExam.questions[i].originalIndex;
+                    
+                    // 填入作答答案 (如果有作答)
                     orderedAnswers[origIdx] = userAnswers[i];
                     shuffledIndices.push(origIdx);
+                    
+                    // 組合這題的筆記與標記狀態
+                    let statusStr = `【第 ${i + 1} 題】(對應原題庫題號: ${origIdx + 1})\n`;
+                    if (flaggedQuestions[i]) statusStr += `[🚩 學生已標記不確定]\n`;
+                    if (questionNotes[i] && questionNotes[i].trim() !== "") {
+                        statusStr += `學生筆記：\n${questionNotes[i]}\n`;
+                    }
+                    studentRealViewLog += statusStr + `\n------------------------\n`;
                 }
 
                 const formData = new URLSearchParams();
                 formData.append("token", "SuHaoClassroom2026_SecureKey");
                 formData.append("action", "submitExam");
-                formData.append("idToken", idToken); // 放入憑證
+                formData.append("idToken", idToken); 
                 formData.append("examId", currentExam.id);
                 formData.append("name", studentName);
                 formData.append("timeSpent", timeSpentStr);
-                formData.append("userAnswers", JSON.stringify(orderedAnswers));
+                // 傳遞答案，未作答的 null 也能被 JSON.stringify 完美保留
+                formData.append("userAnswers", JSON.stringify(orderedAnswers)); 
                 formData.append("studentLog", studentRealViewLog);
                 formData.append("shuffledOrder", JSON.stringify(shuffledIndices));
 
@@ -964,7 +1094,7 @@
                     keepalive: true
                 });
                 
-                const result = await response.json(); // 接收 GAS 批改結果
+                const result = await response.json(); 
 
                 // 關閉載入動畫
                 document.getElementById('loading-screen').style.display = 'none';
@@ -977,30 +1107,26 @@
                     const finalScore = result.score;
                     const earnedPoints = result.earnedPoints || 0; 
 
-                    // ==========================================
-                    // 遊戲化機制
-                    // ==========================================
                     if (earnedPoints > 0) {
-                        // 延遲 0.8 秒，先看到結算畫面，再跳出彈窗
                         setTimeout(() => {
                             alert(`本次測驗獲得 ${finalScore} 分\n系統已自動為您發放【 ${earnedPoints} 點 】學習獎勵！`);
                         }, 800);
                     }
-                    // ==========================================
 
                     const detailedResults = result.details;
                     let shuffledDetails = new Array(currentExam.questions.length);
                     for (let i = 0; i < currentExam.questions.length; i++) {
                         let origIdx = currentExam.questions[i].originalIndex;
                         shuffledDetails[i] = detailedResults[origIdx];
+                        
+                        // 🌟 把學生的筆記跟標記狀態，一起塞入錯題檢討中，讓他回顧時能看到自己當初寫什麼
+                        shuffledDetails[i].studentNote = questionNotes[i] || "";
+                        shuffledDetails[i].isFlagged = flaggedQuestions[i];
                     }
 
-                    // 將正式成績寫入 Firebase
                     const recordData = { score: finalScore, date: new Date().toISOString(), details: shuffledDetails };
                     completedRecords[currentExam.id] = recordData;
-                    // db.ref('exam_records/' + currentUserUid + '/' + currentExam.id).set(recordData);
 
-                    // 顯示大字分數
                     const scoreEl = document.getElementById('score-display');
                     scoreEl.innerText = `${finalScore} 分`;
                     if (finalScore === 100) { 
@@ -1011,20 +1137,27 @@
                         scoreEl.style.color = "#c0392b"; scoreEl.innerText += " (要再加油複習哦！)";
                     }
 
-                    // 渲染錯題檢討
                     const reviewContainer = document.getElementById('review-container');
                     reviewContainer.innerHTML = "";
                     
                     shuffledDetails.forEach((detail, index) => {
+                        // 處理未作答的顯示
+                        let userAnsText = detail.userPick === "未作答" ? `<span style="color:#7f8c8d; font-weight:bold;">未作答</span>` : detail.userPick;
+                        
                         const statusHtml = detail.isCorrect 
                             ? `<span class="review-correct">√ 答對了！</span>` 
-                            : `<span class="review-wrong">x 答錯了 (你的答案：${detail.userPick})</span>`;
-                    
+                            : `<span class="review-wrong">x 答錯了 (你的答案：${userAnsText})</span>`;
+                            
+                        let flagHtml = detail.isFlagged ? `<span style="background:#fdf2f0; color:#c0392b; padding:2px 8px; border-radius:12px; font-size:12px; font-weight:bold; margin-left:10px;">🚩 已標記</span>` : '';
+                        
+                        let noteHtml = detail.studentNote ? `<div style="background:#fff3e0; border-left:4px solid #e67e22; padding:10px; margin-top:10px; font-size:13px; color:#d35400;"><strong>✏️ 你的筆記：</strong><br>${detail.studentNote}</div>` : '';
+
                         reviewContainer.innerHTML += `
                             <div class="review-card">
-                                <div class="review-q">Q${index + 1}. ${detail.originalQuestion}</div>
+                                <div class="review-q">Q${index + 1}. ${detail.originalQuestion} ${flagHtml}</div>
                                 <div class="review-ans">正確答案：${detail.correctAnswer}</div>
                                 <div class="review-ans">${statusHtml}</div>
+                                ${noteHtml}
                                 <div class="review-exp"><strong>解析：</strong><br>${detail.explanation}</div>
                             </div>`;
                     });
