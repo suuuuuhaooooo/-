@@ -459,42 +459,58 @@
             
             <div class="sidebar-menu-wrapper">
                 <div class="nav-group">
-                    <a id="nav-video" class="nav-link active" onclick="showView('video-view', this)">影音中心</a>
-                    <a id="nav-pdf" class="nav-link" onclick="showView('pdf-view', this)">線上教材</a>
-                    <a id="nav-contact" class="nav-link" onclick="showView('contact-view', this)">電子聯絡簿</a>
-                    <a href="test.html" class="nav-link">試務中心</a>
-                    <a id="nav-profile" class="nav-link" onclick="showView('tab-profile', this)">個人檔案</a>
-                    <a class="nav-link" onclick="openRewardModal()">
-                        我的集點卡
-                    </a>
-                    <a id="nav-rewards" class="nav-link" onclick="showView('rewards-view', this)">獎勵制度</a>
-                    <a id="nav-admin-scanner" class="nav-link" onclick="initScanner(this);" style="display: none;">
-                        集點卡管理
-                    </a>
-                    <a href="add_shortcut_method.html" target="_blank" class="nav-link">
-                        手機桌面捷徑教學
-                    </a>
+                    <!-- 群組 1：學習專區 -->
+                    <div class="nav-category active" onclick="toggleMenu('group-learning', this)">
+                        <span>學習專區</span><span class="arrow">▼</span>
+                    </div>
+                    <div id="group-learning" class="nav-sub-group open">
+                        <a id="nav-video" class="nav-link active" onclick="showView('video-view', this)">影音中心</a>
+                        <a id="nav-pdf" class="nav-link" onclick="showView('pdf-view', this)">線上教材</a>
+                        <a href="test.html" class="nav-link">試務中心</a>
+                    </div>
+
+                    <!-- 群組 2：點數獎勵 -->
+                    <div class="nav-category" onclick="toggleMenu('group-rewards', this)">
+                        <span>點數獎勵</span><span class="arrow">▼</span>
+                    </div>
+                    <div id="group-rewards" class="nav-sub-group">
+                        <a class="nav-link" onclick="openRewardModal()">我的集點卡</a>
+                        <a id="nav-rewards" class="nav-link" onclick="showView('rewards-view', this)">獎勵制度</a>
+                        <a id="nav-admin-scanner" class="nav-link" onclick="initScanner(this);" style="display: none;">集點卡管理</a>
+                    </div>
+
+                    <!-- 群組 3：系統與設定 -->
+                    <div class="nav-category" onclick="toggleMenu('group-settings', this)">
+                        <span>系統設定</span><span class="arrow">▼</span>
+                    </div>
+                    <div id="group-settings" class="nav-sub-group">
+                        <a id="nav-contact" class="nav-link" onclick="showView('contact-view', this)">電子聯絡簿</a>
+                        <a id="nav-profile" class="nav-link" onclick="showView('tab-profile', this)">個人檔案</a>
+                        <a href="add_shortcut_method.html" target="_blank" class="nav-link">桌面捷徑教學</a>
+                    </div>
                 </div>
+
+                <!-- 底部區塊永遠釘在最底下，絕不被擠出去 -->
                 <div class="sidebar-footer">
                     <div id="student-name" style="font-size: 15px; font-weight: 700; color: var(--dark);">
                         <div class="loading-dots" style="transform:scale(0.6); justify-content: flex-start; margin-bottom:0;"><div></div><div></div><div></div></div>
                     </div>
-                    <div id="student-meta" style="margin-top: 5px;"></div>
-        
-                    <div style="margin-top: 20px; border-top: 1px solid #f5f5f5; padding-top: 15px;">
-                        
-                        <div style="font-size: 12px; color: var(--dark); font-weight: 700; margin-bottom: 12px; display: flex; align-items: center; gap: 6px;">
-                            <span class="online-dot" style="width: 6px; height: 6px;"></span>
-                            <span id="classroom-presence">連線中...</span>
-                        </div>
-                        
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                            <span class="logout-link" style="color: var(--dark); text-decoration: none; font-weight: 700; margin-top: 0; transition: 0.2s;" onclick="logout()">登出系統</span>
-                            <div id="sidebar-version" style="font-size: 11px; color: #ccc; font-family: monospace; letter-spacing: 1px;">載入中...</div>
-                        </div>
-        
-                        <div id="login-ip" style="font-size: 10px; color: #bbb;">IP: 獲取中...</div>
-                        
+                    <div id="student-meta" style="margin-top: 5px; margin-bottom: 12px;"></div>
+                    
+                    <div style="font-size: 12px; color: var(--dark); font-weight: 700; display: flex; align-items: center; gap: 6px;">
+                        <span class="online-dot" style="width: 6px; height: 6px;"></span>
+                        <span id="classroom-presence">連線中...</span>
+                    </div>
+                    
+                    <!-- 巨無霸登出按鈕 -->
+                    <button class="logout-btn" onclick="logout()">
+                        <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M16 17v-3H9v-4h7V7l5 5-5 5M14 2a2 2 0 012 2v2h-2V4H5v16h9v-2h2v2a2 2 0 01-2 2H5a2 2 0 01-2-2V4a2 2 0 012-2h9z"></path></svg>
+                        登出系統
+                    </button>
+                    
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 5px;">
+                        <span id="login-ip" style="font-size: 10px; color: #bbb;">IP: 獲取中...</span>
+                        <span id="sidebar-version" style="font-size: 10px; color: #ccc; font-family: monospace; letter-spacing: 1px;">載入中...</span>
                     </div>
                 </div>
             </div>
@@ -929,6 +945,26 @@
         // 控制手機版漢堡選單開關
         function toggleMobileMenu() {
             document.querySelector('.sidebar').classList.toggle('open');
+        }
+        // ==========================================
+        // 側邊欄摺疊選單 (Accordion) 控制邏輯
+        // ==========================================
+        function toggleMenu(groupId, clickedElement) {
+            const targetGroup = document.getElementById(groupId);
+            
+            // 如果點擊的是已經打開的分類，就把它收起來
+            if (targetGroup.classList.contains('open')) {
+                targetGroup.classList.remove('open');
+                clickedElement.classList.remove('active');
+            } else {
+                // 如果點擊的是沒打開的分類，先「自動收起」其他的分類 (保持畫面簡潔)
+                document.querySelectorAll('.nav-sub-group').forEach(group => group.classList.remove('open'));
+                document.querySelectorAll('.nav-category').forEach(cat => cat.classList.remove('active'));
+                
+                // 再把目標分類展開
+                targetGroup.classList.add('open');
+                clickedElement.classList.add('active');
+            }
         }
         // ==========================================
         // 影音中心分頁邏輯
