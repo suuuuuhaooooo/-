@@ -1520,7 +1520,7 @@
             return false;
         }
         // ==========================================
-        // 登入整合邏輯
+        // LINE 登入整合邏輯
         // ==========================================
         const MY_LIFF_ID = "2011676700-F1lzWhRW";
 
@@ -1534,19 +1534,22 @@
                 // 1. 初始化 LIFF
                 await liff.init({ liffId: MY_LIFF_ID });
 
-                // 2. 如果尚未登入 LINE 帳號，導向 LINE 官方授權畫面
+                // 2. 如果尚未登入 LINE，直接帶入 redirectUri 叫出授權畫面
                 if (!liff.isLoggedIn()) {
-                    liff.login({ redirectUri: window.location.href });
+                    liff.login({ redirectUri: window.location.origin + window.location.pathname });
                     return;
                 }
 
-                // 3. 獲取憑證
+                // 3. 已經登入，直接取得 ID Token
                 const lineIdToken = liff.getIDToken();
+                if (!lineIdToken) {
+                    throw new Error("無法取得 LINE 授權憑證，請重新嘗試登入。");
+                }
 
                 document.getElementById('loading-screen').style.display = 'flex';
                 document.querySelector('#loading-screen .loading-text').innerText = "LINE 身分核對中...";
 
-                // 4. 將憑證送往後端查驗是否為綁定學員
+                // 4. 將憑證送往後端查驗
                 const payloadData = { 
                     action: "lineLoginAuth", 
                     lineToken: lineIdToken 
@@ -1563,15 +1566,16 @@
                 if (result.success) {
                     document.querySelector('#loading-screen .loading-text').innerText = "為您開啟教室大門...";
                     
-                    // 5. 拿到 Firebase Custom Token，直接讓前端 Firebase 放行！
+                    // 5. 取得 Firebase Custom Token 並完成登入
                     await auth.setPersistence(firebase.auth.Auth.Persistence.SESSION);
-                    await auth.signInWithCustomToken(result.customToken);
+                    const cred = await auth.signInWithCustomToken(result.customToken);
                     
-                    // 登入成功後，清除失敗鎖定紀錄
+                    const sid = Math.random().toString(36).substring(2);
+                    localStorage.setItem('session_id', sid);
+                    await db.ref('auth_status/' + cred.user.uid).set({ current_sid: sid, kick_all: false });
+                    
                     localStorage.removeItem('login_fail_count');
                     localStorage.removeItem('login_lock_until');
-                    
-                    // 接下來系統會自動觸發 auth.onAuthStateChanged() 切換畫面！
                 } else {
                     document.getElementById('loading-screen').style.display = 'none';
                     alert(result.message);
