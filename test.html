@@ -972,16 +972,30 @@
             }
         }
 
-        // 修改：下一題 (支援最後一題觸發交卷)
+        // 修改：下一題 (嚴格攔截模式，未作答不可交卷)
         function nextQuestion() {
             if (currentQuestionIndex < currentExam.questions.length - 1) {
                 currentQuestionIndex++; 
                 renderQuestion();
             } else { 
-                const unanswered = userAnswers.filter(ans => ans === null).length;
-                let confirmMsg = "確定要交卷嗎？";
-                if (unanswered > 0) confirmMsg = `您還有 ${unanswered} 題未作答，確定要交卷嗎？`;
-                if (confirm(confirmMsg)) { finishAndShowResults(); }
+                // 1. 找出未作答的題號 (轉為常見的 1, 2, 3... 題號)
+                let unansweredList = [];
+                for (let i = 0; i < userAnswers.length; i++) {
+                    if (userAnswers[i] === null) {
+                        unansweredList.push(i + 1);
+                    }
+                }
+                
+                // 2. 如果有未作答的題目，強制阻擋並列出題號
+                if (unansweredList.length > 0) {
+                    alert("您還有以下題目尚未完成：\n第 " + unansweredList.join(", ") + " 題\n\n請點擊畫面下方的「答案卡」圓圈，快速跳轉至該題完成作答！");
+                    return; // 終止交卷流程，留在原畫面
+                }
+                
+                // 3. 檢查通過，全部作答完畢，做最後交卷確認
+                if (confirm("確定要正式交卷並查看成績嗎？")) { 
+                    finishAndShowResults(); 
+                }
             }
         }
 
