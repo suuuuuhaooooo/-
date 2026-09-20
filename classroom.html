@@ -419,6 +419,51 @@
             max-width: 100%;
             max-height: 100%;
         }
+        /* =========================================
+           Glassmorphism UI 
+           ========================================= */
+           
+        /* 1. 賦予背景柔和的動態漸層 (毛玻璃必須要有底色變化，才看得出透視感) */
+        body, #login-ui, #classroom-ui {
+            background: linear-gradient(135deg, #d8e0d9 0%, #f4f6f4 50%, #e0e5e2 100%) !important;
+            background-attachment: fixed !important;
+        }
+
+        /* 2. 核心毛玻璃效果：針對所有原本是白底的卡片與側邊欄 */
+        .login-card, 
+        .sidebar, 
+        .sidebar-menu-wrapper,
+        .video-card,
+        div[style*="background: white"], 
+        div[style*="background: #fff"], 
+        div[style*="background: #fafafa"] {
+            background: rgba(255, 255, 255, 0.55) !important; /* 半透明質感 */
+            backdrop-filter: blur(16px) !important;           /* iOS 核心模糊特效 */
+            -webkit-backdrop-filter: blur(16px) !important;   /* 支援 Safari/iPhone */
+            border: 1px solid rgba(255, 255, 255, 0.9) !important; /* 玻璃邊緣的反光白線 */
+            box-shadow: 0 8px 32px rgba(91, 99, 72, 0.08) !important; /* 配合您品牌色的柔和陰影 */
+        }
+
+        /* 3. 微調局部層級，讓透視感更高級 */
+        .sidebar-brand, .sidebar-footer, .nav-sub-group {
+            background: transparent !important; /* 讓子區塊融入整片大玻璃 */
+            border-color: rgba(255, 255, 255, 0.6) !important;
+        }
+        
+        /* 4. 讓登入框與輸入欄位也帶有微透光感 */
+        input {
+            background: rgba(255, 255, 255, 0.65) !important;
+            border: 1px solid rgba(255, 255, 255, 0.8) !important;
+            backdrop-filter: blur(4px) !important;
+            -webkit-backdrop-filter: blur(4px) !important;
+        }
+        
+        /* 5. 確保滑鼠移過去的特效依然優雅 */
+        .video-card:hover {
+            background: rgba(255, 255, 255, 0.8) !important;
+            transform: translateY(-3px);
+            box-shadow: 0 12px 40px rgba(91, 99, 72, 0.15) !important;
+        }
     </style>
     
 </head>
