@@ -1564,7 +1564,7 @@
                 const result = await response.json();
 
                 if (result.success) {
-                    document.querySelector('#loading-screen .loading-text').innerText = "為您開啟教室大門...";
+                    document.querySelector('#loading-screen .loading-text').innerText = "資料庫連線中...";
                     
                     // 5. 取得 Firebase Custom Token 並完成登入
                     await auth.setPersistence(firebase.auth.Auth.Persistence.SESSION);
