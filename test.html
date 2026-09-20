@@ -1281,9 +1281,10 @@
                             container.innerHTML += `
                                 <div class="clean-card">
                                     <div class="tag-pill">${examInfo ? examInfo.title : "歷史單元"}</div>
-                                    <div style="font-size: 16px; font-weight: 700; margin-bottom: 12px; color: #333; line-height: 1.5;">${detail.originalQuestion}</div>
+                                    <div style="font-size: 16px; font-weight: 700; margin-bottom: 12px; color: #333; line-height: 1.5;">${detail.originalQuestion} ${flagHtml}</div>
                                     <div style="font-size: 14px; margin-bottom: 6px; color: #555;">正確答案：<span style="color: #27ae60; font-weight: 700;">${detail.correctAnswer}</span></div>
                                     <div style="font-size: 14px; margin-bottom: 15px; color: #555;">你的答案：<span style="color: #e74c3c; font-weight: 700; text-decoration: line-through;">${detail.userPick}</span></div>
+                                    ${noteHtml}
                                     <div style="background: #f8f8f6; padding: 12px; border-radius: 8px; font-size: 13px; color: #666; border-left: 3px solid var(--primary); line-height: 1.6;">
                                         <strong>解析：</strong><br>${currentExp}
                                     </div>
@@ -1366,7 +1367,7 @@
             document.getElementById('fc-tag').innerText = card.examTitle;
             
             let flagHtml = card.isFlagged ? `<span style="background:#fdf2f0; color:#c0392b; padding:2px 8px; border-radius:12px; font-size:12px; font-weight:bold; margin-left:10px;">🚩 當時已標記</span>` : '';
-            document.getElementById('fc-question').innerHTML = card.question;
+            document.getElementById('fc-question').innerHTML = card.question + flagHtml;
 
             const optionsContainer = document.getElementById('fc-options');
             optionsContainer.innerHTML = "";
@@ -1402,15 +1403,15 @@
                 clickedBtn.classList.add('fc-correct-btn');
                 resultBox.innerHTML = `
                     <h4 style="color:#27ae60; margin-top:0; font-size:18px;">答對嘍！</h4>
+                    ${noteHtml}
                     <div class="review-exp" style="border-left-color:#27ae60;"><strong>解析：</strong><br>${card.explanation}</div>
                 `;
             } else {
-
                 clickedBtn.classList.add('fc-wrong-btn');
-
                 allButtons[card.correctAnswer].classList.add('fc-correct-btn');
                 resultBox.innerHTML = `
                     <h4 style="color:#c0392b; margin-top:0; font-size:18px;">答錯嘍！</h4>
+                    ${noteHtml}
                     <div class="review-exp" style="border-left-color:#c0392b;"><strong>解析：</strong><br>${card.explanation}</div>
                 `;
             }
