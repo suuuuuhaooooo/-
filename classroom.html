@@ -425,8 +425,18 @@
            
         /* 1. 賦予背景柔和的動態漸層 (毛玻璃必須要有底色變化，才看得出透視感) */
         body, #login-ui, #classroom-ui {
-            background: linear-gradient(135deg, #d8e0d9 0%, #f4f6f4 50%, #e0e5e2 100%) !important;
+            /* 準備四個配合您品牌綠色的相近色 */
+            background: linear-gradient(-45deg, #d8e0d9, #f8f8f6, #e0e5e2, #c8d5cb) !important;
+            /* 把背景圖案放大到 400%，這樣才有移動的空間 */
+            background-size: 400% 400% !important;
+            /* 套用我們底下寫好的 gradientBG 動畫，15秒完整循環一次 */
+            animation: gradientBG 15s ease infinite !important;
             background-attachment: fixed !important;
+        }
+        @keyframes gradientBG {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
         }
 
         /* 2. 核心毛玻璃效果：針對所有原本是白底的卡片與側邊欄 */
