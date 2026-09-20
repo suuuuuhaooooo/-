@@ -422,13 +422,11 @@
         /* =========================================
            Glassmorphism UI 
            ========================================= */
-           
-        /* 1. 賦予背景柔和的動態漸層 (毛玻璃必須要有底色變化，才看得出透視感) */
         /* 1. 背景柔和的動態漸層 */
         body, #login-ui, #classroom-ui {
             background: linear-gradient(-45deg, #a3b18a, #f8f8f6, #8e9775, #dadfd1) !important;
             background-size: 400% 400% !important;
-            animation: gradientBG 5s ease infinite !important; 
+            animation: gradientBG 2s ease infinite !important; 
             background-attachment: fixed !important;
         }
         @keyframes gradientBG {
