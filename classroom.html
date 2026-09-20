@@ -1753,9 +1753,19 @@
         function logout() { 
             const user = auth.currentUser;
             if(user) db.ref('presence/' + user.uid).remove();
+
+            // 1. 先清除 Firebase 與本地儲存空間
             auth.signOut().then(() => { 
                 localStorage.clear(); 
                 sessionStorage.clear();
+
+                // 2. 強制登出 LINE 官方的授權快取
+                if (typeof liff !== 'undefined' && liff.isInClient && liff.isInClient()) {
+                    // 如果是在 LINE 內部開啓，執行 LIFF 登出
+                    liff.logout();
+                }
+
+                // 3. 重新整理頁面回到乾淨的登入畫面
                 location.reload(); 
             });
         }
