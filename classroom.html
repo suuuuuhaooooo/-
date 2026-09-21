@@ -2809,9 +2809,6 @@
         
                 if (result.success) {
                     alert(result.message + "\n\n下次登入時，請使用新密碼。");
-                    if (user) {
-                        user.updatePassword(newPwd).catch(err => console.log("Firebase 密碼同步失敗:", err));
-                    }
                     closeChangePwdModal();
                     document.getElementById('prof-pwd').innerText = "••••••••";
                 } else {
