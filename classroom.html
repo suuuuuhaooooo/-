@@ -1706,26 +1706,23 @@
                     const decodedToken = liff.getDecodedIDToken();
                     const now = Math.floor(Date.now() / 1000);
                     
-                    // 如果憑證已經過期，或是剩不到 5 分鐘就過期
                     if (decodedToken && decodedToken.exp < now + 300) {
                         console.log("偵測到本機 LINE 憑證已過期，正在清除快取並重新跳轉...");
-                        // 如果是用一般瀏覽器 (Chrome/Safari)，直接清掉舊資料
                         if (!liff.isInClient()) {
                             liff.logout(); 
-                            // 清掉後重新載入網頁，接下來就會判定為「未登入」並順利跳轉了
                             window.location.reload();
                             return;
                         }
                     }
                 }
 
-                // 2. 如果根本沒登入過，直接叫出授權畫面 (這行才會真正跳轉！)
+                // 2. 如果根本沒登入過，直接叫出授權畫面
                 if (!liff.isLoggedIn()) {
                     liff.login({ redirectUri: window.location.origin + window.location.pathname });
                     return;
                 }
 
-                // 3. 已經登入且憑證新鮮，取得 ID Token
+                // 3. 已經登入且授權憑證，取得 ID Token
                 const lineIdToken = liff.getIDToken();
                 if (!lineIdToken) {
                     throw new Error("無法取得 LINE 授權憑證，請重新嘗試登入。");
