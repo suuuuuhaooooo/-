@@ -15,14 +15,14 @@
     <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     <script>
     window.MathJax = {
-            tex: {
-                inlineMath: [['$', '$'], ['\\(', '\\)']],
-                processEscapes: true 
-            },
-            options: {
-                skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre']
-            }
-        };
+        tex: {
+            inlineMath: [['$', '$'], ['\\(', '\\)']],
+            processEscapes: true 
+        },
+        options: {
+            skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre']
+        }
+    };
     </script>
 
     <style>
@@ -102,14 +102,12 @@
         .summon-btn:hover:not(:disabled) { background: #732d91; transform: translateY(-2px); box-shadow: 0 6px 20px rgba(142, 68, 173, 0.3); }
         .summon-btn:disabled { background: #aaa; cursor: not-allowed; transform: none; box-shadow: none; }
 
-        /* 下拉複選框群組樣式 */
         .dropdown-multiselect { position: relative; width: 100%; }
         .dropdown-select-box { padding: 12px; border-radius: 8px; border: 1px solid #ddd; background: rgba(255,255,255,0.8); font-size: 14px; color: #555; cursor: pointer; font-weight: bold; display: flex; justify-content: space-between; align-items: center; }
         .dropdown-list { display: none; position: absolute; top: 100%; left: 0; width: 100%; max-height: 200px; overflow-y: auto; background: white; border: 1px solid #ddd; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); z-index: 100; margin-top: 5px; padding: 10px; box-sizing: border-box; }
         .dropdown-item { padding: 8px 10px; display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 14px; border-radius: 4px; }
         .dropdown-item:hover { background: #f4ecf8; color: #732d91; }
 
-        /* === 考試介面 UI === */
         .quiz-header-container { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px dashed #eee; padding-bottom: 15px; margin-bottom: 20px; }
         .quiz-header { font-size: 15px; color: #888; font-weight: 700; letter-spacing: 1px; margin: 0; }
         .timer-display { font-size: 18px; color: #c0392b; font-weight: 700; background: #fdf2f0; padding: 5px 12px; border-radius: 4px; border: 1px solid #fadbd8; }
@@ -988,7 +986,7 @@
                         : `<span class="review-wrong">x 答錯了 (你的答案：${userAnsText})</span>`;
                         
                     let flagHtml = detail.isFlagged ? `<span style="background:#fdf2f0; color:#c0392b; padding:2px 8px; border-radius:12px; font-size:12px; font-weight:bold; margin-left:10px;">🚩 已標記</span>` : '';
-                    let noteHtml = detail.studentNote ? `<div style="background:#fff3e0; border-left:4px solid #e67e22; padding:10px; margin-top:10px; font-size:13px; color:#d35400;"><strong>✏️ 你的筆記：</strong><br>${detail.studentNote}</div>` : '';
+                    let noteHtml = detail.studentNote ? `<div style="background:#fff3e0; border-left:4px solid #e67e22; padding:10px; margin-top:10px; font-size:13px; color:#d35400;"><strong>✏️️ 你的筆記：</strong><br>${detail.studentNote}</div>` : '';
 
                     reviewContainer.innerHTML += `
                         <div class="review-card">
