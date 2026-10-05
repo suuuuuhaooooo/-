@@ -375,13 +375,17 @@
                 const quotaEl = document.getElementById('quota-text');
                 const btn = document.getElementById('btn-summon-ai');
 
+                // 檢查是否有待命卷軸或是今天已經用過額度
+                const hasPendingExam = window.pendingAiExam != null;
+                const isTodayUsed = (rpgData.lastSummonDate === formattedToday) || hasPendingExam;
+
                 if (rpgData.lastSummonDate === formattedToday) {
                     btn.disabled = true;
                     btn.innerText = "今日額度已用盡 (卷軸已就緒)";
                     btn.style.background = "#7f8c8d";
                     
                     if (quotaEl) {
-                        quotaEl.innerText = "【 今日試煉額度：0 / 1 (今日已消耗) 】";
+                        quotaEl.innerText = "【 今日試煉額度：0 / 1 】";
                         quotaEl.style.color = "#7f8c8d";
                     }
                 } else {
@@ -579,7 +583,7 @@
 
                     const quotaEl = document.getElementById('quota-text');
                     if (quotaEl) {
-                        quotaEl.innerText = "【 今日試煉額度：0 / 1 (今日已消耗) 】";
+                        quotaEl.innerText = "【 今日試煉額度：0 / 1 】";
                         quotaEl.style.color = "#7f8c8d";
                     }
 
