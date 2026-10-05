@@ -91,7 +91,7 @@
         .back-btn { display: inline-block; margin-bottom: 20px; color: #888; text-decoration: none; font-size: 14px; transition: 0.2s; cursor: pointer; font-weight: bold; }
         .back-btn:hover { color: #8e44ad; }
         .clean-card { background: rgba(255,255,255,0.6); border: 1px solid #f0f0f0; border-radius: 12px; padding: 25px; margin-bottom: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.02); }
-        .modern-input { padding: 12px; border-radius: 8px; border: 1px solid #ddd; outline: none; background: rgba(255,255,255,0.8); font-size: 14px; color: #555; width: 100%; font-weight: bold; box-sizing: border-box; }
+        .modern-select { padding: 12px; border-radius: 8px; border: 1px solid #ddd; outline: none; background: rgba(255,255,255,0.8); font-size: 14px; color: #555; width: 100%; cursor: pointer; font-weight: bold; box-sizing: border-box; }
 
         .rpg-hero-card { background: linear-gradient(135deg, #2c3e50, #34495e); color: white; padding: 25px; border-radius: 12px; box-shadow: 0 10px 20px rgba(0,0,0,0.15); margin-bottom: 30px; position: relative; overflow: hidden; }
         .rpg-hero-card::after { content: '🛡️'; position: absolute; right: -20px; top: -20px; font-size: 150px; opacity: 0.1; }
@@ -102,12 +102,14 @@
         .summon-btn:hover:not(:disabled) { background: #732d91; transform: translateY(-2px); box-shadow: 0 6px 20px rgba(142, 68, 173, 0.3); }
         .summon-btn:disabled { background: #aaa; cursor: not-allowed; transform: none; box-shadow: none; }
 
-        .scope-tags-container { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 15px; }
-        .scope-tag { padding: 10px 18px; border: 2px solid #ddd; border-radius: 25px; font-size: 14px; color: #666; cursor: pointer; transition: 0.2s; background: rgba(255,255,255,0.7); font-weight: bold; }
-        .scope-tag:hover { border-color: #bbb; background: #fff; }
-        .scope-tag.active { border-color: #8e44ad; background: #f4ecf8; color: #732d91; box-shadow: 0 2px 8px rgba(142,68,173,0.2); }
-        .scope-tag.active-weakness { border-color: #e74c3c; background: #fdf2f0; color: #c0392b; box-shadow: 0 2px 8px rgba(231,76,60,0.2); }
+        /* 下拉複選框群組樣式 */
+        .dropdown-multiselect { position: relative; width: 100%; }
+        .dropdown-select-box { padding: 12px; border-radius: 8px; border: 1px solid #ddd; background: rgba(255,255,255,0.8); font-size: 14px; color: #555; cursor: pointer; font-weight: bold; display: flex; justify-content: space-between; align-items: center; }
+        .dropdown-list { display: none; position: absolute; top: 100%; left: 0; width: 100%; max-height: 200px; overflow-y: auto; background: white; border: 1px solid #ddd; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); z-index: 100; margin-top: 5px; padding: 10px; box-sizing: border-box; }
+        .dropdown-item { padding: 8px 10px; display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 14px; border-radius: 4px; }
+        .dropdown-item:hover { background: #f4ecf8; color: #732d91; }
 
+        /* === 考試介面 UI === */
         .quiz-header-container { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px dashed #eee; padding-bottom: 15px; margin-bottom: 20px; }
         .quiz-header { font-size: 15px; color: #888; font-weight: 700; letter-spacing: 1px; margin: 0; }
         .timer-display { font-size: 18px; color: #c0392b; font-weight: 700; background: #fdf2f0; padding: 5px 12px; border-radius: 4px; border: 1px solid #fadbd8; }
@@ -139,7 +141,7 @@
         .ans-circle:hover { border-color: #8e44ad; }
         .ans-circle.answered { background: #8e44ad; color: white; border-color: #8e44ad; }
         .ans-circle.flagged { border-color: #e74c3c; color: #c0392b; background: #fdf2f0; }
-        .ans-circle.answered.flagged { background: #e74c3c; color: white; border-color: #c0392b; }
+        .ans-circle.answered.flagged { background: #e74c3c; color: white; border-color: #e74c3c; }
         .ans-circle.active { box-shadow: 0 0 0 4px rgba(142,68,173,0.2); border-color: #732d91; transform: scale(1.1); }
 
         #score-display { text-align: center; font-size: 36px; color: var(--dark); font-weight: 700; margin: 20px 0; padding: 20px; background: rgba(255,255,255,0.7); border-radius: 8px; }
@@ -170,14 +172,14 @@
 
     <div id="loading-screen">
         <div class="loading-dots"><div></div><div></div><div></div></div>
-        <div class="loading-text" id="loading-msg">正在從 Firebase 載入您的題庫與歷史紀錄...</div>
+        <div class="loading-text" id="loading-msg">正在從 Firebase 與題庫載入資料中...</div>
     </div>
 
     <!-- === 畫面 1：RPG 首頁與出題面板 === -->
     <div class="container-ui" id="rpg-main-ui">
         <a href="classroom.html" class="back-btn">← 返回雲端教室</a>
         <h2 style="border-left-color: #8e44ad;">⚔️ AI 勇者村 (每日試煉)</h2>
-        <p style="font-size: 13px; color: #555; margin-bottom: 25px; padding-left: 20px;">勾選您想複習的範圍 (可複選)，系統將自動從 Firebase 撈取您的歷史錯題或指定單元，讓 AI 為您量身打造類題！</p>
+        <p style="font-size: 13px; color: #555; margin-bottom: 25px; padding-left: 20px;">透過下拉複選勾選您想挑戰的範圍，並選擇能完美湊滿 100 分的題數，讓 AI 為您量身打造專屬卷軸！</p>
 
         <div class="rpg-hero-card">
             <div style="display: flex; justify-content: space-between; align-items: flex-end;">
@@ -200,15 +202,27 @@
         </div>
 
         <div class="clean-card">
-            <h3 style="margin-top: 0; font-size: 16px; color: var(--dark);">1. 選擇試煉範圍 (可複選)</h3>
-            <div id="scope-container" class="scope-tags-container">
-                <!-- 標籤將由 JS 動態載入 -->
+            <h3 style="margin-top: 0; font-size: 16px; color: var(--dark);">1. 選擇試煉範圍 (下拉複選)</h3>
+            <div class="dropdown-multiselect">
+                <div class="dropdown-select-box" onclick="toggleDropdown()">
+                    <span id="dropdown-label">-- 請點擊展開並勾選範圍 --</span>
+                    <span>▼</span>
+                </div>
+                <div id="dropdown-list" class="dropdown-list">
+                    <!-- 動態載入複選項目 -->
+                </div>
             </div>
         </div>
 
         <div class="clean-card">
-            <h3 style="margin-top: 0; font-size: 16px; color: var(--dark);">2. 自訂出題數量</h3>
-            <input type="number" id="ai-quest-count" class="modern-input" value="5" min="1" max="30" placeholder="請輸入想要的題數 (例如 5, 10, 15)">
+            <h3 style="margin-top: 0; font-size: 16px; color: var(--dark);">2. 選擇試煉題數 (保證完美湊滿 100 分)</h3>
+            <select id="ai-quest-count" class="modern-select">
+                <option value="5">20 題 (每題 5 分 = 100 分)</option>
+                <option value="10" selected>10 題 (每題 10 分 = 100 分) [推薦]</option>
+                <option value="25">4 題 (每題 25 分 = 100 分)</option>
+                <option value="50">2 題 (每題 50 分 = 100 分)</option>
+                <option value="100">1 題 (每題 100 分 = 100 分)</option>
+            </select>
         </div>
 
         <div style="text-align: center;">
@@ -282,7 +296,6 @@
         let selectedScopes = new Set();
         let aiGenerateTimer;
 
-        // 考試變數
         let currentExam = null;
         let currentQuestionIndex = 0;
         let userAnswers = [];
@@ -296,9 +309,7 @@
         let cheatWarnings = 0;    
         let isExamActive = false; 
 
-        // ==========================================
-        // 頁面載入與 Firebase 資料同步
-        // ==========================================
+        // 頁面載入與初始化
         auth.onAuthStateChanged(async (user) => {
             if (!user) {
                 alert("請先登入系統！");
@@ -307,58 +318,91 @@
             }
 
             try {
-                // 1. 從 sessionStorage 取得試卷清單目錄
-                const cachedExams = sessionStorage.getItem('suhao_exams');
-                const cachedStudents = sessionStorage.getItem('suhao_students');
-                
-                if (cachedExams && cachedStudents) {
-                    const allExams = JSON.parse(cachedExams);
-                    const students = JSON.parse(cachedStudents);
-                    const myData = students.find(s => s.uid === user.uid);
-                    
-                    if (myData && myData.examIds) {
-                        const assignedIds = myData.examIds.split(',').map(id => id.trim());
-                        studentExams = allExams.filter(exam => assignedIds.includes(exam.id));
-                    }
-                } else {
-                    // 若沒有快取，直接向 GAS 請求試卷目錄
-                    const r = await fetch(SCRIPT_URL + "?token=SuHaoClassroom2026_SecureKey");
-                    const studentDataArray = await r.json();
-                    const idToken = await user.getIdToken();
-                    const r2 = await fetch(SCRIPT_URL, {
-                        method: "POST",
-                        headers: { "Content-Type": "text/plain;charset=utf-8" },
-                        body: JSON.stringify({ token: "SuHaoClassroom2026_SecureKey", action: "getExams", idToken: idToken })
-                    });
-                    studentExams = await r2.json();
-                }
+                // 1. 向後端抓取完整題庫清單 (確保能個別單選或複選做過的考卷)
+                const idToken = await user.getIdToken();
+                const r2 = await fetch(SCRIPT_URL, {
+                    method: "POST",
+                    headers: { "Content-Type": "text/plain;charset=utf-8" },
+                    body: JSON.stringify({ token: "SuHaoClassroom2026_SecureKey", action: "getExams", idToken: idToken })
+                });
+                studentExams = await r2.json();
 
-                // 2. 嚴格從 Firebase 抓取該學生的完整歷史考試紀錄 (exam_records)
+                // 2. 從 Firebase 抓取歷史作答紀錄
                 const snap = await db.ref('exam_records/' + user.uid).once('value');
                 completedRecords = snap.val() || {};
 
-                renderScopeTags();
+                renderDropdownList();
                 document.getElementById('loading-screen').style.display = 'none';
                 document.getElementById('rpg-main-ui').style.display = 'block';
 
             } catch (e) {
                 console.error(e);
-                alert("從 Firebase 載入歷史紀錄失敗，請重新整理頁面。");
+                alert("資料讀取失敗，請重新整理頁面。");
                 window.location.replace("classroom.html");
             }
         });
 
-        // ==========================================
-        // 防作弊機制
-        // ==========================================
+        // 下拉選單開關控制
+        function toggleDropdown() {
+            const list = document.getElementById('dropdown-list');
+            list.style.display = list.style.display === 'block' ? 'none' : 'block';
+        }
+
+        // 點擊畫布其他地方關閉下拉選單
+        window.onclick = function(event) {
+            if (!event.target.closest('.dropdown-multiselect')) {
+                const list = document.getElementById('dropdown-list');
+                if (list) list.style.display = 'none';
+            }
+        }
+
+        // 渲染下拉複選清單
+        function renderDropdownList() {
+            const listContainer = document.getElementById('dropdown-list');
+            listContainer.innerHTML = `
+                <label class="dropdown-item">
+                    <input type="checkbox" value="weakness" onchange="handleCheckboxChange(this, '🎯 歷史錯題盲點特訓')"> 🎯 歷史錯題盲點特訓
+                </label>
+            `;
+            
+            studentExams.forEach(exam => {
+                if (!exam.id.startsWith("AI_RPG_")) {
+                    const isDone = completedRecords[exam.id] ? " (已完成)" : "";
+                    listContainer.innerHTML += `
+                        <label class="dropdown-item">
+                            <input type="checkbox" value="${exam.id}" onchange="handleCheckboxChange(this, '📚 ${exam.title}${isDone}')"> 📚 ${exam.title}${isDone}
+                        </label>
+                    `;
+                }
+            });
+        }
+
+        // 勾選變更時更新狀態與顯示文字
+        function handleCheckboxChange(checkbox, labelText) {
+            const id = checkbox.value;
+            if (checkbox.checked) {
+                selectedScopes.add(id);
+            } else {
+                selectedScopes.delete(id);
+            }
+
+            const labelEl = document.getElementById('dropdown-label');
+            if (selectedScopes.size === 0) {
+                labelEl.innerText = "-- 請點擊展開並勾選範圍 --";
+            } else {
+                labelEl.innerText = `已勾選 ${selectedScopes.size個範圍}`;
+            }
+        }
+
+        // 防弊機制
         document.addEventListener("visibilitychange", () => {
             if (isExamActive && document.hidden) {
                 cheatWarnings++;
                 if (cheatWarnings >= 3) {
-                    alert("【系統通知】\n\n系統偵測到您已切換視窗或離開測驗畫面達 3 次！\n已視同違規作弊，系統將立刻強制交卷。");
+                    alert("【系統通知】\n\n系統偵測到您已切換視窗達 3 次！強制交卷。");
                     finishAndShowResults();
                 } else {
-                    alert(`【警告】\n\n考試期間嚴禁切換視窗、開啟其他網頁或 APP！\n\n您目前已違規 ${cheatWarnings} 次。\n若達 3 次，系統將直接強制收卷。`);
+                    alert(`【警告】考試期間嚴禁切換視窗！已違規 ${cheatWarnings} 次。`);
                 }
             }
         });
@@ -367,63 +411,33 @@
             if (isExamActive) { e.preventDefault(); e.returnValue = ''; return ''; }
         });
 
-        // ==========================================
-        // 出題面板與範圍勾選邏輯
-        // ==========================================
-        function renderScopeTags() {
-            const container = document.getElementById('scope-container');
-            container.innerHTML = `<div class="scope-tag" onclick="toggleScope('weakness', this)">🎯 歷史錯題盲點特訓</div>`;
-            
-            // 同時渲染正規單元，以及學生在 Firebase 內做過、有紀錄的考卷
-            studentExams.forEach(exam => {
-                if (!exam.id.startsWith("AI_RPG_")) {
-                    const isCompleted = completedRecords[exam.id] ? " (已完成)" : "";
-                    container.innerHTML += `<div class="scope-tag" onclick="toggleScope('${exam.id}', this)">📚 ${exam.title}${isCompleted}</div>`;
-                }
-            });
-        }
-
-        function toggleScope(id, el) {
-            const activeClass = id === 'weakness' ? 'active-weakness' : 'active';
-            if (selectedScopes.has(id)) {
-                selectedScopes.delete(id);
-                el.classList.remove(activeClass);
-            } else {
-                selectedScopes.add(id);
-                el.classList.add(activeClass);
-            }
-        }
-
+        // 啟動 AI 召喚
         async function startSummon() {
-            if (selectedScopes.size === 0) return alert("請至少選擇一個試煉範圍！");
+            if (selectedScopes.size === 0) return alert("請至少勾選一個試煉範圍！");
             
             const user = auth.currentUser;
             const btn = document.getElementById('btn-summon-ai');
             const progressBox = document.getElementById('ai-progress-box');
             const bar = document.getElementById('ai-bar');
             const text = document.getElementById('ai-status-text');
-            const qCount = parseInt(document.getElementById('ai-quest-count').value) || 5;
+            // 從下拉選單對應抓取「湊到 100 分」的題數
+            const qCount = parseInt(document.getElementById('ai-quest-count').value) || 10;
 
             let refQuestions = [];
             let scopeLabel = "";
 
-            // 1. 從 Firebase 紀錄 (completedRecords) 精準撈取「歷史錯題」
             if (selectedScopes.has("weakness")) {
                 scopeLabel += "錯題特訓 ";
                 for (const examId in completedRecords) {
                     const record = completedRecords[examId];
                     if (record && record.details) {
                         record.details.forEach(d => {
-                            // 撈出所有答錯的原始題目
-                            if (!d.isCorrect && d.originalQuestion) {
-                                refQuestions.push(d.originalQuestion);
-                            }
+                            if (!d.isCorrect && d.originalQuestion) refQuestions.push(d.originalQuestion);
                         });
                     }
                 }
             }
 
-            // 2. 從勾選的指定單元抓取原題庫題目
             selectedScopes.forEach(id => {
                 if (id !== "weakness") {
                     const targetExam = studentExams.find(e => e.id === id);
@@ -436,17 +450,12 @@
                 }
             });
 
-            // 檢查若選了錯題特訓但 Firebase 裡完全沒有錯題
             if (selectedScopes.has("weakness") && refQuestions.length === 0 && selectedScopes.size === 1) {
-                return alert("太棒了！您的 Firebase 錯題本目前完全沒有錯題紀錄，請改選其他「指定單元」進行試煉！");
+                return alert("您的錯題本目前無錯題紀錄，請改選其他單元！");
             }
 
-            // 隨機抽取 12 題給 AI 當參考範本，避免 Token 爆炸
-            if (refQuestions.length > 12) {
-                refQuestions = refQuestions.sort(() => Math.random() - 0.5).slice(0, 12);
-            }
-
-            if (refQuestions.length === 0) return alert("所選範圍內找不到任何可用題目，無法生成！");
+            if (refQuestions.length > 15) refQuestions = refQuestions.sort(() => Math.random() - 0.5).slice(0, 15);
+            if (refQuestions.length === 0) return alert("所選範圍找不到可用題目！");
 
             btn.disabled = true;
             btn.innerText = "魔法陣詠唱中...";
@@ -457,7 +466,7 @@
                 if (progress < 90) {
                     progress += Math.floor(Math.random() * 4) + 1;
                     bar.style.width = Math.min(progress, 90) + '%';
-                    text.innerText = progress < 40 ? "正在從 Firebase 提取歷史錯題與單元結構..." : "Gemini 3.8 Flash 正在設計全新類題...";
+                    text.innerText = progress < 40 ? "正在萃取勾選單元與錯題考點..." : "Gemini 3.8 Flash 建構 100 分完美試卷中...";
                 }
             }, 500);
 
@@ -484,8 +493,8 @@
                     
                     const aiExamData = {
                         id: "AI_RPG_" + Date.now(), 
-                        title: `⚔ 勇者試煉：${scopeLabel.trim()}`,
-                        desc: `AI 導師針對您的選定範圍量身打造的 ${qCount} 題專屬考驗。`,
+                        title: `⚔ 勇者試煉 (總分100分)：${scopeLabel.trim()}`,
+                        desc: `精選 ${qCount} 題 (每題 ${100/qCount} 分)，完美湊滿 100 分！`,
                         questions: result.questions
                     };
                     
@@ -629,10 +638,10 @@
                     if (userAnswers[i] === null) unansweredList.push(i + 1);
                 }
                 if (unansweredList.length > 0) {
-                    alert("您還有以下題目尚未完成：\n第 " + unansweredList.join(", ") + " 題\n\n請點擊畫面下方的「答案卡」圓圈跳轉作答！");
+                    alert("您還有以下題目尚未完成：\n第 " + unansweredList.join(", ") + " 題\n\n請點擊下方答案卡跳轉！");
                     return; 
                 }
-                if (confirm("確定要正式交卷並查看成績嗎？")) { finishAndShowResults(); }
+                if (confirm("確定要正式交卷並計算分數嗎？")) { finishAndShowResults(); }
             }
         }
 
@@ -656,11 +665,11 @@
         }
 
         function abandonExam() {
-            if (confirm("【警告】\n\n現在放棄測驗將不予計分！\n\n確定要返回勇者村嗎？")) { returnToAltar(); }
+            if (confirm("【警告】現在放棄測驗將不予計分，確定返回？")) { returnToAltar(); }
         }
 
         // ==========================================
-        // 結算與解析檢討
+        // 100分制精準結算與解析檢討
         // ==========================================
         async function finishAndShowResults() {
             isExamActive = false;
@@ -668,13 +677,15 @@
             
             document.getElementById('test-ui').style.display = 'none';
             document.getElementById('loading-screen').style.display = 'flex';
-            document.getElementById('loading-msg').innerText = "AI 導師正在批改您的試卷...";
+            document.getElementById('loading-msg').innerText = "AI 導師正在進行 100 分制精準批改...";
 
             try {
                 let correctCount = 0;
-                let shuffledDetails = new Array(currentExam.questions.length);
+                let totalQ = currentExam.questions.length;
+                let pointsPerQ = 100 / totalQ; // 自動依題數平分 100 分
+                let shuffledDetails = new Array(totalQ);
 
-                for (let i = 0; i < currentExam.questions.length; i++) {
+                for (let i = 0; i < totalQ; i++) {
                     let uAns = userAnswers[i];
                     let qData = currentExam.questions[i];
                     
@@ -692,19 +703,20 @@
                     };
                 }
 
-                const finalScore = Math.round((correctCount / currentExam.questions.length) * 100);
+                // 精準計算總分
+                const finalScore = Math.round(correctCount * pointsPerQ);
 
                 document.getElementById('loading-screen').style.display = 'none';
                 document.getElementById('result-ui').style.display = 'block';
 
                 const scoreEl = document.getElementById('score-display');
-                scoreEl.innerText = `${finalScore} 分`;
+                scoreEl.innerText = `${finalScore} 分 (答對 ${correctCount} / ${totalQ} 題)`;
                 if (finalScore === 100) { 
-                    scoreEl.style.color = "#27ae60"; scoreEl.innerText += " (滿分！太厲害了！)"; 
+                    scoreEl.style.color = "#27ae60"; scoreEl.innerText += " 🏆 完美滿分！"; 
                 } else if (finalScore >= 60) { 
                     scoreEl.style.color = "#d35400"; 
                 } else { 
-                    scoreEl.style.color = "#c0392b"; scoreEl.innerText += " (要再加油哦！)";
+                    scoreEl.style.color = "#c0392b"; scoreEl.innerText += " 💪 再接再厲！";
                 }
 
                 const reviewContainer = document.getElementById('review-container');
@@ -741,6 +753,9 @@
 
         function returnToAltar() {
             currentExam = null;
+            selectedScopes.clear();
+            document.getElementById('dropdown-label').innerText = "-- 請點擊展開並勾選範圍 --";
+            document.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.checked = false);
             document.getElementById('result-ui').style.display = 'none';
             document.getElementById('test-ui').style.display = 'none';
             document.getElementById('rpg-main-ui').style.display = 'block';
