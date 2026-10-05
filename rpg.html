@@ -318,7 +318,7 @@
         let cheatWarnings = 0;    
         let isExamActive = false; 
 
-        // 🛡️ 姓名遮罩處理函式 (例如：王小明 ➔ 王○明，李大同 ➔ 李○同，陳怡 ➔ 陳○)
+        // 🛡️ 姓名遮罩處理函式 (王小明 ➔ 王○明)
         function maskStudentName(fullName) {
             if (!fullName || fullName === "神秘勇者") return "神秘勇者";
             let name = fullName.trim();
@@ -375,8 +375,9 @@
 
                 // 5. 檢查今日額度是否已用完
                 const quotaEl = document.getElementById('quota-text');
+                const btn = document.getElementById('btn-summon-ai');
+
                 if (rpgData.lastSummonDate === formattedToday) {
-                    const btn = document.getElementById('btn-summon-ai');
                     btn.disabled = true;
                     btn.innerText = "今日額度已用盡 (卷軸已就緒)";
                     btn.style.background = "#7f8c8d";
@@ -386,6 +387,10 @@
                         quotaEl.style.color = "#7f8c8d";
                     }
                 } else {
+                    btn.disabled = false;
+                    btn.innerText = "消耗額度，使用 AI 出題";
+                    btn.style.background = "#8e44ad";
+
                     if (quotaEl) {
                         quotaEl.innerText = "【 今日試煉額度：1 / 1 】";
                         quotaEl.style.color = "#27ae60";
@@ -570,7 +575,6 @@
                     await db.ref('rpg_backlog/' + user.uid).set(aiExamData);
                     await db.ref('rpg_system/' + user.uid).update({ lastSummonDate: formattedToday });
 
-                    // 鎖定按鈕與更新額度畫面
                     btn.disabled = true;
                     btn.innerText = "今日額度已用盡";
                     btn.style.background = "#7f8c8d";
@@ -599,7 +603,7 @@
             }
         }
 
-        // 載入並渲染排行榜 (採用姓名遮罩王O明格式)
+        // 載入並渲染排行榜
         async function loadLeaderboard() {
             try {
                 const snap = await db.ref('rpg_system').once('value');
@@ -710,17 +714,15 @@
             renderQuestion();
         }
 
-        // 渲染待命任務清單（自動判斷是否已考過，若已考過則改為「查看檢討」）
+        // 渲染待命任務清單
         function renderQuestBacklog(examData) {
             const container = document.getElementById('quest-backlog-container');
             const list = document.getElementById('backlog-card-list');
             container.style.display = 'block';
             
-            // 檢查這張 AI 考卷是不是已經有作答記錄了
             const isCompleted = completedRecords && completedRecords[examData.id];
             
             if (isCompleted) {
-                // 如果已經考過了：顯示已完成，按鈕改為「查看檢討」
                 list.innerHTML = `
                     <div style="background: rgba(255,255,255,0.9); border: 1px solid #27ae60; border-radius: 8px; padding: 15px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 10px rgba(0,0,0,0.05);">
                         <div>
@@ -731,7 +733,6 @@
                     </div>
                 `;
             } else {
-                // 如果還沒考：維持原本的「進入考場」
                 list.innerHTML = `
                     <div style="background: rgba(255,255,255,0.9); border: 1px solid #8e44ad; border-radius: 8px; padding: 15px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 10px rgba(0,0,0,0.05);">
                         <div>
@@ -743,12 +744,11 @@
                 `;
             }
         }
-        // 點擊「查看檢討」時觸發
+
         function reviewCompletedExam(examId) {
             const record = completedRecords[examId];
             if (!record) return alert("找不到此試卷的作答紀錄！");
 
-            // 隱藏主介面，顯示結算/檢討介面
             document.getElementById('rpg-main-ui').style.display = 'none';
             document.getElementById('test-ui').style.display = 'none';
             document.getElementById('result-ui').style.display = 'block';
@@ -911,7 +911,7 @@
                 }
 
                 const finalScore = Math.round(correctCount * pointsPerQ);
-                const earnedExp = finalScore * 10; // 滿分拿 1000 EXP
+                const earnedExp = finalScore * 10;
 
                 const user = auth.currentUser;
                 if (user) {
@@ -935,9 +935,9 @@
                     else if (newTotalExp >= 3000) newTitle = "戰士";
                     else if (newTotalExp >= 1000) newTitle = "初級冒險者";
 
+                    // 透過後端 getUser 動作抓取真實中文姓名
                     let studentRealName = rpgData.name || "神秘勇者";
                     try {
-                        const idToken = await user.getIdToken();
                         const userRes = await fetch(SCRIPT_URL, {
                             method: "POST",
                             headers: { "Content-Type": "text/plain;charset=utf-8" },
@@ -952,13 +952,13 @@
                             studentRealName = userData.name;
                         }
                     } catch (err) {
-                        console.error("獲取姓名失敗：", err);
+                        console.error("獲取真實姓名失敗：", err);
                     }
 
                     await rpgRef.update({
                         exp: newTotalExp,
                         title: newTitle,
-                        name: studentRealName, // 寫入從 Google 試算表抓到的真實中文姓名
+                        name: studentRealName,
                         lastSummonDate: rpgData.lastSummonDate
                     });
 
@@ -1018,7 +1018,7 @@
             document.getElementById('result-ui').style.display = 'none';
             document.getElementById('test-ui').style.display = 'none';
             document.getElementById('rpg-main-ui').style.display = 'block';
-            loadLeaderboard(); // 回到首頁時順便重新整理排行榜
+            loadLeaderboard();
         }
 
         function updateRpgDashboard(rpgData) {
