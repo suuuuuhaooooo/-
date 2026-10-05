@@ -710,20 +710,76 @@
             renderQuestion();
         }
 
+        // 渲染待命任務清單（自動判斷是否已考過，若已考過則改為「查看檢討」）
         function renderQuestBacklog(examData) {
             const container = document.getElementById('quest-backlog-container');
             const list = document.getElementById('backlog-card-list');
             container.style.display = 'block';
             
-            list.innerHTML = `
-                <div style="background: rgba(255,255,255,0.9); border: 1px solid #8e44ad; border-radius: 8px; padding: 15px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 10px rgba(0,0,0,0.05);">
-                    <div>
-                        <div style="font-weight: bold; color: var(--dark); font-size: 15px; margin-bottom: 4px;">${examData.title}</div>
-                        <div style="font-size: 12px; color: #666;">${examData.desc} ｜ 狀態：等待勇者拔劍</div>
+            // 檢查這張 AI 考卷是不是已經有作答記錄了
+            const isCompleted = completedRecords && completedRecords[examData.id];
+            
+            if (isCompleted) {
+                // 如果已經考過了：顯示已完成，按鈕改為「查看檢討」
+                list.innerHTML = `
+                    <div style="background: rgba(255,255,255,0.9); border: 1px solid #27ae60; border-radius: 8px; padding: 15px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 10px rgba(0,0,0,0.05);">
+                        <div>
+                            <div style="font-weight: bold; color: var(--dark); font-size: 15px; margin-bottom: 4px;">${examData.title}</div>
+                            <div style="font-size: 12px; color: #27ae60;">得分：${completedRecords[examData.id].score} 分 ｜ 狀態：已完成試煉 (可隨時檢討)</div>
+                        </div>
+                        <button class="main-btn" style="margin: 0; width: auto; padding: 10px 20px; font-size: 14px; background: #27ae60;" onclick="reviewCompletedExam('${examData.id}')">查看檢討</button>
                     </div>
-                    <button class="main-btn" style="margin: 0; width: auto; padding: 10px 20px; font-size: 14px;" onclick="startExam(window.pendingAiExam)">進入考場</button>
-                </div>
-            `;
+                `;
+            } else {
+                // 如果還沒考：維持原本的「進入考場」
+                list.innerHTML = `
+                    <div style="background: rgba(255,255,255,0.9); border: 1px solid #8e44ad; border-radius: 8px; padding: 15px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 10px rgba(0,0,0,0.05);">
+                        <div>
+                            <div style="font-weight: bold; color: var(--dark); font-size: 15px; margin-bottom: 4px;">${examData.title}</div>
+                            <div style="font-size: 12px; color: #666;">${examData.desc} ｜ 狀態：等待勇者拔劍</div>
+                        </div>
+                        <button class="main-btn" style="margin: 0; width: auto; padding: 10px 20px; font-size: 14px;" onclick="startExam(window.pendingAiExam)">進入考場</button>
+                    </div>
+                `;
+            }
+        }
+        // 點擊「查看檢討」時觸發
+        function reviewCompletedExam(examId) {
+            const record = completedRecords[examId];
+            if (!record) return alert("找不到此試卷的作答紀錄！");
+
+            // 隱藏主介面，顯示結算/檢討介面
+            document.getElementById('rpg-main-ui').style.display = 'none';
+            document.getElementById('test-ui').style.display = 'none';
+            document.getElementById('result-ui').style.display = 'block';
+
+            const scoreEl = document.getElementById('score-display');
+            scoreEl.innerText = `歷史得分：${record.score} 分`;
+            scoreEl.style.color = record.score >= 60 ? "#27ae60" : "#c0392b";
+
+            const reviewContainer = document.getElementById('review-container');
+            reviewContainer.innerHTML = "";
+            
+            record.details.forEach((detail, index) => {
+                let userAnsText = detail.userPick === "未作答" ? `<span style="color:#7f8c8d; font-weight:bold;">未作答</span>` : detail.userPick;
+                const statusHtml = detail.isCorrect 
+                    ? `<span class="review-correct">√ 答對了！</span>` 
+                    : `<span class="review-wrong">x 答錯了 (你的答案：${userAnsText})</span>`;
+                    
+                let flagHtml = detail.isFlagged ? `<span style="background:#fdf2f0; color:#c0392b; padding:2px 8px; border-radius:12px; font-size:12px; font-weight:bold; margin-left:10px;">🚩 已標記</span>` : '';
+                let noteHtml = detail.studentNote ? `<div style="background:#fff3e0; border-left:4px solid #e67e22; padding:10px; margin-top:10px; font-size:13px; color:#d35400;"><strong>✏️ 你的筆記：</strong><br>${detail.studentNote}</div>` : '';
+
+                reviewContainer.innerHTML += `
+                    <div class="review-card">
+                        <div class="review-q">Q${index + 1}. ${detail.originalQuestion} ${flagHtml}</div>
+                        <div class="review-ans">正確答案：${detail.correctAnswer}</div>
+                        <div class="review-ans">${statusHtml}</div>
+                        ${noteHtml}
+                        <div class="review-exp"><strong>解析：</strong><br>${detail.explanation}</div>
+                    </div>`;
+            });
+
+            if (window.MathJax) { setTimeout(() => { MathJax.typesetPromise([reviewContainer]); }, 100); }
         }
 
         function updateTimerDisplay() {
@@ -879,10 +935,21 @@
                     else if (newTotalExp >= 3000) newTitle = "戰士";
                     else if (newTotalExp >= 1000) newTitle = "初級冒險者";
 
+                    let studentRealName = rpgData.name || "神秘勇者"; // 預設沿用舊的
+                    try {
+                        const profileSnap = await db.ref('auth_status/' + user.uid).once('value');
+                        const profileData = profileSnap.val();
+                        if (profileData && profileData.name) {
+                            studentRealName = profileData.name;
+                        }
+                    } catch (err) {
+                        console.log("讀取姓名失敗，使用預設名稱");
+                    }
+
                     await rpgRef.update({
                         exp: newTotalExp,
                         title: newTitle,
-                        name: user.displayName || (user.email ? user.email.split('@')[0] : "神秘勇者"),
+                        name: studentRealName,
                         lastSummonDate: rpgData.lastSummonDate
                     });
 
