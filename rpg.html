@@ -935,21 +935,30 @@
                     else if (newTotalExp >= 3000) newTitle = "戰士";
                     else if (newTotalExp >= 1000) newTitle = "初級冒險者";
 
-                    let studentRealName = rpgData.name || "神秘勇者"; // 預設沿用舊的
+                    let studentRealName = rpgData.name || "神秘勇者";
                     try {
-                        const profileSnap = await db.ref('auth_status/' + user.uid).once('value');
-                        const profileData = profileSnap.val();
-                        if (profileData && profileData.name) {
-                            studentRealName = profileData.name;
+                        const idToken = await user.getIdToken();
+                        const userRes = await fetch(SCRIPT_URL, {
+                            method: "POST",
+                            headers: { "Content-Type": "text/plain;charset=utf-8" },
+                            body: JSON.stringify({
+                                action: "getUser",
+                                token: "SuHaoClassroom2026_SecureKey",
+                                uid: user.uid
+                            })
+                        });
+                        const userData = await userRes.json();
+                        if (userData.success && userData.name) {
+                            studentRealName = userData.name;
                         }
                     } catch (err) {
-                        console.log("讀取姓名失敗，使用預設名稱");
+                        console.error("獲取姓名失敗：", err);
                     }
 
                     await rpgRef.update({
                         exp: newTotalExp,
                         title: newTitle,
-                        name: studentRealName,
+                        name: studentRealName, // 寫入從 Google 試算表抓到的真實中文姓名
                         lastSummonDate: rpgData.lastSummonDate
                     });
 
