@@ -917,7 +917,7 @@
                 }
 
                 const finalScore = Math.round(correctCount * pointsPerQ);
-                const earnedExp = finalScore * 10;
+                const earnedExp = correctCount;
 
                 const user = auth.currentUser;
                 if (user) {
