@@ -226,7 +226,7 @@
 
         <div style="text-align: center;">
             <div style="font-size: 14px; font-weight: bold; color: #27ae60; margin-bottom: 15px;">【 今日試煉額度：1 / 1 】</div>
-            <button id="btn-summon-ai" class="summon-btn" onclick="startSummon()">✨ 消耗額度，啟動 AI 詠唱</button>
+            <button id="btn-summon-ai" class="summon-btn" onclick="startSummon()">消耗額度，使用 AI 出題</button>
             <div id="ai-progress-box" style="display: none; margin-top: 20px;">
                 <div style="font-size: 13px; color: #8e44ad; font-weight: bold; margin-bottom: 8px; text-align: left;" id="ai-status-text">正在向 Firebase 調閱歷史資料中...</div>
                 <div style="width: 100%; height: 8px; background: #eee; border-radius: 4px; overflow: hidden;">
@@ -360,7 +360,7 @@
             const listContainer = document.getElementById('dropdown-list');
             listContainer.innerHTML = `
                 <label class="dropdown-item">
-                    <input type="checkbox" value="weakness" onchange="handleCheckboxChange(this, '🎯 歷史錯題盲點特訓')"> 🎯 歷史錯題盲點特訓
+                    <input type="checkbox" value="weakness" onchange="handleCheckboxChange(this, '歷史錯題特訓')"> 歷史錯題特訓
                 </label>
             `;
             
@@ -369,7 +369,7 @@
                     const isDone = completedRecords[exam.id] ? " (已完成)" : "";
                     listContainer.innerHTML += `
                         <label class="dropdown-item">
-                            <input type="checkbox" value="${exam.id}" onchange="handleCheckboxChange(this, '📚 ${exam.title}${isDone}')"> 📚 ${exam.title}${isDone}
+                            <input type="checkbox" value="${exam.id}" onchange="handleCheckboxChange(this, '${exam.title}${isDone}')"> ${exam.title}${isDone}
                         </label>
                     `;
                 }
@@ -500,7 +500,7 @@
                     setTimeout(() => {
                         progressBox.style.display = 'none';
                         btn.disabled = false;
-                        btn.innerText = "✨ 消耗額度，啟動 AI 詠唱";
+                        btn.innerText = "消耗額度，使用 AI 出題";
                         startExam(aiExamData);
                     }, 1000);
 
@@ -510,7 +510,7 @@
                 clearInterval(aiGenerateTimer);
                 progressBox.style.display = 'none';
                 btn.disabled = false;
-                btn.innerText = "✨ 消耗額度，啟動 AI 詠唱";
+                btn.innerText = "消耗額度，使用 AI 出題";
                 alert("召喚失敗：" + e.message);
             }
         }
@@ -676,7 +676,7 @@
             
             document.getElementById('test-ui').style.display = 'none';
             document.getElementById('loading-screen').style.display = 'flex';
-            document.getElementById('loading-msg').innerText = "AI 導師正在進行 100 分制精準批改...";
+            document.getElementById('loading-msg').innerText = "AI 導師正在進行批改...";
 
             try {
                 let correctCount = 0;
@@ -711,11 +711,11 @@
                 const scoreEl = document.getElementById('score-display');
                 scoreEl.innerText = `${finalScore} 分 (答對 ${correctCount} / ${totalQ} 題)`;
                 if (finalScore === 100) { 
-                    scoreEl.style.color = "#27ae60"; scoreEl.innerText += " 🏆 完美滿分！"; 
+                    scoreEl.style.color = "#27ae60"; scoreEl.innerText += "滿分！"; 
                 } else if (finalScore >= 60) { 
                     scoreEl.style.color = "#d35400"; 
                 } else { 
-                    scoreEl.style.color = "#c0392b"; scoreEl.innerText += " 💪 再接再厲！";
+                    scoreEl.style.color = "#c0392b"; scoreEl.innerText += "再接再厲！";
                 }
 
                 const reviewContainer = document.getElementById('review-container');
