@@ -470,9 +470,9 @@
             if (isExamActive) { e.preventDefault(); e.returnValue = ''; return ''; }
         });
 
-        // 啟動 AI 召喚 (已修復 Load failed 與變數作用域)
+        // 啟動 AI 召喚
         async function startSummon() {
-            if (selectedScopes.size === 0) return alert("Please select at least one quest scope!");
+            if (selectedScopes.size === 0) return alert("請至少勾選一個試煉範圍！");
             
             const user = auth.currentUser;
             const btn = document.getElementById('btn-summon-ai');
@@ -557,6 +557,20 @@
                     bar.style.width = '100%';
                     text.innerText = "試煉卷軸完成！並存至任務清單！";
                     
+                    const aiExamData = {
+                        id: "AI_RPG_" + Date.now(), 
+                        title: `⚔ 勇者試煉 (總分100分)：${scopeLabel.trim()}`,
+                        desc: `精選 ${qCount} 題 (每題 ${100/qCount} 分)`,
+                        questions: result.questions
+                    };
+
+                    const d = new Date();
+                    const formattedToday = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+                    
+                    await db.ref('rpg_backlog/' + user.uid).set(aiExamData);
+                    await db.ref('rpg_system/' + user.uid).update({ lastSummonDate: formattedToday });
+
+                    // 鎖定按鈕與更新額度畫面
                     btn.disabled = true;
                     btn.innerText = "今日額度已用盡";
                     btn.style.background = "#7f8c8d";
@@ -566,20 +580,6 @@
                         quotaEl.innerText = "【 今日試煉額度：0 / 1 (今日已消耗) 】";
                         quotaEl.style.color = "#7f8c8d";
                     }
-                    
-                    const aiExamData = {
-                        id: "AI_RPG_" + Date.now(), 
-                        title: `⚔ 勇者試煉 (總分100分)：${scopeLabel.trim()}`,
-                        desc: `精選 ${qCount} 題 (每題 ${100/qCount} 分)`,
-                        questions: result.questions
-                    };
-
-                    await db.ref('rpg_backlog/' + user.uid).set(aiExamData);
-                    
-                    // 順便把今日消耗日期寫入 rpg_system 鎖定額度
-                    const d = new Date();
-                    const formattedToday = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-                    await db.ref('rpg_system/' + user.uid).update({ lastSummonDate: formattedToday });
 
                     window.pendingAiExam = aiExamData;
                     renderQuestBacklog(aiExamData);
@@ -595,7 +595,7 @@
                 progressBox.style.display = 'none';
                 btn.disabled = false;
                 btn.innerText = "消耗額度，使用 AI 出題";
-                alert("召喚失敗：" + e.message);
+                alert("召喚失敗（額度未扣除）：" + e.message);
             }
         }
 
