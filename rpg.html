@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <link rel="icon" href="https://suuuuuhaooooo.github.io/-/favicon.png" type="image/png">
+    <link rel="apple-touch-icon" href="https://suuuuuhaooooo.github.io/-/favicon.png">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>蘇昊數理｜AI 勇者村</title>
+    
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-database-compat.js"></script>
+    
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;700&display=swap');
+        
+        :root { --primary: #8e9775; --dark: #5b6348; --bg: #f8f8f6; --white: #ffffff; }
+        
+        body { 
+            font-family: "Noto Serif TC", serif; 
+            background-color: var(--bg); 
+            margin: 0; padding: 20px; color: #333; 
+            user-select: none; -webkit-user-select: none;
+            background-image: linear-gradient(120deg, #8e9775, #b2bd9f, #d5dcd0, #9ba483, #c6d0bb) !important;
+            background-size: 900% 900% !important;
+            animation: fluidGradient 180s ease-in-out infinite !important; 
+        }
+
+        @keyframes fluidGradient {
+            0%   { background-position: 0% 20%; }
+            25%  { background-position: 80% 100%; }
+            50%  { background-position: 100% 20%; }
+            75%  { background-position: 20% 0%; }
+            100% { background-position: 0% 20%; }
+        }
+
+        #loading-screen { 
+            display: flex; flex-direction: column; justify-content: center; align-items: center; 
+            height: 100vh; position: fixed; width: 100%; z-index: 9999; top: 0; left: 0;
+            background: rgba(255, 255, 255, 0.85); backdrop-filter: blur(10px);
+        }
+        .loading-dots { display: flex; gap: 8px; margin-bottom: 15px; }
+        .loading-dots div { width: 10px; height: 10px; background-color: var(--primary); border-radius: 50%; animation: bounce 0.5s infinite alternate; }
+        .loading-dots div:nth-child(2) { animation-delay: 0.15s; }
+        .loading-dots div:nth-child(3) { animation-delay: 0.3s; }
+        @keyframes bounce { from { transform: translateY(0); opacity: 0.6; } to { transform: translateY(-10px); opacity: 1; } }
+        .loading-text { font-size: 14px; color: var(--dark); font-weight: 700; letter-spacing: 2px; }
+
+        /* 繼承 test.html 的 UI 容器與毛玻璃 */
+        .container-ui { 
+            max-width: 800px; margin: 0 auto; 
+            padding: 40px; border-radius: 8px; box-shadow: 0 8px 32px rgba(91, 99, 72, 0.1);
+            border-top: 6px solid #8e44ad;
+            background: rgba(255, 255, 255, 0.85) !important; 
+            backdrop-filter: blur(24px) !important;            
+            -webkit-backdrop-filter: blur(24px) !important;   
+            border: 1px solid rgba(255, 255, 255, 0.4); 
+        }
+
+        h2 { color: var(--dark); border-left: 5px solid #8e44ad; padding-left: 15px; margin-top: 0; }
+        .back-btn { display: inline-block; margin-bottom: 20px; color: #888; text-decoration: none; font-size: 14px; transition: 0.2s; cursor: pointer; font-weight: bold; }
+        .back-btn:hover { color: #8e44ad; }
+        .clean-card { background: rgba(255,255,255,0.6); border: 1px solid #f0f0f0; border-radius: 12px; padding: 25px; margin-bottom: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.02); }
+        .modern-select { padding: 12px; border-radius: 8px; border: 1px solid #ddd; outline: none; background: rgba(255,255,255,0.8); font-size: 14px; color: #555; width: 100%; cursor: pointer; font-weight: bold; }
+
+        /* === RPG 專屬視覺 === */
+        .rpg-hero-card { background: linear-gradient(135deg, #2c3e50, #34495e); color: white; padding: 25px; border-radius: 12px; box-shadow: 0 10px 20px rgba(0,0,0,0.15); margin-bottom: 30px; position: relative; overflow: hidden; }
+        .rpg-hero-card::after { content: '🛡️'; position: absolute; right: -20px; top: -20px; font-size: 150px; opacity: 0.1; }
+        .rpg-exp-bar-bg { width: 100%; height: 10px; background: rgba(255,255,255,0.2); border-radius: 5px; overflow: hidden; margin-top: 8px; }
+        .rpg-exp-bar-fill { width: 45%; height: 100%; background: #f1c40f; box-shadow: 0 0 10px rgba(241,196,15,0.8); }
+        
+        .summon-btn { background: #8e44ad; color: white; border: none; padding: 16px; font-size: 16px; font-weight: bold; border-radius: 8px; cursor: pointer; transition: 0.3s; width: 100%; letter-spacing: 2px; margin-top: 10px; }
+        .summon-btn:hover:not(:disabled) { background: #732d91; transform: translateY(-2px); box-shadow: 0 6px 20px rgba(142, 68, 173, 0.3); }
+        .summon-btn:disabled { background: #aaa; cursor: not-allowed; transform: none; box-shadow: none; }
+
+        /* 標籤複選器 UI */
+        .scope-tags-container { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 15px; }
+        .scope-tag { padding: 10px 18px; border: 2px solid #ddd; border-radius: 25px; font-size: 14px; color: #666; cursor: pointer; transition: 0.2s; background: rgba(255,255,255,0.7); font-weight: bold; }
+        .scope-tag:hover { border-color: #bbb; background: #fff; }
+        .scope-tag.active { border-color: #8e44ad; background: #f4ecf8; color: #732d91; box-shadow: 0 2px 8px rgba(142,68,173,0.2); }
+        .scope-tag.active-weakness { border-color: #e74c3c; background: #fdf2f0; color: #c0392b; box-shadow: 0 2px 8px rgba(231,76,60,0.2); }
+
+        @media (max-width: 768px) {
+            body { padding: 10px; }
+            .container-ui { padding: 20px 15px; }
+            .rpg-hero-card { padding: 20px; }
+            #rpg-title-text { font-size: 22px !important; }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="loading-screen">
+        <div class="loading-dots"><div></div><div></div><div></div></div>
+        <div class="loading-text" id="loading-msg">身分驗證與魔法陣準備中...</div>
+    </div>
+
+    <div class="container-ui" id="rpg-main-ui" style="display: none;">
+        <a href="classroom.html" class="back-btn">← 返回雲端教室</a>
+        <h2 style="border-left-color: #8e44ad;">⚔️ AI 勇者村 (每日試煉)</h2>
+        <p style="font-size: 13px; color: #555; margin-bottom: 25px; padding-left: 20px;">請點擊下方標籤勾選您想挑戰的範圍 (可複選)，AI 導師將為您量身打造專屬試卷。</p>
+
+        <div class="rpg-hero-card">
+            <div style="display: flex; justify-content: space-between; align-items: flex-end;">
+                <div>
+                    <div style="font-size: 14px; color: #bdc3c7; margin-bottom: 5px;">當前稱號</div>
+                    <div id="rpg-title-text" style="font-size: 28px; font-weight: bold; color: #f1c40f; letter-spacing: 2px; text-shadow: 0 2px 4px rgba(0,0,0,0.5);">新手見習生</div>
+                </div>
+                <div style="text-align: right;">
+                    <div style="font-size: 14px; color: #bdc3c7; margin-bottom: 5px;">試煉完成度</div>
+                    <div style="font-size: 24px; font-weight: bold; color: #e74c3c;">🔥 準備中</div>
+                </div>
+            </div>
+            <div style="margin-top: 25px;">
+                <div style="display: flex; justify-content: space-between; font-size: 12px; color: #ecf0f1;">
+                    <span>EXP 準備啟動</span>
+                    <span>等級提升</span>
+                </div>
+                <div class="rpg-exp-bar-bg"><div class="rpg-exp-bar-fill"></div></div>
+            </div>
+        </div>
+
+        <div class="clean-card">
+            <h3 style="margin-top: 0; font-size: 16px; color: var(--dark);">1. 選擇試煉範圍 (可多選)</h3>
+            <div id="scope-container" class="scope-tags-container">
+                <!-- 標籤將由 JS 動態載入 -->
+            </div>
+        </div>
+
+        <div class="clean-card">
+            <h3 style="margin-top: 0; font-size: 16px; color: var(--dark);">2. 選擇試煉題數</h3>
+            <select id="ai-quest-count" class="modern-select">
+                <option value="5">5 題 (小試身手)</option>
+                <option value="10">10 題 (極限挑戰)</option>
+            </select>
+        </div>
+
+        <div style="text-align: center;">
+            <div style="font-size: 14px; font-weight: bold; color: #27ae60; margin-bottom: 15px;">【 今日試煉額度：1 / 1 】</div>
+            <button id="btn-summon-ai" class="summon-btn" onclick="startSummon()">✨ 消耗額度，啟動 AI 詠唱</button>
+            <div id="ai-progress-box" style="display: none; margin-top: 20px;">
+                <div style="font-size: 13px; color: #8e44ad; font-weight: bold; margin-bottom: 8px; text-align: left;" id="ai-status-text">分析核心考點中...</div>
+                <div style="width: 100%; height: 8px; background: #eee; border-radius: 4px; overflow: hidden;">
+                    <div id="ai-bar" style="width: 0%; height: 100%; background: linear-gradient(90deg, #9b59b6, #8e44ad); transition: width 0.5s;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyALkTnkYY3JZLCTyajahpi4IZKmFX9USdw",
+            authDomain: "su-hao-classroom.firebaseapp.com",
+            projectId: "su-hao-classroom",
+            storageBucket: "su-hao-classroom.firebasestorage.app",
+            messagingSenderId: "764168135846",
+            appId: "1:764168135846:web:f2923a5f4952fa1ca64067"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.database();
+        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwxFfufe0b7eJpDxSmLgnbVvlq1itLvoD6ZCpvDJKtJg7ChcWn7lpf9LgZqQ4ZsThJiXQ/exec";
+
+        let studentExams = [];
+        let completedRecords = {};
+        let selectedScopes = new Set();
+        let aiGenerateTimer;
+
+        // 頁面載入與身分驗證
+        auth.onAuthStateChanged(async (user) => {
+            if (!user) {
+                alert("請先登入系統！");
+                window.location.replace("classroom.html");
+                return;
+            }
+
+            try {
+                // 嘗試從 sessionStorage 抓取快取資料 (由 classroom.html 存入的)
+                const cachedExams = sessionStorage.getItem('suhao_exams');
+                const cachedStudents = sessionStorage.getItem('suhao_students');
+                
+                if (cachedExams && cachedStudents) {
+                    const allExams = JSON.parse(cachedExams);
+                    const students = JSON.parse(cachedStudents);
+                    const myData = students.find(s => s.uid === user.uid);
+                    
+                    if (myData && myData.examIds) {
+                        const assignedIds = myData.examIds.split(',').map(id => id.trim());
+                        studentExams = allExams.filter(exam => assignedIds.includes(exam.id));
+                    }
+                }
+
+                // 抓取 Firebase 歷史作答紀錄 (用於抽錯題)
+                const snap = await db.ref('exam_records/' + user.uid).once('value');
+                completedRecords = snap.val() || {};
+
+                renderScopeTags();
+                document.getElementById('loading-screen').style.display = 'none';
+                document.getElementById('rpg-main-ui').style.display = 'block';
+
+            } catch (e) {
+                alert("資料讀取失敗，請重新整理頁面。");
+                window.location.replace("classroom.html");
+            }
+        });
+
+        // 渲染可複選的標籤
+        function renderScopeTags() {
+            const container = document.getElementById('scope-container');
+            container.innerHTML = `<div class="scope-tag" onclick="toggleScope('weakness', this)">🎯 歷史錯題盲點特訓</div>`;
+            
+            studentExams.forEach(exam => {
+                // 排除以前的 AI 生成卷，只顯示正規單元
+                if (!exam.id.startsWith("AI_RPG_")) {
+                    container.innerHTML += `<div class="scope-tag" onclick="toggleScope('${exam.id}', this)">📚 ${exam.title}</div>`;
+                }
+            });
+        }
+
+        // 標籤點擊切換邏輯
+        function toggleScope(id, el) {
+            const activeClass = id === 'weakness' ? 'active-weakness' : 'active';
+            if (selectedScopes.has(id)) {
+                selectedScopes.delete(id);
+                el.classList.remove(activeClass);
+            } else {
+                selectedScopes.add(id);
+                el.classList.add(activeClass);
+            }
+        }
+
+        // 啟動 AI 召喚
+        async function startSummon() {
+            if (selectedScopes.size === 0) return alert("請至少選擇一個試煉範圍！");
+            
+            const user = auth.currentUser;
+            const btn = document.getElementById('btn-summon-ai');
+            const progressBox = document.getElementById('ai-progress-box');
+            const bar = document.getElementById('ai-bar');
+            const text = document.getElementById('ai-status-text');
+            const qCount = parseInt(document.getElementById('ai-quest-count').value) || 5;
+
+            let refQuestions = [];
+            let scopeLabel = "";
+
+            // 1. 蒐集錯題
+            if (selectedScopes.has("weakness")) {
+                scopeLabel += "錯題特訓 ";
+                for (const examId in completedRecords) {
+                    if (completedRecords[examId]?.details) {
+                        completedRecords[examId].details.forEach(d => {
+                            if (!d.isCorrect) refQuestions.push(d.originalQuestion);
+                        });
+                    }
+                }
+            }
+
+            // 2. 蒐集指定單元題目
+            selectedScopes.forEach(id => {
+                if (id !== "weakness") {
+                    const targetExam = studentExams.find(e => e.id === id);
+                    if (targetExam) {
+                        scopeLabel += targetExam.title + " ";
+                        refQuestions.push(...targetExam.questions.map(q => q.question));
+                    }
+                }
+            });
+
+            // 隨機抽取 10 題給 AI 當範本，避免 Token 爆炸
+            if (refQuestions.length > 10) refQuestions = refQuestions.sort(() => Math.random() - 0.5).slice(0, 10);
+            if (refQuestions.length === 0) return alert("所選範圍內尚未有作答紀錄或題目，無法生成！");
+
+            btn.disabled = true;
+            btn.innerText = "魔法陣詠唱中...";
+            progressBox.style.display = 'block';
+            
+            let progress = 0;
+            aiGenerateTimer = setInterval(() => {
+                if (progress < 90) {
+                    progress += Math.floor(Math.random() * 5) + 1;
+                    bar.style.width = Math.min(progress, 90) + '%';
+                    text.innerText = progress < 40 ? "分析核心考點與概念中..." : "Gemini 3.8 Flash 建構全新試煉中...";
+                }
+            }, 600);
+
+            try {
+                const idToken = await user.getIdToken();
+                const response = await fetch(SCRIPT_URL, {
+                    method: 'POST',
+                    headers: { "Content-Type": "text/plain;charset=utf-8" },
+                    body: JSON.stringify({
+                        action: "generateAIQuest",
+                        idToken: idToken,
+                        scopeLabel: scopeLabel.trim(),
+                        questionCount: qCount,
+                        refQuestions: refQuestions
+                    })
+                });
+
+                const result = await response.json();
+                clearInterval(aiGenerateTimer);
+                
+                if (result.success) {
+                    bar.style.width = '100%';
+                    text.innerText = "試煉卷軸完成！傳送至試務中心...";
+                    
+                    const aiExamData = {
+                        id: "AI_RPG_" + Date.now(), 
+                        title: `⚔ 勇者試煉：${scopeLabel.trim()}`,
+                        desc: `AI 導師依據您的選擇生成的 ${qCount} 題專屬考驗。`,
+                        questions: result.questions
+                    };
+                    
+                    // 🌟 關鍵：將生成好的考卷打包存進 sessionStorage，並跳轉至 test.html
+                    sessionStorage.setItem('pending_ai_exam', JSON.stringify(aiExamData));
+                    
+                    setTimeout(() => {
+                        window.location.href = "test.html?mode=ai_quest";
+                    }, 1500);
+
+                } else throw new Error(result.message);
+
+            } catch (e) {
+                clearInterval(aiGenerateTimer);
+                progressBox.style.display = 'none';
+                btn.disabled = false;
+                btn.innerText = "✨ 消耗額度，啟動 AI 詠唱";
+                alert("召喚失敗：" + e.message);
+            }
+        }
+    </script>
+</body>
+</html>
