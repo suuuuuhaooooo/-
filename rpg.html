@@ -228,6 +228,11 @@
                 <option value="50">50 題 (每題 2 分)</option>
             </select>
         </div>
+        <!-- 這是新增的歷史試煉紀錄區塊 -->
+        <div class="clean-card" id="history-container" style="display: none; border-top: 4px solid #3498db;">
+            <h3 style="margin-top: 0; font-size: 16px; color: var(--dark);">📚 歷史 AI 試煉紀錄 (隨時檢討)</h3>
+            <div id="history-list" style="display: flex; flex-direction: column; gap: 10px;"></div>
+        </div>
 
         <div style="text-align: center;">
             <div id="quota-text" style="font-size: 14px; font-weight: bold; color: #27ae60; margin-bottom: 15px;">【 今日試煉額度：1 / 1 】</div>
@@ -410,6 +415,7 @@
 
                 loadLeaderboard();
                 renderDropdownList();
+                renderHistoryExams();
                 document.getElementById('loading-screen').style.display = 'none';
                 document.getElementById('rpg-main-ui').style.display = 'block';
 
@@ -916,6 +922,7 @@
                 const user = auth.currentUser;
                 if (user) {
                     const recordPayload = {
+                        title: currentExam.title,
                         score: finalScore,
                         date: new Date().toISOString(),
                         details: shuffledDetails
@@ -1020,7 +1027,7 @@
             document.getElementById('rpg-main-ui').style.display = 'block';
             
             loadLeaderboard();
-            
+            renderHistoryExams();
             const btn = document.getElementById('btn-summon-ai');
             const d = new Date();
             const formattedToday = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
@@ -1056,6 +1063,38 @@
             if (expLabel && expLabel.previousElementSibling && expLabel.previousElementSibling.children[0]) {
                 expLabel.previousElementSibling.children[0].innerText = `EXP: ${currentExp} / 下一階門檻`;
             }
+        }
+        function renderHistoryExams() {
+            const container = document.getElementById('history-container');
+            const list = document.getElementById('history-list');
+            list.innerHTML = "";
+            let hasAIHistory = false;
+
+            // 將歷史紀錄按日期排序（最新的在最上面）
+            const sortedIds = Object.keys(completedRecords).sort((a, b) => {
+                return new Date(completedRecords[b].date) - new Date(completedRecords[a].date);
+            });
+
+            sortedIds.forEach(examId => {
+                if (examId.startsWith("AI_RPG_")) {
+                    hasAIHistory = true;
+                    const record = completedRecords[examId];
+                    const dateStr = new Date(record.date).toLocaleDateString('zh-TW');
+                    const titleStr = record.title || "未知試煉 (舊版紀錄)";
+
+                    list.innerHTML += `
+                        <div style="background: rgba(255,255,255,0.9); border: 1px solid #ddd; border-radius: 6px; padding: 12px; display: flex; justify-content: space-between; align-items: center;">
+                            <div>
+                                <div style="font-weight: bold; color: var(--dark); font-size: 14px; margin-bottom: 4px;">${titleStr}</div>
+                                <div style="font-size: 12px; color: #666;">作答日期：${dateStr} ｜ 得分：<span style="color:${record.score >= 60 ? '#27ae60' : '#c0392b'}; font-weight:bold;">${record.score} 分</span></div>
+                            </div>
+                            <button class="main-btn" style="margin: 0; width: auto; padding: 6px 15px; font-size: 13px; background: #3498db;" onclick="reviewCompletedExam('${examId}')">查看檢討</button>
+                        </div>
+                    `;
+                }
+            });
+
+            if (hasAIHistory) container.style.display = 'block';
         }
     </script>
 </body>
