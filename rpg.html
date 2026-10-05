@@ -289,8 +289,7 @@
 
         let studentExams = [];
         let completedRecords = {};
-        let selectedScopeId = ""; // 記錄目前單選的範圍 ID
-        let selectedScopeTitle = ""; // 記錄範圍名稱
+        let selectedScopes = new Set();
         let aiGenerateTimer;
 
         let currentExam = null;
@@ -374,38 +373,22 @@
             });
         }
 
-        // 渲染下拉單選清單
-function renderDropdownList() {
-    const listContainer = document.getElementById('dropdown-list');
-    listContainer.innerHTML = `
-        <label class="dropdown-item">
-            <input type="radio" name="rpg-scope" value="weakness" onchange="handleRadioChange(this, '歷史錯題特訓')"> 歷史錯題特訓
-        </label>
-    `;
-    
-    studentExams.forEach(exam => {
-        if (!exam.id.startsWith("AI_RPG_")) {
-            const isDone = completedRecords[exam.id] ? " (已完成)" : "";
-            listContainer.innerHTML += `
-                <label class="dropdown-item">
-                    <input type="radio" name="rpg-scope" value="${exam.id}" onchange="handleRadioChange(this, '${exam.title}${isDone}')"> ${exam.title}${isDone}
-                </label>
-            `;
+        // 勾選變更時更新狀態與顯示文字
+        function handleCheckboxChange(checkbox, labelText) {
+            const id = checkbox.value;
+            if (checkbox.checked) {
+                selectedScopes.add(id);
+            } else {
+                selectedScopes.delete(id);
+            }
+
+            const labelEl = document.getElementById('dropdown-label');
+            if (selectedScopes.size === 0) {
+                labelEl.innerText = "-- 請點擊展開並勾選範圍 --";
+            } else {
+                labelEl.innerText = `已勾選 ${selectedScopes.size} 個範圍`;
+            }
         }
-    });
-}
-
-// 單選變更時更新狀態
-function handleRadioChange(radio, labelText) {
-    selectedScopeId = radio.value;
-    selectedScopeTitle = labelText;
-
-    const labelEl = document.getElementById('dropdown-label');
-    labelEl.innerText = `已選擇：${labelText}`;
-    
-    // 點擊後自動收起下拉選單
-    document.getElementById('dropdown-list').style.display = 'none';
-}
 
         // 防弊機制
         document.addEventListener("visibilitychange", () => {
@@ -426,12 +409,21 @@ function handleRadioChange(radio, labelText) {
 
         // 啟動 AI 召喚
         async function startSummon() {
-            if (!selectedScopeId) return alert("請先選擇一個試煉範圍！");
+            if (selectedScopes.size === 0) return alert("請至少勾選一個試煉範圍！");
             
-            let refQuestions = [];
-            let scopeLabel = selectedScopeTitle;
+            const user = auth.currentUser;
+            const btn = document.getElementById('btn-summon-ai');
+            const progressBox = document.getElementById('ai-progress-box');
+            const bar = document.getElementById('ai-bar');
+            const text = document.getElementById('ai-status-text');
+            // 從下拉選單對應抓取「湊到 100 分」的題數
+            const qCount = parseInt(document.getElementById('ai-quest-count').value) || 10;
 
-            if (selectedScopeId === "weakness") {
+            let refQuestions = [];
+            let scopeLabel = "";
+
+            if (selectedScopes.has("weakness")) {
+                scopeLabel += "錯題特訓 ";
                 for (const examId in completedRecords) {
                     const record = completedRecords[examId];
                     if (record && record.details) {
@@ -440,17 +432,6 @@ function handleRadioChange(radio, labelText) {
                         });
                     }
                 }
-            } else {
-                const targetExam = studentExams.find(e => e.id === selectedScopeId);
-                if (targetExam && targetExam.questions) {
-                    targetExam.questions.forEach(q => {
-                        if (q.question) refQuestions.push(q.question);
-                    });
-                }
-            }
-
-            if (selectedScopeId === "weakness" && refQuestions.length === 0) {
-                return alert("您的錯題本目前無錯題紀錄，請改選其他單元！");
             }
 
             selectedScopes.forEach(id => {
@@ -769,10 +750,9 @@ function handleRadioChange(radio, labelText) {
 
         function returnToAltar() {
             currentExam = null;
-            selectedScopeId = "";
-            selectedScopeTitle = "";
-            document.getElementById('dropdown-label').innerText = "-- 請點擊展開選擇範圍 --";
-            document.querySelectorAll('input[type="radio"]').forEach(rb => rb.checked = false);
+            selectedScopes.clear();
+            document.getElementById('dropdown-label').innerText = "-- 請點擊展開並勾選範圍 --";
+            document.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.checked = false);
             document.getElementById('result-ui').style.display = 'none';
             document.getElementById('test-ui').style.display = 'none';
             document.getElementById('rpg-main-ui').style.display = 'block';
