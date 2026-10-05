@@ -217,13 +217,21 @@
         <div class="clean-card">
             <h3 style="margin-top: 0; font-size: 16px; color: var(--dark);">2. 選擇試煉題數</h3>
             <select id="ai-quest-count" class="modern-select">
-                <option value="20">5 題 (每題 20 分)</option>
+                <option value="5">5 題 (每題 20 分)</option>
+                <option value="10" selected>10 題 (每題 10 分)</option>
+                <option value="20">20 題 (每題 5 分)</option>
+                <option value="25">25 題 (每題 4 分)</option>
+                <option value="50">50 題 (每題 2 分)</option>
             </select>
         </div>
 
         <div style="text-align: center;">
             <div style="font-size: 14px; font-weight: bold; color: #27ae60; margin-bottom: 15px;">【 今日試煉額度：1 / 1 】</div>
             <button id="btn-summon-ai" class="summon-btn" onclick="startSummon()">消耗額度，使用 AI 出題</button>
+            <div id="quest-backlog-container" style="margin-top: 20px; text-align: left; display: none;">
+                <div style="font-size: 15px; font-weight: bold; color: var(--dark); margin-bottom: 10px; border-bottom: 2px solid #8e44ad; padding-bottom: 5px;">📜 待命的試煉卷軸 (任務清單)</div>
+                <div id="backlog-card-list"></div>
+            </div>
             <div id="ai-progress-box" style="display: none; margin-top: 20px;">
                 <div style="font-size: 13px; color: #8e44ad; font-weight: bold; margin-bottom: 8px; text-align: left;" id="ai-status-text">正在向 Firebase 調閱歷史資料中...</div>
                 <div style="width: 100%; height: 8px; background: #eee; border-radius: 4px; overflow: hidden;">
@@ -327,7 +335,23 @@
                 const snap = await db.ref('exam_records/' + user.uid).once('value');
                 completedRecords = snap.val() || {};
 
-                renderDropdownList();
+                const todayStr = new Date().toLocaleDateString('zh-TW', { timeZone: 'Asia/Taipei' }).replace(/\//g, '-');
+                // 為了保險，對齊後端的日期格式 (YYYY-MM-DD)
+                const d = new Date();
+                const year = d.getFullYear();
+                const month = String(d.getMonth() + 1).padStart(2, '0');
+                const day = String(d.getDate()).padStart(2, '0');
+                const formattedToday = `${year}-${month}-${day}`;
+
+                const rpgSnap = await db.ref('rpg_system/' + user.uid).once('value');
+                const rpgData = rpgSnap.val() || {};
+
+                if (rpgData.lastSummonDate === formattedToday) {
+                    const btn = document.getElementById('btn-summon-ai');
+                    btn.disabled = true;
+                    btn.innerText = "今日額度已用完 (明日 00:00 重置)";
+                    btn.style.background = "#7f8c8d";
+                }
                 document.getElementById('loading-screen').style.display = 'none';
                 document.getElementById('rpg-main-ui').style.display = 'block';
 
@@ -486,7 +510,11 @@
                 
                 if (result.success) {
                     bar.style.width = '100%';
-                    text.innerText = "試煉卷軸完成！進入考場...";
+                    text.innerText = "試煉卷軸完成！並存至任務清單！";
+                    const btn = document.getElementById('btn-summon-ai');
+                    btn.disabled = true;
+                    btn.innerText = "今日額度已用完";
+                    btn.style.background = "#7f8c8d";
                     
                     const aiExamData = {
                         id: "AI_RPG_" + Date.now(), 
@@ -494,6 +522,8 @@
                         desc: `精選 ${qCount} 題 (每題 ${100/qCount} 分)`,
                         questions: result.questions
                     };
+                    window.pendingAiExam = aiExamData;
+                    renderQuestBacklog(aiExamData);
                     
                     setTimeout(() => {
                         progressBox.style.display = 'none';
@@ -571,7 +601,22 @@
             }, 1000);
             renderQuestion();
         }
-
+        // 渲染待命任務清單
+        function renderQuestBacklog(examData) {
+            const container = document.getElementById('quest-backlog-container');
+            const list = document.getElementById('backlog-card-list');
+            container.style.display = 'block';
+            
+            list.innerHTML = `
+                <div style="background: rgba(255,255,255,0.9); border: 1px solid #8e44ad; border-radius: 8px; padding: 15px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 10px rgba(0,0,0,0.05);">
+                    <div>
+                        <div style="font-weight: bold; color: var(--dark); font-size: 15px; margin-bottom: 4px;">${examData.title}</div>
+                        <div style="font-size: 12px; color: #666;">${examData.desc} ｜ 狀態：等待勇者拔劍</div>
+                    </div>
+                    <button class="main-btn" style="margin: 0; width: auto; padding: 10px 20px; font-size: 14px;" onclick="startExam(window.pendingAiExam)">進入考場</button>
+                </div>
+            `;
+        }
         function updateTimerDisplay() {
             const m = Math.floor(timeRemaining / 60); const s = timeRemaining % 60;
             document.getElementById('timer-display').innerText = `時間還剩 ${m < 10 ? '0' : ''}${m}:${s < 10 ? '0' : ''}${s}`;
@@ -666,7 +711,7 @@
         }
 
         // ==========================================
-        // 100分制精準結算與解析檢討
+        // 結算與解析檢討
         // ==========================================
         async function finishAndShowResults() {
             isExamActive = false;
@@ -702,6 +747,20 @@
 
                 // 精準計算總分
                 const finalScore = Math.round(correctCount * pointsPerQ);
+
+                const user = auth.currentUser;
+                if (user) {
+                    const recordPayload = {
+                        score: finalScore,
+                        date: new Date().toISOString(),
+                        details: shuffledDetails
+                    };
+                    // 寫入到跟一般測驗相同的 exam_records 路徑下
+                    await db.ref('exam_records/' + user.uid + '/' + currentExam.id).set(recordPayload);
+                    
+                    // 同步更新本地的 completedRecords，這樣馬上就能在錯題特訓裡抓到這次的錯題
+                    completedRecords[currentExam.id] = recordPayload;
+                }
 
                 document.getElementById('loading-screen').style.display = 'none';
                 document.getElementById('result-ui').style.display = 'block';
