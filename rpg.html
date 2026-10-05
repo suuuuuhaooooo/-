@@ -200,7 +200,12 @@
                 <div class="rpg-exp-bar-bg"><div class="rpg-exp-bar-fill"></div></div>
             </div>
         </div>
-
+        <div class="clean-card">
+            <h3 style="margin-top: 0; font-size: 16px; color: var(--dark);">🏆 勇者村榮譽排行榜 (Top 10)</h3>
+            <div id="leaderboard-container" style="font-size: 14px; color: #555;">
+                正在召集各路勇者排名中...
+            </div>
+        </div>
         <div class="clean-card">
             <h3 style="margin-top: 0; font-size: 16px; color: var(--dark);">1. 選擇試煉範圍 (下拉複選)</h3>
             <div class="dropdown-multiselect">
@@ -314,6 +319,7 @@
         let isExamActive = false; 
 
         // 頁面載入與初始化
+        // 頁面載入與初始化
         auth.onAuthStateChanged(async (user) => {
             if (!user) {
                 alert("請先登入系統！");
@@ -322,7 +328,7 @@
             }
 
             try {
-                // 1. 向後端抓取完整題庫清單 (確保能個別單選或複選做過的考卷)
+                // 1. 向後端抓取完整題庫清單
                 const idToken = await user.getIdToken();
                 const r2 = await fetch(SCRIPT_URL, {
                     method: "POST",
@@ -335,34 +341,41 @@
                 const snap = await db.ref('exam_records/' + user.uid).once('value');
                 completedRecords = snap.val() || {};
 
-                const todayStr = new Date().toLocaleDateString('zh-TW', { timeZone: 'Asia/Taipei' }).replace(/\//g, '-');
-                // 為了保險，對齊後端的日期格式 (YYYY-MM-DD)
+                // 3. 計算今日日期
                 const d = new Date();
                 const year = d.getFullYear();
                 const month = String(d.getMonth() + 1).padStart(2, '0');
                 const day = String(d.getDate()).padStart(2, '0');
                 const formattedToday = `${year}-${month}-${day}`;
 
+                // 4. 讀取 RPG 系統資料與待命卷軸
                 const rpgSnap = await db.ref('rpg_system/' + user.uid).once('value');
                 const rpgData = rpgSnap.val() || {};
 
+                updateRpgDashboard(rpgData);
+
+                const backlogSnap = await db.ref('rpg_backlog/' + user.uid).once('value');
+                const backlogExam = backlogSnap.val();
+                if (backlogExam) {
+                    window.pendingAiExam = backlogExam;
+                    renderQuestBacklog(backlogExam);
+                }
+
+                // 5. 檢查今日額度是否已用完
                 if (rpgData.lastSummonDate === formattedToday) {
                     const btn = document.getElementById('btn-summon-ai');
                     btn.disabled = true;
-                    btn.innerText = "今日額度已用完 (明日 00:00 重置)";
+                    btn.innerText = "今日額度已用完 (卷軸已就緒)";
                     btn.style.background = "#7f8c8d";
+                    
                     const quotaEl = document.getElementById('quota-text');
                     if (quotaEl) {
                         quotaEl.innerText = "【 今日試煉額度：0 / 1 (今日已消耗) 】";
                         quotaEl.style.color = "#7f8c8d";
                     }
-                    const backlogSnap = await db.ref('rpg_backlog/' + user.uid).once('value');
-                    const backlogExam = backlogSnap.val();
-                    if (backlogExam) {
-                        window.pendingAiExam = backlogExam;
-                        renderQuestBacklog(backlogExam);
-                    }
                 }
+
+                renderDropdownList();
                 document.getElementById('loading-screen').style.display = 'none';
                 document.getElementById('rpg-main-ui').style.display = 'block';
 
@@ -567,7 +580,60 @@
                 alert("召喚失敗：" + e.message);
             }
         }
+        // 載入並渲染排行榜
+        async function loadLeaderboard() {
+            try {
+                // 從 Firebase 抓取所有勇者的 rpg_system 資料
+                const snap = await db.ref('rpg_system').once('value');
+                const data = snap.val() || {};
+                
+                let list = [];
+                for (let uid in data) {
+                    list.push(data[uid]);
+                }
+                
+                // 依照 EXP 由高到低排序
+                list.sort((a, b) => (b.exp || 0) - (a.exp || 0));
+                
+                // 取前 10 名
+                const topList = list.slice(0, 10);
+                const container = document.getElementById('leaderboard-container');
+                
+                if (topList.length === 0) {
+                    container.innerHTML = "目前尚無勇者登榜，快去完成試煉拔得頭籌吧！";
+                    return;
+                }
 
+                let html = `
+                    <table style="width: 100%; border-collapse: collapse; font-size: 14px;">
+                        <tr style="border-bottom: 2px solid #eee; text-align: left; color: var(--dark);">
+                            <th style="padding: 8px; width: 15%;">排名</th>
+                            <th style="padding: 8px; width: 35%;">勇者</th>
+                            <th style="padding: 8px; width: 30%;">稱號</th>
+                            <th style="padding: 8px; width: 20%; text-align: right;">總 EXP</th>
+                        </tr>
+                `;
+
+                topList.forEach((u, index) => {
+                    let rankBadge = index === 0 ? "🥇" : index === 1 ? "🥈" : index === 2 ? "🥉" : `#${index + 1}`;
+                    html += `
+                        <tr style="border-bottom: 1px solid #f2f2f2;">
+                            <td style="padding: 10px 8px; font-weight: bold;">${rankBadge}</td>
+                            <td style="padding: 10px 8px; font-weight: bold; color: #333;">${u.name || "神秘勇者"}</td>
+                            <td style="padding: 10px 8px; color: #8e44ad; font-weight: bold;">${u.title || "新手見習生"}</td>
+                            <td style="padding: 10px 8px; text-align: right; font-weight: bold; color: #d35400;">${u.exp || 0} EXP</td>
+                        </tr>
+                    `;
+                });
+
+                html += `</table>`;
+                container.innerHTML = html;
+
+            } catch (err) {
+                console.error("排行榜載入錯誤：", err);
+                document.getElementById('leaderboard-container').innerHTML = "排行榜載入失敗";
+            }
+        }
         // ==========================================
         // 考試介面互動邏輯
         // ==========================================
@@ -772,6 +838,7 @@
 
                 // 精準計算總分
                 const finalScore = Math.round(correctCount * pointsPerQ);
+                const earnedExp = finalScore * 1;
 
                 const user = auth.currentUser;
                 if (user) {
@@ -785,13 +852,35 @@
                     
                     // 同步更新本地的 completedRecords，這樣馬上就能在錯題特訓裡抓到這次的錯題
                     completedRecords[currentExam.id] = recordPayload;
+                    const rpgRef = db.ref('rpg_system/' + user.uid);
+                    const rpgSnap = await rpgRef.once('value');
+                    let rpgData = rpgSnap.val() || {};
+                    
+                    let newTotalExp = (rpgData.exp || 0) + earnedExp;
+                    
+                    // 根據總 EXP 自動判定稱號
+                    let newTitle = "新手見習生";
+                    if (newTotalExp >= 10000) newTitle = "傳說勇者";
+                    else if (newTotalExp >= 6000) newTitle = "劍士";
+                    else if (newTotalExp >= 3000) newTitle = "戰士";
+                    else if (newTotalExp >= 1000) newTitle = "初級冒險者";
+
+                    await rpgRef.update({
+                        exp: newTotalExp,
+                        title: newTitle,
+                        name: user.displayName || (user.email ? user.email.split('@')[0] : "神秘勇者"),
+                        lastSummonDate: rpgData.lastSummonDate
+                    });
+
+                    // 3. 🌟 【新增】清空雲端的待命卷軸（代表這張卷軸已經考完了）
+                    await db.ref('rpg_backlog/' + user.uid).remove();
                 }
 
                 document.getElementById('loading-screen').style.display = 'none';
                 document.getElementById('result-ui').style.display = 'block';
 
                 const scoreEl = document.getElementById('score-display');
-                scoreEl.innerText = `${finalScore} 分 (答對 ${correctCount} / ${totalQ} 題)`;
+                scoreEl.innerText = `${finalScore} 分 (答對 ${correctCount} / ${totalQ} 題)\n🎁 獲得經驗值 +${earnedExp} EXP！`;
                 if (finalScore === 100) { 
                     scoreEl.style.color = "#27ae60"; scoreEl.innerText += "滿分！"; 
                 } else if (finalScore >= 60) { 
@@ -840,6 +929,27 @@
             document.getElementById('result-ui').style.display = 'none';
             document.getElementById('test-ui').style.display = 'none';
             document.getElementById('rpg-main-ui').style.display = 'block';
+        }
+        // 更新首頁的 RPG 看板（稱號、經驗值條）
+        function updateRpgDashboard(rpgData) {
+            const currentExp = rpgData.exp || 0;
+            const currentTitle = rpgData.title || "新手見習生";
+            
+            const titleEl = document.getElementById('rpg-title-text');
+            if (titleEl) titleEl.innerText = currentTitle;
+            
+            // 計算等級進度條與下一級門檻 (簡單設定每 2000 EXP 為一階)
+            let maxExp = 2000;
+            let percent = Math.min(Math.floor((currentExp % maxExp) / maxExp * 100), 100);
+            if (currentExp >= 10000) percent = 100;
+
+            const fillBar = document.querySelector('.rpg-exp-bar-fill');
+            if (fillBar) fillBar.style.width = percent + '%';
+            
+            const expLabel = document.querySelector('.rpg-exp-bar-bg');
+            if (expLabel && expLabel.previousElementSibling && expLabel.previousElementSibling.children[0]) {
+                expLabel.previousElementSibling.children[0].innerText = `EXP: ${currentExp} / 下一階門檻`;
+            }
         }
     </script>
 </body>
