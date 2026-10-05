@@ -1,7 +1,6 @@
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
-    
     <link rel="icon" href="https://suuuuuhaooooo.github.io/-/favicon.png" type="image/png">
     <link rel="apple-touch-icon" href="https://suuuuuhaooooo.github.io/-/favicon.png">
     <meta charset="UTF-8">
@@ -187,8 +186,8 @@
                     <div id="rpg-title-text" style="font-size: 28px; font-weight: bold; color: #f1c40f; letter-spacing: 2px; text-shadow: 0 2px 4px rgba(0,0,0,0.5);">新手見習生</div>
                 </div>
                 <div style="text-align: right;">
-                    <div style="font-size: 14px; color: #bdc3c7; margin-bottom: 5px;">試煉完成度</div>
-                    <div style="font-size: 24px; font-weight: bold; color: #e74c3c;">🔥 準備中</div>
+                    <div style="font-size: 14px; color: #bdc3c7; margin-bottom: 5px;">連續試煉天數</div>
+                    <div id="rpg-streak-text" style="font-size: 24px; font-weight: bold; color: #e74c3c;">🔥 0 天</div>
                 </div>
             </div>
             <div style="margin-top: 25px;">
@@ -934,7 +933,27 @@
                     const rpgSnap = await rpgRef.once('value');
                     let rpgData = rpgSnap.val() || {};
                     
-                    let newTotalExp = (rpgData.exp || 0) + earnedExp;
+                    // --- 連續登入與刷題天數判定 ---
+                    const d = new Date();
+                    const today = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+                    
+                    let dYesterday = new Date();
+                    dYesterday.setDate(d.getDate() - 1);
+                    const yesterday = `${dYesterday.getFullYear()}-${String(dYesterday.getMonth() + 1).padStart(2, '0')}-${String(dYesterday.getDate()).padStart(2, '0')}`;
+
+                    let currentStreak = rpgData.streakDays || 0;
+                    if (rpgData.lastActiveDate === yesterday) {
+                        currentStreak += 1;
+                    } else if (rpgData.lastActiveDate !== today) {
+                        currentStreak = 1;
+                    }
+
+                    // 連勝經驗值加成
+                    let streakBonus = 0;
+                    if (currentStreak >= 7) streakBonus = 3;      // 連續 7 天以上多送 3 點
+                    else if (currentStreak >= 3) streakBonus = 1; // 連續 3 天以上多送 1 點
+                    
+                    let newTotalExp = (rpgData.exp || 0) + earnedExp + streakBonus;
                     
                     let newTitle = "新手見習生";
                     if (newTotalExp >= 10000) newTitle = "傳說勇者";
@@ -965,7 +984,9 @@
                         exp: newTotalExp,
                         title: newTitle,
                         name: studentRealName,
-                        lastSummonDate: rpgData.lastSummonDate
+                        lastSummonDate: rpgData.lastSummonDate,
+                        lastActiveDate: today,
+                        streakDays: currentStreak
                     });
 
                     await db.ref('rpg_backlog/' + user.uid).remove();
@@ -977,6 +998,9 @@
 
                 const scoreEl = document.getElementById('score-display');
                 scoreEl.innerText = `${finalScore} 分 (答對 ${correctCount} / ${totalQ} 題)\n🎁 獲得經驗值 +${earnedExp} EXP！`;
+                if (streakBonus > 0) {
+                    scoreEl.innerText += `\n🔥 連續 ${currentStreak} 天！額外加成 +${streakBonus} EXP！`;
+                }
                 if (finalScore === 100) { 
                     scoreEl.style.color = "#27ae60"; scoreEl.innerText += "滿分！"; 
                 } else if (finalScore >= 60) { 
@@ -1051,6 +1075,9 @@
             
             const titleEl = document.getElementById('rpg-title-text');
             if (titleEl) titleEl.innerText = currentTitle;
+
+            const streakEl = document.getElementById('rpg-streak-text');
+            if (streakEl) streakEl.innerText = `🔥 ${rpgData.streakDays || 0} 天`;
             
             let maxExp = 2000;
             let percent = Math.min(Math.floor((currentExp % maxExp) / maxExp * 100), 100);
