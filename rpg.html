@@ -285,6 +285,23 @@
     </div>
 
     <script>
+        document.addEventListener('contextmenu', function(e) {
+            e.preventDefault(); // 禁止右鍵選單
+            alert("版權所有，翻印必究");
+        });
+
+        document.addEventListener('keydown', function(e) {
+            // 阻擋 F12、Ctrl+Shift+I (開發者工具)、Ctrl+U (檢視原始碼)、Ctrl+C (複製)、Ctrl+V (貼上)、Ctrl+X (剪下)
+            if (
+                e.key === 'F12' || 
+                (e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'i' || e.key === 'J' || e.key === 'j' || e.key === 'C' || e.key === 'c')) ||
+                (e.ctrlKey && (e.key === 'U' || e.key === 'u' || e.key === 'C' || e.key === 'c' || e.key === 'V' || e.key === 'v' || e.key === 'x' || e.key === 'X'))
+            ) {
+                e.preventDefault();
+                alert("【警告】\n系統偵測到違規操作！");
+                return false;
+            }
+        });
         const firebaseConfig = {
             apiKey: "AIzaSyALkTnkYY3JZLCTyajahpi4IZKmFX9USdw",
             authDomain: "su-hao-classroom.firebaseapp.com",
