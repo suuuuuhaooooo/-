@@ -218,10 +218,6 @@
             <h3 style="margin-top: 0; font-size: 16px; color: var(--dark);">2. 選擇試煉題數</h3>
             <select id="ai-quest-count" class="modern-select">
                 <option value="20">5 題 (每題 20 分)</option>
-                <option value="10" selected>10 題 (每題 10 分)</option>
-                <option value="5">20 題 (每題 5 分)</option>
-                <option value="4">25 題 (每題 4 分)</option>
-                <option value="2">50 題 (每題 2 分)</option>
             </select>
         </div>
 
@@ -458,7 +454,7 @@
             if (refQuestions.length === 0) return alert("所選範圍找不到可用題目！");
 
             btn.disabled = true;
-            btn.innerText = "魔法陣詠唱中...";
+            btn.innerText = "組卷中...";
             progressBox.style.display = 'block';
             
             let progress = 0;
@@ -477,6 +473,7 @@
                     headers: { "Content-Type": "text/plain;charset=utf-8" },
                     body: JSON.stringify({
                         action: "generateAIQuest",
+                        token: "SuHaoClassroom2026_SecureKey",
                         idToken: idToken,
                         scopeLabel: scopeLabel.trim(),
                         questionCount: qCount,
