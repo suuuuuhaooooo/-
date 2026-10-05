@@ -226,7 +226,7 @@
         </div>
 
         <div style="text-align: center;">
-            <div style="font-size: 14px; font-weight: bold; color: #27ae60; margin-bottom: 15px;">【 今日試煉額度：1 / 1 】</div>
+            <div id="quota-text" style="font-size: 14px; font-weight: bold; color: #27ae60; margin-bottom: 15px;">【 今日試煉額度：載入中... 】</div>
             <button id="btn-summon-ai" class="summon-btn" onclick="startSummon()">消耗額度，使用 AI 出題</button>
             <div id="quest-backlog-container" style="margin-top: 20px; text-align: left; display: none;">
                 <div style="font-size: 15px; font-weight: bold; color: var(--dark); margin-bottom: 10px; border-bottom: 2px solid #8e44ad; padding-bottom: 5px;">📜 待命的試煉卷軸 (任務清單)</div>
@@ -351,6 +351,11 @@
                     btn.disabled = true;
                     btn.innerText = "今日額度已用完 (明日 00:00 重置)";
                     btn.style.background = "#7f8c8d";
+                    const quotaEl = document.getElementById('quota-text');
+                    if (quotaEl) {
+                        quotaEl.innerText = "【 今日試煉額度：0 / 1 (今日已消耗) 】";
+                        quotaEl.style.color = "#7f8c8d";
+                    }
                     const backlogSnap = await db.ref('rpg_backlog/' + user.uid).once('value');
                     const backlogExam = backlogSnap.val();
                     if (backlogExam) {
@@ -528,6 +533,12 @@
                     btn.disabled = true;
                     btn.innerText = "今日額度已用完";
                     btn.style.background = "#7f8c8d";
+
+                    const quotaEl = document.getElementById('quota-text');
+                    if (quotaEl) {
+                        quotaEl.innerText = "【 今日試煉額度：0 / 1 (今日已消耗) 】";
+                        quotaEl.style.color = "#7f8c8d";
+                    }
                     
                     const aiExamData = {
                         id: "AI_RPG_" + Date.now(), 
