@@ -229,7 +229,7 @@
         </div>
 
         <div style="text-align: center;">
-            <div id="quota-text" style="font-size: 14px; font-weight: bold; color: #27ae60; margin-bottom: 15px;">【 今日試煉額度：載入中... 】</div>
+            <div id="quota-text" style="font-size: 14px; font-weight: bold; color: #27ae60; margin-bottom: 15px;">【 今日試煉額度：1 / 1 】</div>
             <button id="btn-summon-ai" class="summon-btn" onclick="startSummon()">消耗額度，使用 AI 出題</button>
             <div id="quest-backlog-container" style="margin-top: 20px; text-align: left; display: none;">
                 <div style="font-size: 15px; font-weight: bold; color: var(--dark); margin-bottom: 10px; border-bottom: 2px solid #8e44ad; padding-bottom: 5px;">📜 待命的試煉卷軸 (任務清單)</div>
@@ -729,7 +729,7 @@
                     <div style="background: rgba(255,255,255,0.9); border: 1px solid #27ae60; border-radius: 8px; padding: 15px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 10px rgba(0,0,0,0.05);">
                         <div>
                             <div style="font-weight: bold; color: var(--dark); font-size: 15px; margin-bottom: 4px;">${examData.title}</div>
-                            <div style="font-size: 12px; color: #27ae60;">得分：${completedRecords[examData.id].score} 分 ｜ 狀態：已完成試煉 (可隨時檢討)</div>
+                            <div style="font-size: 12px; color: #27ae60;">得分：${completedRecords[examData.id].score} 分 ｜ 狀態：已完成試煉</div>
                         </div>
                         <button class="main-btn" style="margin: 0; width: auto; padding: 10px 20px; font-size: 14px; background: #27ae60;" onclick="reviewCompletedExam('${examData.id}')">查看檢討</button>
                     </div>
@@ -741,7 +741,7 @@
                             <div style="font-weight: bold; color: var(--dark); font-size: 15px; margin-bottom: 4px;">${examData.title}</div>
                             <div style="font-size: 12px; color: #666;">${examData.desc} ｜ 狀態：等待勇者拔劍</div>
                         </div>
-                        <button class="main-btn" style="margin: 0; width: auto; padding: 10px 20px; font-size: 14px;" onclick="startExam(window.pendingAiExam)">進入考場</button>
+                        <button class="main-btn" style="margin: 0; width: auto; padding: 10px 20px; font-size: 14px;" onclick="startExam(window.pendingAiExam)">進入試煉場</button>
                     </div>
                 `;
             }
