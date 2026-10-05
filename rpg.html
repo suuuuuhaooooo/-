@@ -511,7 +511,14 @@
                     })
                 });
 
-                const result = await response.json();
+                const responseText = await response.text();
+                let result;
+                try {
+                    result = JSON.parse(responseText);
+                } catch (parseErr) {
+                    console.error("後端回傳的不是 JSON，內容是：", responseText);
+                    throw new Error("伺服器回傳格式異常：" + responseText.substring(0, 100));
+                }
                 clearInterval(aiGenerateTimer);
                 
                 if (result.success) {
