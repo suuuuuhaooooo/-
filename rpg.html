@@ -179,7 +179,7 @@
     <div class="container-ui" id="rpg-main-ui">
         <a href="classroom.html" class="back-btn">← 返回雲端教室</a>
         <h2 style="border-left-color: #8e44ad;">⚔️ AI 勇者村 (每日試煉)</h2>
-        <p style="font-size: 13px; color: #555; margin-bottom: 25px; padding-left: 20px;">透過下拉複選勾選您想挑戰的範圍，並選擇能完美湊滿 100 分的題數，讓 AI 為您量身打造專屬卷軸！</p>
+        <p style="font-size: 13px; color: #555; margin-bottom: 25px; padding-left: 20px;">透過下拉複選勾選您想挑戰的範圍</p>
 
         <div class="rpg-hero-card">
             <div style="display: flex; justify-content: space-between; align-items: flex-end;">
@@ -215,8 +215,9 @@
         </div>
 
         <div class="clean-card">
-            <h3 style="margin-top: 0; font-size: 16px; color: var(--dark);">2. 選擇試煉題數 (保證完美湊滿 100 分)</h3>
+            <h3 style="margin-top: 0; font-size: 16px; color: var(--dark);">2. 選擇試煉題數</h3>
             <select id="ai-quest-count" class="modern-select">
+                <option value="20">5 題 (每題 20 分)</option>
                 <option value="10" selected>10 題 (每題 10 分)</option>
                 <option value="5">20 題 (每題 5 分)</option>
                 <option value="4">25 題 (每題 4 分)</option>
@@ -389,7 +390,7 @@
             if (selectedScopes.size === 0) {
                 labelEl.innerText = "-- 請點擊展開並勾選範圍 --";
             } else {
-                labelEl.innerText = `已勾選 ${selectedScopes.size}個範圍`;
+                labelEl.innerText = `已勾選 ${selectedScopes.size} 個範圍`;
             }
         }
 
@@ -493,7 +494,7 @@
                     const aiExamData = {
                         id: "AI_RPG_" + Date.now(), 
                         title: `⚔ 勇者試煉 (總分100分)：${scopeLabel.trim()}`,
-                        desc: `精選 ${qCount} 題 (每題 ${100/qCount} 分)，完美湊滿 100 分！`,
+                        desc: `精選 ${qCount} 題 (每題 ${100/qCount} 分)`,
                         questions: result.questions
                     };
                     
