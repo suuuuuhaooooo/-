@@ -763,6 +763,44 @@
                 `;
             }
         }
+        // 點擊「查看檢討」時觸發
+        function reviewCompletedExam(examId) {
+            const record = completedRecords[examId];
+            if (!record) return alert("找不到此試卷的作答紀錄！");
+
+            // 隱藏主介面與測驗介面，顯示結算/檢討介面
+            document.getElementById('rpg-main-ui').style.display = 'none';
+            document.getElementById('test-ui').style.display = 'none';
+            document.getElementById('result-ui').style.display = 'block';
+
+            const scoreEl = document.getElementById('score-display');
+            scoreEl.innerText = `歷史得分：${record.score} 分`;
+            scoreEl.style.color = record.score >= 60 ? "#27ae60" : "#c0392b";
+
+            const reviewContainer = document.getElementById('review-container');
+            reviewContainer.innerHTML = "";
+            
+            record.details.forEach((detail, index) => {
+                let userAnsText = detail.userPick === "未作答" ? `<span style="color:#7f8c8d; font-weight:bold;">未作答</span>` : detail.userPick;
+                const statusHtml = detail.isCorrect 
+                    ? `<span class="review-correct">√ 答對了！</span>` 
+                    : `<span class="review-wrong">x 答錯了 (你的答案：${userAnsText})</span>`;
+                    
+                let flagHtml = detail.isFlagged ? `<span style="background:#fdf2f0; color:#c0392b; padding:2px 8px; border-radius:12px; font-size:12px; font-weight:bold; margin-left:10px;">🚩 已標記</span>` : '';
+                let noteHtml = detail.studentNote ? `<div style="background:#fff3e0; border-left:4px solid #e67e22; padding:10px; margin-top:10px; font-size:13px; color:#d35400;"><strong>✏️ 你的筆記：</strong><br>${detail.studentNote}</div>` : '';
+
+                reviewContainer.innerHTML += `
+                    <div class="review-card">
+                        <div class="review-q">Q${index + 1}. ${detail.originalQuestion} ${flagHtml}</div>
+                        <div class="review-ans">正確答案：${detail.correctAnswer}</div>
+                        <div class="review-ans">${statusHtml}</div>
+                        ${noteHtml}
+                        <div class="review-exp"><strong>解析：</strong><br>${detail.explanation}</div>
+                    </div>`;
+            });
+
+            if (window.MathJax) { setTimeout(() => { MathJax.typesetPromise([reviewContainer]); }, 100); }
+        }
 
         function reviewCompletedExam(examId) {
             const record = completedRecords[examId];
