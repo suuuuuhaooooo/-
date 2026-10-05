@@ -365,7 +365,7 @@
                 if (rpgData.lastSummonDate === formattedToday) {
                     const btn = document.getElementById('btn-summon-ai');
                     btn.disabled = true;
-                    btn.innerText = "今日額度已用完 (卷軸已就緒)";
+                    btn.innerText = "今日額度已用盡 (卷軸已就緒)";
                     btn.style.background = "#7f8c8d";
                     
                     const quotaEl = document.getElementById('quota-text');
@@ -544,7 +544,7 @@
                     text.innerText = "試煉卷軸完成！並存至任務清單！";
                     const btn = document.getElementById('btn-summon-ai');
                     btn.disabled = true;
-                    btn.innerText = "今日額度已用完";
+                    btn.innerText = "今日額度已用盡";
                     btn.style.background = "#7f8c8d";
 
                     const quotaEl = document.getElementById('quota-text');
