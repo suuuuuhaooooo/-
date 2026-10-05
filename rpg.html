@@ -170,7 +170,7 @@
 
     <div id="loading-screen">
         <div class="loading-dots"><div></div><div></div><div></div></div>
-        <div class="loading-text" id="loading-msg">正在從 Firebase 與題庫載入資料中...</div>
+        <div class="loading-text" id="loading-msg">正在從資料庫載入中...</div>
     </div>
 
     <!-- === 畫面 1：RPG 首頁與出題面板 === -->
@@ -199,7 +199,7 @@
             </div>
         </div>
         <div class="clean-card">
-            <h3 style="margin-top: 0; font-size: 16px; color: var(--dark);">🏆 勇者村榮譽排行榜 (Top 10)</h3>
+            <h3 style="margin-top: 0; font-size: 16px; color: var(--dark);">🏆 勇者村榮譽排行榜</h3>
             <div id="leaderboard-container" style="font-size: 14px; color: #555;">
                 正在召集各路勇者排名中...
             </div>
@@ -634,7 +634,7 @@
                 }
                 
                 list.sort((a, b) => (b.exp || 0) - (a.exp || 0));
-                const topList = list.slice(0, 10);
+                const topList = list.slice(0, 3);
                 const container = document.getElementById('leaderboard-container');
                 
                 if (topList.length === 0) {
