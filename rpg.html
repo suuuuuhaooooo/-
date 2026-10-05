@@ -1,0 +1,1103 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    
+    <link rel="icon" href="https://suuuuuhaooooo.github.io/-/favicon.png" type="image/png">
+    <link rel="apple-touch-icon" href="https://suuuuuhaooooo.github.io/-/favicon.png">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>蘇昊數理｜AI 勇者村</title>
+
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-database-compat.js"></script>
+    
+    <!-- 載入 MathJax 用於數學式渲染 -->
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script>
+    window.MathJax = {
+        tex: {
+            inlineMath: [['$', '$'], ['\\(', '\\)']],
+            processEscapes: true 
+        },
+        options: {
+            skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre']
+        }
+    };
+    </script>
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;700&display=swap');
+        
+        :root { --primary: #8e9775; --dark: #5b6348; --bg: #f8f8f6; --white: #ffffff; }
+        
+        body { 
+            font-family: "Noto Serif TC", serif; 
+            background-color: var(--bg); 
+            margin: 0; padding: 20px; color: #333; 
+            user-select: none; -webkit-user-select: none;
+            overscroll-behavior-y: none;
+            background-image: linear-gradient(120deg, #8e9775, #b2bd9f, #d5dcd0, #9ba483, #c6d0bb) !important;
+            background-size: 900% 900% !important;
+            animation: fluidGradient 180s ease-in-out infinite !important; 
+        }
+
+        @keyframes fluidGradient {
+            0%   { background-position: 0% 20%; }
+            25%  { background-position: 80% 100%; }
+            50%  { background-position: 100% 20%; }
+            75%  { background-position: 20% 0%; }
+            100% { background-position: 0% 20%; }
+        }
+
+        mjx-container {
+            max-width: 100% !important;
+            overflow-x: auto !important;
+            overflow-y: hidden !important;
+            padding: 4px 0;
+            box-sizing: border-box;
+        }
+        mjx-container::-webkit-scrollbar { height: 4px; }
+        mjx-container::-webkit-scrollbar-thumb { background-color: #ccc; border-radius: 4px; }
+        .question-text, .option-btn, .review-exp, .clean-card {
+            word-break: break-word;
+            overflow-wrap: break-word;
+            max-width: 100%;
+        }
+
+        #loading-screen { 
+            display: flex; flex-direction: column; justify-content: center; align-items: center; 
+            height: 100vh; position: fixed; width: 100%; z-index: 9999; top: 0; left: 0;
+            background: rgba(255, 255, 255, 0.85); backdrop-filter: blur(10px);
+        }
+        .loading-dots { display: flex; gap: 8px; margin-bottom: 15px; }
+        .loading-dots div { width: 10px; height: 10px; background-color: var(--primary); border-radius: 50%; animation: bounce 0.5s infinite alternate; }
+        .loading-dots div:nth-child(2) { animation-delay: 0.15s; }
+        .loading-dots div:nth-child(3) { animation-delay: 0.3s; }
+        @keyframes bounce { from { transform: translateY(0); opacity: 0.6; } to { transform: translateY(-10px); opacity: 1; } }
+        .loading-text { font-size: 14px; color: var(--dark); font-weight: 700; letter-spacing: 2px; }
+
+        .container-ui { 
+            max-width: 800px; margin: 0 auto; 
+            padding: 40px; border-radius: 8px; box-shadow: 0 8px 32px rgba(91, 99, 72, 0.1);
+            border-top: 6px solid #8e44ad;
+            background: rgba(255, 255, 255, 0.85) !important; 
+            backdrop-filter: blur(24px) !important;            
+            -webkit-backdrop-filter: blur(24px) !important;   
+            border: 1px solid rgba(255, 255, 255, 0.4); 
+            display: none; 
+        }
+
+        h2 { color: var(--dark); border-left: 5px solid #8e44ad; padding-left: 15px; margin-top: 0; }
+        .back-btn { display: inline-block; margin-bottom: 20px; color: #888; text-decoration: none; font-size: 14px; transition: 0.2s; cursor: pointer; font-weight: bold; }
+        .back-btn:hover { color: #8e44ad; }
+        .clean-card { background: rgba(255,255,255,0.6); border: 1px solid #f0f0f0; border-radius: 12px; padding: 25px; margin-bottom: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.02); }
+        .modern-select { padding: 12px; border-radius: 8px; border: 1px solid #ddd; outline: none; background: rgba(255,255,255,0.8); font-size: 14px; color: #555; width: 100%; cursor: pointer; font-weight: bold; box-sizing: border-box; }
+
+        .rpg-hero-card { background: linear-gradient(135deg, #2c3e50, #34495e); color: white; padding: 25px; border-radius: 12px; box-shadow: 0 10px 20px rgba(0,0,0,0.15); margin-bottom: 30px; position: relative; overflow: hidden; }
+        .rpg-hero-card::after { content: '🛡️'; position: absolute; right: -20px; top: -20px; font-size: 150px; opacity: 0.1; }
+        .rpg-exp-bar-bg { width: 100%; height: 10px; background: rgba(255,255,255,0.2); border-radius: 5px; overflow: hidden; margin-top: 8px; }
+        .rpg-exp-bar-fill { width: 45%; height: 100%; background: #f1c40f; box-shadow: 0 0 10px rgba(241,196,15,0.8); }
+        
+        .summon-btn { background: #8e44ad; color: white; border: none; padding: 16px; font-size: 16px; font-weight: bold; border-radius: 8px; cursor: pointer; transition: 0.3s; width: 100%; letter-spacing: 2px; margin-top: 10px; }
+        .summon-btn:hover:not(:disabled) { background: #732d91; transform: translateY(-2px); box-shadow: 0 6px 20px rgba(142, 68, 173, 0.3); }
+        .summon-btn:disabled { background: #aaa; cursor: not-allowed; transform: none; box-shadow: none; }
+
+        .dropdown-multiselect { position: relative; width: 100%; }
+        .dropdown-select-box { padding: 12px; border-radius: 8px; border: 1px solid #ddd; background: rgba(255,255,255,0.8); font-size: 14px; color: #555; cursor: pointer; font-weight: bold; display: flex; justify-content: space-between; align-items: center; }
+        .dropdown-list { display: none; position: absolute; top: 100%; left: 0; width: 100%; max-height: 200px; overflow-y: auto; background: white; border: 1px solid #ddd; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); z-index: 100; margin-top: 5px; padding: 10px; box-sizing: border-box; }
+        .dropdown-item { padding: 8px 10px; display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 14px; border-radius: 4px; }
+        .dropdown-item:hover { background: #f4ecf8; color: #732d91; }
+
+        .quiz-header-container { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px dashed #eee; padding-bottom: 15px; margin-bottom: 20px; }
+        .quiz-header { font-size: 15px; color: #888; font-weight: 700; letter-spacing: 1px; margin: 0; }
+        .timer-display { font-size: 18px; color: #c0392b; font-weight: 700; background: #fdf2f0; padding: 5px 12px; border-radius: 4px; border: 1px solid #fadbd8; }
+        
+        .question-text { font-size: 18px; color: #333; line-height: 1.6; margin-bottom: 25px; font-weight: 700; }
+        .option-btn { display: block; width: 100%; text-align: left; padding: 15px 20px; margin-bottom: 12px; background: rgba(255,255,255,0.7); border: 2px solid #eee; border-radius: 6px; font-size: 16px; color: #555; cursor: pointer; transition: 0.2s; box-sizing: border-box; font-family: inherit; }
+        .option-btn:hover { background: #f0f3ef; border-color: #d1d8c8; }
+        .option-btn.selected { background: #f4ecf8; border-color: #8e44ad; color: #732d91; font-weight: 700; }
+        
+        .main-btn { background: #8e44ad; color: white; border: none; padding: 15px; width: 100%; cursor: pointer; letter-spacing: 2px; font-weight: 700; transition: 0.3s; margin-top: 20px; border-radius: 4px; font-size: 16px; }
+        .main-btn:hover { background: #732d91; }
+        .main-btn:disabled { background: #ccc; cursor: not-allowed; }
+
+        .test-controls { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        .flag-btn { background: #fff; border: 2px solid #ddd; color: #777; padding: 6px 12px; border-radius: 20px; font-size: 13px; font-weight: bold; cursor: pointer; transition: 0.2s; display: flex; align-items: center; gap: 5px; }
+        .flag-btn.active { border-color: #e74c3c; color: #c0392b; background: #fdf2f0; }
+        
+        .note-area { width: 100%; box-sizing: border-box; padding: 12px; border-radius: 8px; border: 2px solid #eee; margin-top: 15px; font-family: inherit; font-size: 14px; resize: vertical; min-height: 80px; background: rgba(255,255,255,0.7); transition: 0.2s; outline: none; }
+        .note-area:focus { border-color: #8e44ad; background: #fff; }
+
+        .nav-buttons { display: flex; gap: 10px; margin-top: 20px; }
+        .nav-btn-secondary { background: #e0e0e0; color: #555; }
+        .nav-btn-secondary:hover:not(:disabled) { background: #d0d0d0; }
+
+        .answer-sheet-wrapper { margin-top: 30px; background: rgba(255,255,255,0.7); padding: 20px; border-radius: 8px; border: 1px solid #eee; }
+        .answer-sheet-title { font-size: 14px; font-weight: bold; color: var(--dark); border-bottom: 2px solid #f0f0f0; padding-bottom: 10px; margin-bottom: 15px; }
+        .answer-sheet { display: flex; flex-wrap: wrap; gap: 10px; }
+        .ans-circle { width: 38px; height: 38px; border-radius: 50%; border: 2px solid #ddd; display: flex; align-items: center; justify-content: center; font-weight: bold; cursor: pointer; color: #777; background: #fff; transition: 0.2s; font-size: 14px; }
+        .ans-circle:hover { border-color: #8e44ad; }
+        .ans-circle.answered { background: #8e44ad; color: white; border-color: #8e44ad; }
+        .ans-circle.flagged { border-color: #e74c3c; color: #c0392b; background: #fdf2f0; }
+        .ans-circle.answered.flagged { background: #e74c3c; color: white; border-color: #e74c3c; }
+        .ans-circle.active { box-shadow: 0 0 0 4px rgba(142,68,173,0.2); border-color: #732d91; transform: scale(1.1); }
+
+        #score-display { text-align: center; font-size: 36px; color: var(--dark); font-weight: 700; margin: 20px 0; padding: 20px; background: rgba(255,255,255,0.7); border-radius: 8px; }
+        .review-card { background: rgba(255,255,255,0.8); border: 1px solid #eee; padding: 20px; margin-bottom: 20px; border-radius: 6px; }
+        .review-q { font-weight: 700; margin-bottom: 10px; font-size: 16px; }
+        .review-ans { font-size: 14px; margin-bottom: 5px; }
+        .review-correct { color: #27ae60; font-weight: 700; }
+        .review-wrong { color: #c0392b; font-weight: 700; }
+        .review-exp { margin-top: 12px; padding: 12px; background: #f9f9f9; border-left: 4px solid #8e44ad; font-size: 13px; color: #666; line-height: 1.5; }
+
+        @media (max-width: 768px) {
+            body { padding: 10px; }
+            .container-ui { padding: 20px 15px; }
+            .rpg-hero-card { padding: 20px; }
+            #rpg-title-text { font-size: 22px !important; }
+            .quiz-header-container { flex-direction: row !important; justify-content: space-between; align-items: center; padding-bottom: 12px; }
+            .quiz-header { text-align: left; font-size: 13px; }
+            .timer-display { text-align: right; font-size: 14px; padding: 5px 10px; }
+            .question-text { font-size: 16px; margin-bottom: 20px; }
+            .option-btn { padding: 12px 15px; font-size: 15px; margin-bottom: 10px; }
+            .main-btn { padding: 12px; font-size: 15px; }
+            #score-display { font-size: 28px; padding: 15px; }
+            .review-card { padding: 15px; }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="loading-screen">
+        <div class="loading-dots"><div></div><div></div><div></div></div>
+        <div class="loading-text" id="loading-msg">正在從資料庫載入中...</div>
+    </div>
+
+    <!-- === 畫面 1：RPG 首頁與出題面板 === -->
+    <div class="container-ui" id="rpg-main-ui">
+        <a href="classroom.html" class="back-btn">← 返回雲端教室</a>
+        <h2 style="border-left-color: #8e44ad;">⚔️ AI 勇者村 (每日試煉)</h2>
+        <p style="font-size: 13px; color: #555; margin-bottom: 25px; padding-left: 20px;">透過下拉複選勾選您想挑戰的範圍</p>
+
+        <div class="rpg-hero-card">
+            <div style="display: flex; justify-content: space-between; align-items: flex-end;">
+                <div>
+                    <div style="font-size: 14px; color: #bdc3c7; margin-bottom: 5px;">當前稱號</div>
+                    <div id="rpg-title-text" style="font-size: 28px; font-weight: bold; color: #f1c40f; letter-spacing: 2px; text-shadow: 0 2px 4px rgba(0,0,0,0.5);">新手見習生</div>
+                </div>
+                <div style="text-align: right;">
+                    <div style="font-size: 14px; color: #bdc3c7; margin-bottom: 5px;">試煉完成度</div>
+                    <div style="font-size: 24px; font-weight: bold; color: #e74c3c;">🔥 準備中</div>
+                </div>
+            </div>
+            <div style="margin-top: 25px;">
+                <div style="display: flex; justify-content: space-between; font-size: 12px; color: #ecf0f1;">
+                    <span>EXP 準備啟動</span>
+                    <span>等級提升</span>
+                </div>
+                <div class="rpg-exp-bar-bg"><div class="rpg-exp-bar-fill"></div></div>
+            </div>
+        </div>
+        <div class="clean-card">
+            <h3 style="margin-top: 0; font-size: 16px; color: var(--dark);">🏆 勇者村榮譽排行榜</h3>
+            <div id="leaderboard-container" style="font-size: 14px; color: #555;">
+                正在召集各路勇者排名中...
+            </div>
+        </div>
+        <div class="clean-card">
+            <h3 style="margin-top: 0; font-size: 16px; color: var(--dark);">1. 選擇試煉範圍 (下拉複選)</h3>
+            <div class="dropdown-multiselect">
+                <div class="dropdown-select-box" onclick="toggleDropdown()">
+                    <span id="dropdown-label">-- 請點擊展開並勾選範圍 --</span>
+                    <span>▼</span>
+                </div>
+                <div id="dropdown-list" class="dropdown-list">
+                    <!-- 動態載入複選項目 -->
+                </div>
+            </div>
+        </div>
+
+        <div class="clean-card">
+            <h3 style="margin-top: 0; font-size: 16px; color: var(--dark);">2. 選擇試煉題數</h3>
+            <select id="ai-quest-count" class="modern-select">
+                <option value="5">5 題 (每題 20 分)</option>
+                <option value="10" selected>10 題 (每題 10 分)</option>
+                <option value="20">20 題 (每題 5 分)</option>
+                <option value="25">25 題 (每題 4 分)</option>
+                <option value="50">50 題 (每題 2 分)</option>
+            </select>
+        </div>
+
+        <div style="text-align: center;">
+            <div id="quota-text" style="font-size: 14px; font-weight: bold; color: #27ae60; margin-bottom: 15px;">【 今日試煉額度：1 / 1 】</div>
+            <button id="btn-summon-ai" class="summon-btn" onclick="startSummon()">消耗額度，使用 AI 出題</button>
+            <div id="quest-backlog-container" style="margin-top: 20px; text-align: left; display: none;">
+                <div style="font-size: 15px; font-weight: bold; color: var(--dark); margin-bottom: 10px; border-bottom: 2px solid #8e44ad; padding-bottom: 5px;">📜 待命的試煉卷軸 (任務清單)</div>
+                <div id="backlog-card-list"></div>
+            </div>
+            <div id="ai-progress-box" style="display: none; margin-top: 20px;">
+                <div style="font-size: 13px; color: #8e44ad; font-weight: bold; margin-bottom: 8px; text-align: left;" id="ai-status-text">正在向資料庫調閱歷史資料中...</div>
+                <div style="width: 100%; height: 8px; background: #eee; border-radius: 4px; overflow: hidden;">
+                    <div id="ai-bar" style="width: 0%; height: 100%; background: linear-gradient(90deg, #9b59b6, #8e44ad); transition: width 0.5s;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- === 畫面 2：考試作答介面 === -->
+    <div id="test-ui" class="container-ui">
+        <span class="back-btn" onclick="abandonExam()">← 放棄本次作答，返回勇者村</span>
+        <h2 id="active-exam-title">測驗載入中...</h2>
+        <div id="quiz-container">
+            <div class="quiz-header-container">
+                <div class="quiz-header" id="quiz-progress">題目 1 / X</div>
+                <div class="timer-display" id="timer-display">時間還剩 30:00</div>
+            </div>
+            
+            <div class="test-controls">
+                <button id="flag-btn" class="flag-btn" onclick="toggleFlag()">🚩 標記本題</button>
+            </div>
+
+            <div class="question-text" id="question-text">載入題目中...</div>
+            <div id="options-container"></div>
+            
+            <textarea id="note-area" class="note-area" placeholder="在此輸入您的個人筆記或計算思路 (僅供自己參考)..." oninput="saveNote(this.value)"></textarea>
+
+            <div class="nav-buttons">
+                <button id="prev-btn" class="main-btn nav-btn-secondary" onclick="prevQuestion()" disabled>上一題</button>
+                <button id="next-btn" class="main-btn" onclick="nextQuestion()">下一題</button>
+            </div>
+
+            <div class="answer-sheet-wrapper">
+                <div class="answer-sheet-title">作答狀況與答案卡 (點擊圓圈可快速跳題)</div>
+                <div id="answer-sheet" class="answer-sheet"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- === 畫面 3：測驗結算與檢討介面 === -->
+    <div id="result-ui" class="container-ui">
+        <h3 id="result-title" style="text-align: center; color: var(--dark); margin-bottom: 0;">測驗結算</h3>
+        <div id="score-display"></div>
+        <h4 style="border-bottom: 2px solid #eee; padding-bottom: 10px; margin-top: 30px;">錯題與未作答檢討</h4>
+        <div id="review-container"></div>
+        <button class="main-btn" onclick="returnToAltar()">完成檢討，返回勇者村</button>
+    </div>
+
+    <script>
+        document.addEventListener('contextmenu', function(e) {
+            e.preventDefault(); // 禁止右鍵選單
+            alert("版權所有，翻印必究");
+        });
+
+        document.addEventListener('keydown', function(e) {
+            // 阻擋 F12、Ctrl+Shift+I (開發者工具)、Ctrl+U (檢視原始碼)、Ctrl+C (複製)、Ctrl+V (貼上)、Ctrl+X (剪下)
+            if (
+                e.key === 'F12' || 
+                (e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'i' || e.key === 'J' || e.key === 'j' || e.key === 'C' || e.key === 'c')) ||
+                (e.ctrlKey && (e.key === 'U' || e.key === 'u' || e.key === 'C' || e.key === 'c' || e.key === 'V' || e.key === 'v' || e.key === 'x' || e.key === 'X'))
+            ) {
+                e.preventDefault();
+                alert("【警告】\n系統偵測到違規操作！");
+                return false;
+            }
+        });
+        const firebaseConfig = {
+            apiKey: "AIzaSyALkTnkYY3JZLCTyajahpi4IZKmFX9USdw",
+            authDomain: "su-hao-classroom.firebaseapp.com",
+            projectId: "su-hao-classroom",
+            storageBucket: "su-hao-classroom.firebasestorage.app",
+            messagingSenderId: "764168135846",
+            appId: "1:764168135846:web:f2923a5f4952fa1ca64067"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.database();
+        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwxFfufe0b7eJpDxSmLgnbVvlq1itLvoD6ZCpvDJKtJg7ChcWn7lpf9LgZqQ4ZsThJiXQ/exec";
+
+        let studentExams = [];
+        let completedRecords = {};
+        let selectedScopes = new Set();
+        let aiGenerateTimer;
+
+        let currentExam = null;
+        let currentQuestionIndex = 0;
+        let userAnswers = [];
+        let flaggedQuestions = [];
+        let questionNotes = [];
+        let examStartTime = 0; 
+        let allocatedTime = 0; 
+        let frozenTimeSpent = null; 
+        let timerInterval = null; 
+        let timeRemaining = 0;
+        let cheatWarnings = 0;    
+        let isExamActive = false; 
+
+        // 🛡️ 姓名遮罩處理函式 (王小明 ➔ 王○明)
+        function maskStudentName(fullName) {
+            if (!fullName || fullName === "神秘勇者") return "神秘勇者";
+            let name = fullName.trim();
+            if (name.length === 2) {
+                return name[0] + "○";
+            } else if (name.length >= 3) {
+                let middleMask = "○".repeat(name.length - 2);
+                return name[0] + middleMask + name[name.length - 1];
+            }
+            return name;
+        }
+
+        // 頁面載入與初始化
+        auth.onAuthStateChanged(async (user) => {
+            if (!user) {
+                alert("請先登入系統！");
+                window.location.replace("classroom.html");
+                return;
+            }
+
+            try {
+                // 1. 向後端抓取完整題庫清單
+                const idToken = await user.getIdToken();
+                const r2 = await fetch(SCRIPT_URL, {
+                    method: "POST",
+                    headers: { "Content-Type": "text/plain;charset=utf-8" },
+                    body: JSON.stringify({ token: "SuHaoClassroom2026_SecureKey", action: "getExams", idToken: idToken })
+                });
+                studentExams = await r2.json();
+
+                // 2. 從 Firebase 抓取歷史作答紀錄
+                const snap = await db.ref('exam_records/' + user.uid).once('value');
+                completedRecords = snap.val() || {};
+
+                // 3. 計算今日日期
+                const d = new Date();
+                const year = d.getFullYear();
+                const month = String(d.getMonth() + 1).padStart(2, '0');
+                const day = String(d.getDate()).padStart(2, '0');
+                const formattedToday = `${year}-${month}-${day}`;
+
+                // 4. 讀取 RPG 系統資料與待命卷軸
+                const rpgSnap = await db.ref('rpg_system/' + user.uid).once('value');
+                const rpgData = rpgSnap.val() || {};
+
+                updateRpgDashboard(rpgData);
+
+                const backlogSnap = await db.ref('rpg_backlog/' + user.uid).once('value');
+                const backlogExam = backlogSnap.val();
+                if (backlogExam) {
+                    window.pendingAiExam = backlogExam;
+                    renderQuestBacklog(backlogExam);
+                }
+
+                // 5. 檢查今日額度是否已用完
+                const quotaEl = document.getElementById('quota-text');
+                const btn = document.getElementById('btn-summon-ai');
+
+                // 檢查是否有待命卷軸或是今天已經用過額度
+                const hasPendingExam = window.pendingAiExam != null;
+                const isTodayUsed = (rpgData.lastSummonDate === formattedToday) || hasPendingExam;
+
+                if (rpgData.lastSummonDate === formattedToday) {
+                    btn.disabled = true;
+                    btn.innerText = "今日額度已用盡 (卷軸已就緒)";
+                    btn.style.background = "#7f8c8d";
+                    
+                    if (quotaEl) {
+                        quotaEl.innerText = "【 今日試煉額度：0 / 1 】";
+                        quotaEl.style.color = "#7f8c8d";
+                    }
+                } else {
+                    btn.disabled = false;
+                    btn.innerText = "消耗額度，使用 AI 出題";
+                    btn.style.background = "#8e44ad";
+
+                    if (quotaEl) {
+                        quotaEl.innerText = "【 今日試煉額度：1 / 1 】";
+                        quotaEl.style.color = "#27ae60";
+                    }
+                }
+
+                loadLeaderboard();
+                renderDropdownList();
+                document.getElementById('loading-screen').style.display = 'none';
+                document.getElementById('rpg-main-ui').style.display = 'block';
+
+            } catch (e) {
+                console.error("初始化崩潰錯誤詳情：", e);
+                alert("資料讀取失敗，請重新整理頁面。錯誤：" + e.message);
+                window.location.replace("classroom.html");
+            }
+        });
+
+        // 下拉選單開關控制
+        function toggleDropdown() {
+            const list = document.getElementById('dropdown-list');
+            list.style.display = list.style.display === 'block' ? 'none' : 'block';
+        }
+
+        window.onclick = function(event) {
+            if (!event.target.closest('.dropdown-multiselect')) {
+                const list = document.getElementById('dropdown-list');
+                if (list) list.style.display = 'none';
+            }
+        }
+
+        function renderDropdownList() {
+            const listContainer = document.getElementById('dropdown-list');
+            listContainer.innerHTML = `
+                <label class="dropdown-item">
+                    <input type="checkbox" value="weakness" onchange="handleCheckboxChange(this, '歷史錯題特訓')"> 歷史錯題特訓
+                </label>
+            `;
+            
+            studentExams.forEach(exam => {
+                if (!exam.id.startsWith("AI_RPG_")) {
+                    const isDone = completedRecords[exam.id] ? " (已完成)" : "";
+                    listContainer.innerHTML += `
+                        <label class="dropdown-item">
+                            <input type="checkbox" value="${exam.id}" onchange="handleCheckboxChange(this, '${exam.title}${isDone}')"> ${exam.title}${isDone}
+                        </label>
+                    `;
+                }
+            });
+        }
+
+        function handleCheckboxChange(checkbox, labelText) {
+            const id = checkbox.value;
+            if (checkbox.checked) {
+                selectedScopes.add(id);
+            } else {
+                selectedScopes.delete(id);
+            }
+
+            const labelEl = document.getElementById('dropdown-label');
+            if (selectedScopes.size === 0) {
+                labelEl.innerText = "-- 請點擊展開並勾選範圍 --";
+            } else {
+                labelEl.innerText = `已勾選 ${selectedScopes.size} 個範圍`;
+            }
+        }
+
+        // 防弊機制
+        document.addEventListener("visibilitychange", () => {
+            if (isExamActive && document.hidden) {
+                cheatWarnings++;
+                if (cheatWarnings >= 3) {
+                    alert("【系統通知】\n\n系統偵測到您已切換視窗達 3 次！強制交卷。");
+                    finishAndShowResults();
+                } else {
+                    alert(`【警告】考試期間嚴禁切換視窗！已違規 ${cheatWarnings} 次。`);
+                }
+            }
+        });
+
+        window.addEventListener('beforeunload', function (e) {
+            if (isExamActive) { e.preventDefault(); e.returnValue = ''; return ''; }
+        });
+
+        // 啟動 AI 召喚
+        async function startSummon() {
+            if (selectedScopes.size === 0) return alert("請至少勾選一個試煉範圍！");
+            
+            const user = auth.currentUser;
+            const btn = document.getElementById('btn-summon-ai');
+            const progressBox = document.getElementById('ai-progress-box');
+            const bar = document.getElementById('ai-bar');
+            const text = document.getElementById('ai-status-text');
+            const qCount = parseInt(document.getElementById('ai-quest-count').value) || 10;
+
+            let refQuestions = [];
+            let scopeLabel = "";
+
+            if (selectedScopes.has("weakness")) {
+                scopeLabel += "錯題特訓 ";
+                for (const examId in completedRecords) {
+                    const record = completedRecords[examId];
+                    if (record && record.details) {
+                        record.details.forEach(d => {
+                            if (!d.isCorrect && d.originalQuestion) refQuestions.push(d.originalQuestion);
+                        });
+                    }
+                }
+            }
+
+            selectedScopes.forEach(id => {
+                if (id !== "weakness") {
+                    const targetExam = studentExams.find(e => e.id === id);
+                    if (targetExam && targetExam.questions) {
+                        scopeLabel += targetExam.title + " ";
+                        targetExam.questions.forEach(q => {
+                            if (q.question) refQuestions.push(q.question);
+                        });
+                    }
+                }
+            });
+
+            if (selectedScopes.has("weakness") && refQuestions.length === 0 && selectedScopes.size === 1) {
+                return alert("您的錯題本目前無錯題紀錄，請改選其他單元！");
+            }
+
+            if (refQuestions.length > 15) refQuestions = refQuestions.sort(() => Math.random() - 0.5).slice(0, 15);
+            if (refQuestions.length === 0) return alert("所選範圍找不到可用題目！");
+
+            btn.disabled = true;
+            btn.innerText = "組卷中...";
+            progressBox.style.display = 'block';
+            
+            let progress = 0;
+            aiGenerateTimer = setInterval(() => {
+                if (progress < 90) {
+                    progress += Math.floor(Math.random() * 4) + 1;
+                    bar.style.width = Math.min(progress, 90) + '%';
+                    text.innerText = progress < 40 ? "正在萃取勾選單元與錯題考點..." : "建構試卷中...";
+                }
+            }, 500);
+
+            try {
+                const idToken = await user.getIdToken();
+                const response = await fetch(SCRIPT_URL, {
+                    method: 'POST',
+                    headers: { "Content-Type": "text/plain;charset=utf-8" },
+                    body: JSON.stringify({
+                        action: "generateAIQuest",
+                        token: "SuHaoClassroom2026_SecureKey",
+                        idToken: idToken,
+                        scopeLabel: scopeLabel.trim(),
+                        questionCount: qCount,
+                        refQuestions: refQuestions
+                    })
+                });
+
+                const responseText = await response.text();
+                let result;
+                try {
+                    result = JSON.parse(responseText);
+                } catch (parseErr) {
+                    console.error("後端回傳的不是 JSON，內容是：", responseText);
+                    throw new Error("伺服器回傳格式異常：" + responseText.substring(0, 100));
+                }
+                clearInterval(aiGenerateTimer);
+                
+                if (result.success) {
+                    bar.style.width = '100%';
+                    text.innerText = "試煉卷軸完成！並存至任務清單！";
+                    
+                    const aiExamData = {
+                        id: "AI_RPG_" + Date.now(), 
+                        title: `⚔ 勇者試煉 (總分100分)：${scopeLabel.trim()}`,
+                        desc: `精選 ${qCount} 題 (每題 ${100/qCount} 分)`,
+                        questions: result.questions
+                    };
+
+                    const d = new Date();
+                    const formattedToday = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+                    
+                    await db.ref('rpg_backlog/' + user.uid).set(aiExamData);
+                    await db.ref('rpg_system/' + user.uid).update({ lastSummonDate: formattedToday });
+
+                    btn.disabled = true;
+                    btn.innerText = "今日額度已用盡";
+                    btn.style.background = "#7f8c8d";
+
+                    const quotaEl = document.getElementById('quota-text');
+                    if (quotaEl) {
+                        quotaEl.innerText = "【 今日試煉額度：0 / 1 】";
+                        quotaEl.style.color = "#7f8c8d";
+                    }
+
+                    window.pendingAiExam = aiExamData;
+                    renderQuestBacklog(aiExamData);
+                    
+                    setTimeout(() => {
+                        progressBox.style.display = 'none';
+                    }, 1000);
+
+                } else throw new Error(result.message);
+
+            } catch (e) {
+                clearInterval(aiGenerateTimer);
+                progressBox.style.display = 'none';
+                btn.disabled = false;
+                btn.innerText = "消耗額度，使用 AI 出題";
+                alert("召喚失敗（額度未扣除）：" + e.message);
+            }
+        }
+
+        // 載入並渲染排行榜
+        async function loadLeaderboard() {
+            try {
+                const snap = await db.ref('rpg_system').once('value');
+                const data = snap.val() || {};
+                
+                let list = [];
+                for (let uid in data) {
+                    list.push(data[uid]);
+                }
+                
+                list.sort((a, b) => (b.exp || 0) - (a.exp || 0));
+                const topList = list.slice(0, 3);
+                const container = document.getElementById('leaderboard-container');
+                
+                if (topList.length === 0) {
+                    container.innerHTML = "目前尚無勇者登榜，快去完成試煉拔得頭籌吧！";
+                    return;
+                }
+
+                let html = `
+                    <table style="width: 100%; border-collapse: collapse; font-size: 14px;">
+                        <tr style="border-bottom: 2px solid #eee; text-align: left; color: var(--dark);">
+                            <th style="padding: 8px; width: 15%;">排名</th>
+                            <th style="padding: 8px; width: 35%;">勇者</th>
+                            <th style="padding: 8px; width: 30%;">稱號</th>
+                            <th style="padding: 8px; width: 20%; text-align: right;">總 EXP</th>
+                        </tr>
+                `;
+
+                topList.forEach((u, index) => {
+                    let rankBadge = index === 0 ? "🥇" : index === 1 ? "🥈" : index === 2 ? "🥉" : `#${index + 1}`;
+                    let maskedName = maskStudentName(u.name);
+                    html += `
+                        <tr style="border-bottom: 1px solid #f2f2f2;">
+                            <td style="padding: 10px 8px; font-weight: bold;">${rankBadge}</td>
+                            <td style="padding: 10px 8px; font-weight: bold; color: #333;">${maskedName}</td>
+                            <td style="padding: 10px 8px; color: #8e44ad; font-weight: bold;">${u.title || "新手見習生"}</td>
+                            <td style="padding: 10px 8px; text-align: right; font-weight: bold; color: #d35400;">${u.exp || 0} EXP</td>
+                        </tr>
+                    `;
+                });
+
+                html += `</table>`;
+                container.innerHTML = html;
+
+            } catch (err) {
+                console.error("排行榜載入錯誤：", err);
+                document.getElementById('leaderboard-container').innerHTML = "排行榜載入失敗";
+            }
+        }
+
+        // ==========================================
+        // 考試介面互動邏輯
+        // ==========================================
+        function shuffleQuestions(questions) {
+            let groups = [];
+            for (let i = 0; i < questions.length; i++) {
+                if (i > 0 && (questions[i].question.includes("承上題") || questions[i].question.includes("同上題"))) {
+                    groups[groups.length - 1].push(questions[i]);
+                } else {
+                    groups.push([questions[i]]);
+                }
+            }
+            for (let i = groups.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [groups[i], groups[j]] = [groups[j], groups[i]];
+            }
+            let finalQuestions = [];
+            groups.forEach(group => { finalQuestions.push(...group); });
+            return finalQuestions;
+        }
+
+        function startExam(aiExamData) {
+            currentExam = JSON.parse(JSON.stringify(aiExamData)); 
+            currentExam.questions.forEach((q, index) => { q.originalIndex = index; });
+            currentExam.questions = shuffleQuestions(currentExam.questions);
+            currentQuestionIndex = 0;
+            
+            userAnswers = new Array(currentExam.questions.length).fill(null);
+            flaggedQuestions = new Array(currentExam.questions.length).fill(false);
+            questionNotes = new Array(currentExam.questions.length).fill("");
+
+            document.getElementById('rpg-main-ui').style.display = 'none';
+            document.getElementById('test-ui').style.display = 'block';
+            document.getElementById('active-exam-title').innerText = currentExam.title;
+            
+            allocatedTime = currentExam.questions.length * 2 * 60;
+            timeRemaining = allocatedTime; 
+            frozenTimeSpent = null; 
+            
+            updateTimerDisplay();
+            clearInterval(timerInterval);
+            cheatWarnings = 0;
+            isExamActive = true;
+            examStartTime = Date.now(); 
+            
+            timerInterval = setInterval(() => {
+                let elapsedSec = Math.floor((Date.now() - examStartTime) / 1000);
+                timeRemaining = allocatedTime - elapsedSec;
+                updateTimerDisplay();
+                if (timeRemaining <= 0) { 
+                    clearInterval(timerInterval); 
+                    frozenTimeSpent = allocatedTime; 
+                    alert("測驗時間到！系統即將自動為您交卷結算。"); 
+                    finishAndShowResults(); 
+                }
+            }, 1000);
+            renderQuestion();
+        }
+
+        // 渲染待命任務清單
+        function renderQuestBacklog(examData) {
+            const container = document.getElementById('quest-backlog-container');
+            const list = document.getElementById('backlog-card-list');
+            container.style.display = 'block';
+            
+            const isCompleted = completedRecords && completedRecords[examData.id];
+            
+            if (isCompleted) {
+                list.innerHTML = `
+                    <div style="background: rgba(255,255,255,0.9); border: 1px solid #27ae60; border-radius: 8px; padding: 15px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 10px rgba(0,0,0,0.05);">
+                        <div>
+                            <div style="font-weight: bold; color: var(--dark); font-size: 15px; margin-bottom: 4px;">${examData.title}</div>
+                            <div style="font-size: 12px; color: #27ae60;">得分：${completedRecords[examData.id].score} 分 ｜ 狀態：已完成試煉</div>
+                        </div>
+                        <button class="main-btn" style="margin: 0; width: auto; padding: 10px 20px; font-size: 14px; background: #27ae60;" onclick="reviewCompletedExam('${examData.id}')">查看檢討</button>
+                    </div>
+                `;
+            } else {
+                list.innerHTML = `
+                    <div style="background: rgba(255,255,255,0.9); border: 1px solid #8e44ad; border-radius: 8px; padding: 15px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 10px rgba(0,0,0,0.05);">
+                        <div>
+                            <div style="font-weight: bold; color: var(--dark); font-size: 15px; margin-bottom: 4px;">${examData.title}</div>
+                            <div style="font-size: 12px; color: #666;">${examData.desc} ｜ 狀態：等待勇者拔劍</div>
+                        </div>
+                        <button class="main-btn" style="margin: 0; width: auto; padding: 10px 20px; font-size: 14px;" onclick="startExam(window.pendingAiExam)">進入試煉場</button>
+                    </div>
+                `;
+            }
+        }
+        // 點擊「查看檢討」時觸發
+        function reviewCompletedExam(examId) {
+            const record = completedRecords[examId];
+            if (!record) return alert("找不到此試卷的作答紀錄！");
+
+            // 隱藏主介面與測驗介面，顯示結算/檢討介面
+            document.getElementById('rpg-main-ui').style.display = 'none';
+            document.getElementById('test-ui').style.display = 'none';
+            document.getElementById('result-ui').style.display = 'block';
+
+            const scoreEl = document.getElementById('score-display');
+            scoreEl.innerText = `歷史得分：${record.score} 分`;
+            scoreEl.style.color = record.score >= 60 ? "#27ae60" : "#c0392b";
+
+            const reviewContainer = document.getElementById('review-container');
+            reviewContainer.innerHTML = "";
+            
+            record.details.forEach((detail, index) => {
+                let userAnsText = detail.userPick === "未作答" ? `<span style="color:#7f8c8d; font-weight:bold;">未作答</span>` : detail.userPick;
+                const statusHtml = detail.isCorrect 
+                    ? `<span class="review-correct">√ 答對了！</span>` 
+                    : `<span class="review-wrong">x 答錯了 (你的答案：${userAnsText})</span>`;
+                    
+                let flagHtml = detail.isFlagged ? `<span style="background:#fdf2f0; color:#c0392b; padding:2px 8px; border-radius:12px; font-size:12px; font-weight:bold; margin-left:10px;">🚩 已標記</span>` : '';
+                let noteHtml = detail.studentNote ? `<div style="background:#fff3e0; border-left:4px solid #e67e22; padding:10px; margin-top:10px; font-size:13px; color:#d35400;"><strong>✏️ 你的筆記：</strong><br>${detail.studentNote}</div>` : '';
+
+                reviewContainer.innerHTML += `
+                    <div class="review-card">
+                        <div class="review-q">Q${index + 1}. ${detail.originalQuestion} ${flagHtml}</div>
+                        <div class="review-ans">正確答案：${detail.correctAnswer}</div>
+                        <div class="review-ans">${statusHtml}</div>
+                        ${noteHtml}
+                        <div class="review-exp"><strong>解析：</strong><br>${detail.explanation}</div>
+                    </div>`;
+            });
+
+            if (window.MathJax) { setTimeout(() => { MathJax.typesetPromise([reviewContainer]); }, 100); }
+        }
+
+        function reviewCompletedExam(examId) {
+            const record = completedRecords[examId];
+            if (!record) return alert("找不到此試卷的作答紀錄！");
+
+            document.getElementById('rpg-main-ui').style.display = 'none';
+            document.getElementById('test-ui').style.display = 'none';
+            document.getElementById('result-ui').style.display = 'block';
+
+            const scoreEl = document.getElementById('score-display');
+            scoreEl.innerText = `歷史得分：${record.score} 分`;
+            scoreEl.style.color = record.score >= 60 ? "#27ae60" : "#c0392b";
+
+            const reviewContainer = document.getElementById('review-container');
+            reviewContainer.innerHTML = "";
+            
+            record.details.forEach((detail, index) => {
+                let userAnsText = detail.userPick === "未作答" ? `<span style="color:#7f8c8d; font-weight:bold;">未作答</span>` : detail.userPick;
+                const statusHtml = detail.isCorrect 
+                    ? `<span class="review-correct">√ 答對了！</span>` 
+                    : `<span class="review-wrong">x 答錯了 (你的答案：${userAnsText})</span>`;
+                    
+                let flagHtml = detail.isFlagged ? `<span style="background:#fdf2f0; color:#c0392b; padding:2px 8px; border-radius:12px; font-size:12px; font-weight:bold; margin-left:10px;">🚩 已標記</span>` : '';
+                let noteHtml = detail.studentNote ? `<div style="background:#fff3e0; border-left:4px solid #e67e22; padding:10px; margin-top:10px; font-size:13px; color:#d35400;"><strong>✏️ 你的筆記：</strong><br>${detail.studentNote}</div>` : '';
+
+                reviewContainer.innerHTML += `
+                    <div class="review-card">
+                        <div class="review-q">Q${index + 1}. ${detail.originalQuestion} ${flagHtml}</div>
+                        <div class="review-ans">正確答案：${detail.correctAnswer}</div>
+                        <div class="review-ans">${statusHtml}</div>
+                        ${noteHtml}
+                        <div class="review-exp"><strong>解析：</strong><br>${detail.explanation}</div>
+                    </div>`;
+            });
+
+            if (window.MathJax) { setTimeout(() => { MathJax.typesetPromise([reviewContainer]); }, 100); }
+        }
+
+        function updateTimerDisplay() {
+            const m = Math.floor(timeRemaining / 60); const s = timeRemaining % 60;
+            document.getElementById('timer-display').innerText = `時間還剩 ${m < 10 ? '0' : ''}${m}:${s < 10 ? '0' : ''}${s}`;
+        }
+
+        function renderQuestion() {
+            const qData = currentExam.questions[currentQuestionIndex];
+            document.getElementById('quiz-progress').innerText = `題目 ${currentQuestionIndex + 1} / ${currentExam.questions.length}`;
+            document.getElementById('question-text').innerHTML = qData.question;
+            
+            document.getElementById('note-area').value = questionNotes[currentQuestionIndex];
+            
+            const flagBtn = document.getElementById('flag-btn');
+            if (flaggedQuestions[currentQuestionIndex]) {
+                flagBtn.classList.add('active');
+                flagBtn.innerText = "🚩 取消標記";
+            } else {
+                flagBtn.classList.remove('active');
+                flagBtn.innerText = "🚩 標記本題";
+            }
+
+            const optionsContainer = document.getElementById('options-container');
+            optionsContainer.innerHTML = ""; 
+            qData.options.forEach((opt, index) => {
+                const btn = document.createElement('button');
+                btn.className = 'option-btn';
+                btn.innerHTML = `${String.fromCharCode(65 + index)}. ${opt}`;
+                btn.onclick = () => selectOption(index);
+                if (userAnswers[currentQuestionIndex] === index) btn.classList.add('selected');
+                optionsContainer.appendChild(btn);
+            });
+            
+            document.getElementById('prev-btn').disabled = (currentQuestionIndex === 0);
+            const nextBtn = document.getElementById('next-btn');
+            nextBtn.disabled = false;
+            nextBtn.innerText = currentQuestionIndex === currentExam.questions.length - 1 ? "完成並交卷" : "下一題";
+            
+            renderAnswerSheet(); 
+            if (window.MathJax) { setTimeout(() => { MathJax.typesetPromise(); }, 100); }
+        }
+
+        function selectOption(index) {
+            userAnswers[currentQuestionIndex] = index; 
+            const buttons = document.querySelectorAll('.option-btn');
+            buttons.forEach(btn => btn.classList.remove('selected'));
+            buttons[index].classList.add('selected'); 
+            renderAnswerSheet(); 
+        }
+
+        function prevQuestion() {
+            if (currentQuestionIndex > 0) { currentQuestionIndex--; renderQuestion(); }
+        }
+
+        function nextQuestion() {
+            if (currentQuestionIndex < currentExam.questions.length - 1) {
+                currentQuestionIndex++; 
+                renderQuestion();
+            } else { 
+                let unansweredList = [];
+                for (let i = 0; i < userAnswers.length; i++) {
+                    if (userAnswers[i] === null) unansweredList.push(i + 1);
+                }
+                if (unansweredList.length > 0) {
+                    alert("您還有以下題目尚未完成：\n第 " + unansweredList.join(", ") + " 題\n\n請點擊下方答案卡跳轉！");
+                    return; 
+                }
+                if (confirm("確定要正式交卷並計算分數嗎？")) { finishAndShowResults(); }
+            }
+        }
+
+        function jumpToQuestion(idx) { currentQuestionIndex = idx; renderQuestion(); }
+        function toggleFlag() { flaggedQuestions[currentQuestionIndex] = !flaggedQuestions[currentQuestionIndex]; renderQuestion(); }
+        function saveNote(val) { questionNotes[currentQuestionIndex] = val; }
+
+        function renderAnswerSheet() {
+            const sheet = document.getElementById('answer-sheet');
+            sheet.innerHTML = "";
+            for (let i = 0; i < currentExam.questions.length; i++) {
+                const circle = document.createElement('div');
+                circle.className = 'ans-circle';
+                if (i === currentQuestionIndex) circle.classList.add('active');
+                if (userAnswers[i] !== null) circle.classList.add('answered');
+                if (flaggedQuestions[i]) circle.classList.add('flagged');
+                circle.innerText = i + 1;
+                circle.onclick = () => jumpToQuestion(i);
+                sheet.appendChild(circle);
+            }
+        }
+
+        function abandonExam() {
+            if (confirm("【警告】現在放棄測驗將不予計分，確定返回？")) { returnToAltar(); }
+        }
+
+        // ==========================================
+        // 結算與解析檢討
+        // ==========================================
+        async function finishAndShowResults() {
+            isExamActive = false;
+            if (timerInterval) clearInterval(timerInterval);
+            
+            document.getElementById('test-ui').style.display = 'none';
+            document.getElementById('loading-screen').style.display = 'flex';
+            document.getElementById('loading-msg').innerText = "AI 導師正在進行批改...";
+
+            try {
+                let correctCount = 0;
+                let totalQ = currentExam.questions.length;
+                let pointsPerQ = 100 / totalQ; 
+                let shuffledDetails = new Array(totalQ);
+
+                for (let i = 0; i < totalQ; i++) {
+                    let uAns = userAnswers[i];
+                    let qData = currentExam.questions[i];
+                    
+                    let isCorrect = (uAns === qData.correctAnswer);
+                    if (isCorrect) correctCount++;
+                    
+                    shuffledDetails[i] = {
+                        originalQuestion: qData.question,
+                        userPick: (uAns !== null && uAns !== undefined) ? qData.options[uAns] : "未作答",
+                        isCorrect: isCorrect,
+                        correctAnswer: qData.options[qData.correctAnswer],
+                        explanation: qData.explanation || "無解析",
+                        studentNote: questionNotes[i] || "",
+                        isFlagged: flaggedQuestions[i]
+                    };
+                }
+
+                const finalScore = Math.round(correctCount * pointsPerQ);
+                const earnedExp = finalScore * 10;
+
+                const user = auth.currentUser;
+                if (user) {
+                    const recordPayload = {
+                        score: finalScore,
+                        date: new Date().toISOString(),
+                        details: shuffledDetails
+                    };
+                    await db.ref('exam_records/' + user.uid + '/' + currentExam.id).set(recordPayload);
+                    completedRecords[currentExam.id] = recordPayload;
+
+                    const rpgRef = db.ref('rpg_system/' + user.uid);
+                    const rpgSnap = await rpgRef.once('value');
+                    let rpgData = rpgSnap.val() || {};
+                    
+                    let newTotalExp = (rpgData.exp || 0) + earnedExp;
+                    
+                    let newTitle = "新手見習生";
+                    if (newTotalExp >= 10000) newTitle = "傳說勇者";
+                    else if (newTotalExp >= 6000) newTitle = "劍士";
+                    else if (newTotalExp >= 3000) newTitle = "戰士";
+                    else if (newTotalExp >= 1000) newTitle = "初級冒險者";
+
+                    // 透過後端 getUser 動作抓取真實中文姓名
+                    let studentRealName = rpgData.name || "神秘勇者";
+                    try {
+                        const userRes = await fetch(SCRIPT_URL, {
+                            method: "POST",
+                            headers: { "Content-Type": "text/plain;charset=utf-8" },
+                            body: JSON.stringify({
+                                action: "getUser",
+                                token: "SuHaoClassroom2026_SecureKey",
+                                uid: user.uid
+                            })
+                        });
+                        const userData = await userRes.json();
+                        if (userData.success && userData.name) {
+                            studentRealName = userData.name;
+                        }
+                    } catch (err) {
+                        console.error("獲取真實姓名失敗：", err);
+                    }
+
+                    await rpgRef.update({
+                        exp: newTotalExp,
+                        title: newTitle,
+                        name: studentRealName,
+                        lastSummonDate: rpgData.lastSummonDate
+                    });
+
+                    await db.ref('rpg_backlog/' + user.uid).remove();
+                }
+
+                document.getElementById('loading-screen').style.display = 'none';
+                document.getElementById('result-ui').style.display = 'block';
+
+                const scoreEl = document.getElementById('score-display');
+                scoreEl.innerText = `${finalScore} 分 (答對 ${correctCount} / ${totalQ} 題)\n🎁 獲得經驗值 +${earnedExp} EXP！`;
+                if (finalScore === 100) { 
+                    scoreEl.style.color = "#27ae60"; scoreEl.innerText += "滿分！"; 
+                } else if (finalScore >= 60) { 
+                    scoreEl.style.color = "#d35400"; 
+                } else { 
+                    scoreEl.style.color = "#c0392b"; scoreEl.innerText += "再接再厲！";
+                }
+
+                const reviewContainer = document.getElementById('review-container');
+                reviewContainer.innerHTML = "";
+                
+                shuffledDetails.forEach((detail, index) => {
+                    let userAnsText = detail.userPick === "未作答" ? `<span style="color:#7f8c8d; font-weight:bold;">未作答</span>` : detail.userPick;
+                    const statusHtml = detail.isCorrect 
+                        ? `<span class="review-correct">√ 答對了！</span>` 
+                        : `<span class="review-wrong">x 答錯了 (你的答案：${userAnsText})</span>`;
+                        
+                    let flagHtml = detail.isFlagged ? `<span style="background:#fdf2f0; color:#c0392b; padding:2px 8px; border-radius:12px; font-size:12px; font-weight:bold; margin-left:10px;">🚩 已標記</span>` : '';
+                    let noteHtml = detail.studentNote ? `<div style="background:#fff3e0; border-left:4px solid #e67e22; padding:10px; margin-top:10px; font-size:13px; color:#d35400;"><strong>✏️️ 你的筆記：</strong><br>${detail.studentNote}</div>` : '';
+
+                    reviewContainer.innerHTML += `
+                        <div class="review-card">
+                            <div class="review-q">Q${index + 1}. ${detail.originalQuestion} ${flagHtml}</div>
+                            <div class="review-ans">正確答案：${detail.correctAnswer}</div>
+                            <div class="review-ans">${statusHtml}</div>
+                            ${noteHtml}
+                            <div class="review-exp"><strong>解析：</strong><br>${detail.explanation}</div>
+                        </div>`;
+                });
+
+                if (window.MathJax) { setTimeout(() => { MathJax.typesetPromise([reviewContainer]); }, 100); }
+
+            } catch (err) {
+                console.error(err);
+                document.getElementById('loading-screen').style.display = 'none';
+                alert("結算過程發生錯誤。");
+                returnToAltar();
+            }
+        }
+
+        function returnToAltar() {
+            currentExam = null;
+            selectedScopes.clear();
+            document.getElementById('dropdown-label').innerText = "-- 請點擊展開並勾選範圍 --";
+            document.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.checked = false);
+            document.getElementById('result-ui').style.display = 'none';
+            document.getElementById('test-ui').style.display = 'none';
+            document.getElementById('rpg-main-ui').style.display = 'block';
+            loadLeaderboard();
+        }
+
+        function updateRpgDashboard(rpgData) {
+            const currentExp = rpgData.exp || 0;
+            const currentTitle = rpgData.title || "新手見習生";
+            
+            const titleEl = document.getElementById('rpg-title-text');
+            if (titleEl) titleEl.innerText = currentTitle;
+            
+            let maxExp = 2000;
+            let percent = Math.min(Math.floor((currentExp % maxExp) / maxExp * 100), 100);
+            if (currentExp >= 10000) percent = 100;
+
+            const fillBar = document.querySelector('.rpg-exp-bar-fill');
+            if (fillBar) fillBar.style.width = percent + '%';
+            
+            const expLabel = document.querySelector('.rpg-exp-bar-bg');
+            if (expLabel && expLabel.previousElementSibling && expLabel.previousElementSibling.children[0]) {
+                expLabel.previousElementSibling.children[0].innerText = `EXP: ${currentExp} / 下一階門檻`;
+            }
+        }
+    </script>
+</body>
+</html>
