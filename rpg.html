@@ -86,14 +86,14 @@
             backdrop-filter: blur(24px) !important;            
             -webkit-backdrop-filter: blur(24px) !important;   
             border: 1px solid rgba(255, 255, 255, 0.4); 
-            display: none; /* 預設隱藏，由 JS 控制顯示 */
+            display: none; 
         }
 
         h2 { color: var(--dark); border-left: 5px solid #8e44ad; padding-left: 15px; margin-top: 0; }
         .back-btn { display: inline-block; margin-bottom: 20px; color: #888; text-decoration: none; font-size: 14px; transition: 0.2s; cursor: pointer; font-weight: bold; }
         .back-btn:hover { color: #8e44ad; }
         .clean-card { background: rgba(255,255,255,0.6); border: 1px solid #f0f0f0; border-radius: 12px; padding: 25px; margin-bottom: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.02); }
-        .modern-select { padding: 12px; border-radius: 8px; border: 1px solid #ddd; outline: none; background: rgba(255,255,255,0.8); font-size: 14px; color: #555; width: 100%; cursor: pointer; font-weight: bold; }
+        .modern-input { padding: 12px; border-radius: 8px; border: 1px solid #ddd; outline: none; background: rgba(255,255,255,0.8); font-size: 14px; color: #555; width: 100%; font-weight: bold; box-sizing: border-box; }
 
         /* === RPG 首頁專屬視覺 === */
         .rpg-hero-card { background: linear-gradient(135deg, #2c3e50, #34495e); color: white; padding: 25px; border-radius: 12px; box-shadow: 0 10px 20px rgba(0,0,0,0.15); margin-bottom: 30px; position: relative; overflow: hidden; }
@@ -112,7 +112,7 @@
         .scope-tag.active { border-color: #8e44ad; background: #f4ecf8; color: #732d91; box-shadow: 0 2px 8px rgba(142,68,173,0.2); }
         .scope-tag.active-weakness { border-color: #e74c3c; background: #fdf2f0; color: #c0392b; box-shadow: 0 2px 8px rgba(231,76,60,0.2); }
 
-        /* === 考試介面 UI (繼承自 test.html) === */
+        /* === 考試介面 UI === */
         .quiz-header-container { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px dashed #eee; padding-bottom: 15px; margin-bottom: 20px; }
         .quiz-header { font-size: 15px; color: #888; font-weight: 700; letter-spacing: 1px; margin: 0; }
         .timer-display { font-size: 18px; color: #c0392b; font-weight: 700; background: #fdf2f0; padding: 5px 12px; border-radius: 4px; border: 1px solid #fadbd8; }
@@ -144,7 +144,7 @@
         .ans-circle:hover { border-color: #8e44ad; }
         .ans-circle.answered { background: #8e44ad; color: white; border-color: #8e44ad; }
         .ans-circle.flagged { border-color: #e74c3c; color: #c0392b; background: #fdf2f0; }
-        .ans-circle.answered.flagged { background: #e74c3c; color: white; border-color: #c0392b; }
+        .ans-circle.answered.flagged { background: #e74c3c; color: white; border-color: #e74c3c; }
         .ans-circle.active { box-shadow: 0 0 0 4px rgba(142,68,173,0.2); border-color: #732d91; transform: scale(1.1); }
 
         #score-display { text-align: center; font-size: 36px; color: var(--dark); font-weight: 700; margin: 20px 0; padding: 20px; background: rgba(255,255,255,0.7); border-radius: 8px; }
@@ -175,14 +175,14 @@
 
     <div id="loading-screen">
         <div class="loading-dots"><div></div><div></div><div></div></div>
-        <div class="loading-text" id="loading-msg">身分驗證與魔法陣準備中...</div>
+        <div class="loading-text" id="loading-msg">從 Firebase 載入歷史資料中...</div>
     </div>
 
     <!-- === 畫面 1：RPG 首頁與出題面板 === -->
     <div class="container-ui" id="rpg-main-ui">
         <a href="classroom.html" class="back-btn">← 返回雲端教室</a>
         <h2 style="border-left-color: #8e44ad;">⚔️ AI 勇者村 (每日試煉)</h2>
-        <p style="font-size: 13px; color: #555; margin-bottom: 25px; padding-left: 20px;">請點擊下方標籤勾選您想挑戰的範圍 (可複選)，AI 導師將為您量身打造專屬試卷。</p>
+        <p style="font-size: 13px; color: #555; margin-bottom: 25px; padding-left: 20px;">勾選您想複習的範圍 (可複選)，系統將自動從 Firebase 撈取您的歷史錯題或指定單元，讓 AI 為您量身打造類題！</p>
 
         <div class="rpg-hero-card">
             <div style="display: flex; justify-content: space-between; align-items: flex-end;">
@@ -212,18 +212,15 @@
         </div>
 
         <div class="clean-card">
-            <h3 style="margin-top: 0; font-size: 16px; color: var(--dark);">2. 選擇試煉題數</h3>
-            <select id="ai-quest-count" class="modern-select">
-                <option value="5">5 題 (小試身手)</option>
-                <option value="10">10 題 (極限挑戰)</option>
-            </select>
+            <h3 style="margin-top: 0; font-size: 16px; color: var(--dark);">2. 自訂出題數量</h3>
+            <input type="number" id="ai-quest-count" class="modern-input" value="5" min="1" max="30" placeholder="請輸入想要的題數 (例如 5, 10, 15)">
         </div>
 
         <div style="text-align: center;">
             <div style="font-size: 14px; font-weight: bold; color: #27ae60; margin-bottom: 15px;">【 今日試煉額度：1 / 1 】</div>
             <button id="btn-summon-ai" class="summon-btn" onclick="startSummon()">✨ 消耗額度，啟動 AI 詠唱</button>
             <div id="ai-progress-box" style="display: none; margin-top: 20px;">
-                <div style="font-size: 13px; color: #8e44ad; font-weight: bold; margin-bottom: 8px; text-align: left;" id="ai-status-text">分析核心考點中...</div>
+                <div style="font-size: 13px; color: #8e44ad; font-weight: bold; margin-bottom: 8px; text-align: left;" id="ai-status-text">正在向 Firebase 調閱歷史資料中...</div>
                 <div style="width: 100%; height: 8px; background: #eee; border-radius: 4px; overflow: hidden;">
                     <div id="ai-bar" style="width: 0%; height: 100%; background: linear-gradient(90deg, #9b59b6, #8e44ad); transition: width 0.5s;"></div>
                 </div>
@@ -233,7 +230,7 @@
 
     <!-- === 畫面 2：考試作答介面 === -->
     <div id="test-ui" class="container-ui">
-        <span class="back-btn" onclick="abandonExam()">← 放棄本次作答，提早交卷</span>
+        <span class="back-btn" onclick="abandonExam()">← 放棄本次作答，返回勇者村</span>
         <h2 id="active-exam-title">測驗載入中...</h2>
         <div id="quiz-container">
             <div class="quiz-header-container">
@@ -272,9 +269,6 @@
     </div>
 
     <script>
-        // ==========================================
-        // Firebase 設定與全域變數
-        // ==========================================
         const firebaseConfig = {
             apiKey: "AIzaSyALkTnkYY3JZLCTyajahpi4IZKmFX9USdw",
             authDomain: "su-hao-classroom.firebaseapp.com",
@@ -293,7 +287,7 @@
         let selectedScopes = new Set();
         let aiGenerateTimer;
 
-        // 考試相關變數
+        // 考試變數
         let currentExam = null;
         let currentQuestionIndex = 0;
         let userAnswers = [];
@@ -308,7 +302,7 @@
         let isExamActive = false; 
 
         // ==========================================
-        // 頁面載入與身分驗證
+        // 頁面載入與 Firebase 資料同步
         // ==========================================
         auth.onAuthStateChanged(async (user) => {
             if (!user) {
@@ -318,7 +312,7 @@
             }
 
             try {
-                // 從 sessionStorage 抓取快取資料 (由 classroom.html 存入的)
+                // 1. 從 sessionStorage 取得試卷清單目錄
                 const cachedExams = sessionStorage.getItem('suhao_exams');
                 const cachedStudents = sessionStorage.getItem('suhao_students');
                 
@@ -333,7 +327,7 @@
                     }
                 }
 
-                // 抓取 Firebase 歷史作答紀錄 (用於抽錯題)
+                // 2. 直接從 Firebase 抓取該學生的完整歷史考試紀錄 (與 test.html 同源)
                 const snap = await db.ref('exam_records/' + user.uid).once('value');
                 completedRecords = snap.val() || {};
 
@@ -342,13 +336,14 @@
                 document.getElementById('rpg-main-ui').style.display = 'block';
 
             } catch (e) {
-                alert("資料讀取失敗，請重新整理頁面。");
+                console.error(e);
+                alert("從 Firebase 載入歷史紀錄失敗，請重新整理頁面。");
                 window.location.replace("classroom.html");
             }
         });
 
         // ==========================================
-        // 防作弊機制 (切換視窗偵測)
+        // 防作弊機制
         // ==========================================
         document.addEventListener("visibilitychange", () => {
             if (isExamActive && document.hidden) {
@@ -361,42 +356,19 @@
                 }
             }
         });
-        
-        window.addEventListener('popstate', function(event) {
-            if (isExamActive) {
-                window.history.pushState('exam_active', null, '');
-                cheatWarnings++;
-                if (cheatWarnings >= 3) {
-                    alert("【系統通知】\n\n系統偵測到您已切換視窗或離開測驗畫面達 3 次！\n已視同違規作弊，系統將立刻強制交卷。");
-                    finishAndShowResults();
-                } else {
-                    alert(`【警告】\n\n考試期間嚴禁點擊「上一頁」或使用「返回手勢」！\n\n您目前已違規 ${cheatWarnings} 次。\n若達 3 次，系統將直接強制收卷。`);
-                }
-            }
-        });
 
         window.addEventListener('beforeunload', function (e) {
             if (isExamActive) { e.preventDefault(); e.returnValue = ''; return ''; }
         });
 
-        // 禁用開發者工具與右鍵
-        document.addEventListener('keydown', function(event) {
-            if (event.keyCode === 123 || (event.ctrlKey && event.shiftKey && (event.keyCode === 73 || event.keyCode === 74)) || (event.ctrlKey && event.keyCode === 85)) { 
-                event.preventDefault(); alert("【警告】\n\n嚴禁開啟開發者工具！系統已記錄異常行為。"); 
-            }
-        });
-        document.addEventListener('contextmenu', function(event) { event.preventDefault(); alert("版權所有，翻印必究！"); });
-
-
         // ==========================================
-        // 出題面板邏輯
+        // 出題面板與範圍勾選邏輯
         // ==========================================
         function renderScopeTags() {
             const container = document.getElementById('scope-container');
             container.innerHTML = `<div class="scope-tag" onclick="toggleScope('weakness', this)">🎯 歷史錯題盲點特訓</div>`;
             
             studentExams.forEach(exam => {
-                // 排除以前的 AI 生成卷，只顯示正規單元
                 if (!exam.id.startsWith("AI_RPG_")) {
                     container.innerHTML += `<div class="scope-tag" onclick="toggleScope('${exam.id}', this)">📚 ${exam.title}</div>`;
                 }
@@ -427,32 +399,46 @@
             let refQuestions = [];
             let scopeLabel = "";
 
-            // 1. 蒐集錯題
+            // 1. 從 Firebase 紀錄 (completedRecords) 抓取「歷史錯題」
             if (selectedScopes.has("weakness")) {
                 scopeLabel += "錯題特訓 ";
                 for (const examId in completedRecords) {
-                    if (completedRecords[examId]?.details) {
-                        completedRecords[examId].details.forEach(d => {
-                            if (!d.isCorrect) refQuestions.push(d.originalQuestion);
+                    const record = completedRecords[examId];
+                    if (record && record.details) {
+                        record.details.forEach(d => {
+                            // 篩選出答錯的題目作為弱點範本
+                            if (!d.isCorrect && d.originalQuestion) {
+                                refQuestions.push(d.originalQuestion);
+                            }
                         });
                     }
                 }
             }
 
-            // 2. 蒐集指定單元題目
+            // 2. 從勾選的指定單元抓取原題庫題目
             selectedScopes.forEach(id => {
                 if (id !== "weakness") {
                     const targetExam = studentExams.find(e => e.id === id);
-                    if (targetExam) {
+                    if (targetExam && targetExam.questions) {
                         scopeLabel += targetExam.title + " ";
-                        refQuestions.push(...targetExam.questions.map(q => q.question));
+                        targetExam.questions.forEach(q => {
+                            if (q.question) refQuestions.push(q.question);
+                        });
                     }
                 }
             });
 
-            // 隨機抽取 10 題給 AI 當範本，避免 Token 爆炸
-            if (refQuestions.length > 10) refQuestions = refQuestions.sort(() => Math.random() - 0.5).slice(0, 10);
-            if (refQuestions.length === 0) return alert("所選範圍內尚未有作答紀錄或題目，無法生成！");
+            // 如果選了錯題特訓但 Firebase 裡完全沒有錯題紀錄
+            if (selectedScopes.has("weakness") && refQuestions.length === 0 && selectedScopes.size === 1) {
+                return alert("太棒了！您的 Firebase 錯題本目前完全沒有錯題紀錄，請改選其他「指定單元」進行試煉！");
+            }
+
+            // 隨機抽取 12 題給 AI 當參考範本，避免 Token 爆炸
+            if (refQuestions.length > 12) {
+                refQuestions = refQuestions.sort(() => Math.random() - 0.5).slice(0, 12);
+            }
+
+            if (refQuestions.length === 0) return alert("所選範圍內找不到任何可用題目，無法生成！");
 
             btn.disabled = true;
             btn.innerText = "魔法陣詠唱中...";
@@ -461,11 +447,11 @@
             let progress = 0;
             aiGenerateTimer = setInterval(() => {
                 if (progress < 90) {
-                    progress += Math.floor(Math.random() * 5) + 1;
+                    progress += Math.floor(Math.random() * 4) + 1;
                     bar.style.width = Math.min(progress, 90) + '%';
-                    text.innerText = progress < 40 ? "分析核心考點與概念中..." : "Gemini 3.8 Flash 建構全新試煉中...";
+                    text.innerText = progress < 40 ? "正在從 Firebase 提取錯題與單元結構..." : "Gemini 3.8 Flash 正在設計全新類題...";
                 }
-            }, 600);
+            }, 500);
 
             try {
                 const idToken = await user.getIdToken();
@@ -491,19 +477,16 @@
                     const aiExamData = {
                         id: "AI_RPG_" + Date.now(), 
                         title: `⚔ 勇者試煉：${scopeLabel.trim()}`,
-                        desc: `AI 導師依據您的選擇生成的 ${qCount} 題專屬考驗。`,
+                        desc: `AI 導師針對您的選定範圍量身打造的 ${qCount} 題專屬考驗。`,
                         questions: result.questions
                     };
                     
                     setTimeout(() => {
-                        // 復原按鈕狀態
                         progressBox.style.display = 'none';
                         btn.disabled = false;
                         btn.innerText = "✨ 消耗額度，啟動 AI 詠唱";
-                        
-                        // 啟動考試
                         startExam(aiExamData);
-                    }, 1200);
+                    }, 1000);
 
                 } else throw new Error(result.message);
 
@@ -517,7 +500,7 @@
         }
 
         // ==========================================
-        // 考試介面與邏輯 (原汁原味移植)
+        // 考試介面互動邏輯
         // ==========================================
         function shuffleQuestions(questions) {
             let groups = [];
@@ -539,9 +522,7 @@
 
         function startExam(aiExamData) {
             currentExam = JSON.parse(JSON.stringify(aiExamData)); 
-            currentExam.questions.forEach((q, index) => {
-                q.originalIndex = index;
-            });
+            currentExam.questions.forEach((q, index) => { q.originalIndex = index; });
             currentExam.questions = shuffleQuestions(currentExam.questions);
             currentQuestionIndex = 0;
             
@@ -549,12 +530,11 @@
             flaggedQuestions = new Array(currentExam.questions.length).fill(false);
             questionNotes = new Array(currentExam.questions.length).fill("");
 
-            // 切換畫面
             document.getElementById('rpg-main-ui').style.display = 'none';
             document.getElementById('test-ui').style.display = 'block';
             document.getElementById('active-exam-title').innerText = currentExam.title;
             
-            allocatedTime = currentExam.questions.length * 2 * 60; // 預設一題兩分鐘
+            allocatedTime = currentExam.questions.length * 2 * 60;
             timeRemaining = allocatedTime; 
             frozenTimeSpent = null; 
             
@@ -563,12 +543,10 @@
             cheatWarnings = 0;
             isExamActive = true;
             examStartTime = Date.now(); 
-            window.history.pushState('exam_active', null, '');
             
             timerInterval = setInterval(() => {
                 let elapsedSec = Math.floor((Date.now() - examStartTime) / 1000);
                 timeRemaining = allocatedTime - elapsedSec;
-                
                 updateTimerDisplay();
                 if (timeRemaining <= 0) { 
                     clearInterval(timerInterval); 
@@ -643,7 +621,7 @@
                     if (userAnswers[i] === null) unansweredList.push(i + 1);
                 }
                 if (unansweredList.length > 0) {
-                    alert("您還有以下題目尚未完成：\n第 " + unansweredList.join(", ") + " 題\n\n請點擊畫面下方的「答案卡」圓圈，快速跳轉至該題完成作答！");
+                    alert("您還有以下題目尚未完成：\n第 " + unansweredList.join(", ") + " 題\n\n請點擊畫面下方的「答案卡」圓圈跳轉作答！");
                     return; 
                 }
                 if (confirm("確定要正式交卷並查看成績嗎？")) { finishAndShowResults(); }
@@ -651,12 +629,7 @@
         }
 
         function jumpToQuestion(idx) { currentQuestionIndex = idx; renderQuestion(); }
-
-        function toggleFlag() {
-            flaggedQuestions[currentQuestionIndex] = !flaggedQuestions[currentQuestionIndex];
-            renderQuestion();
-        }
-
+        function toggleFlag() { flaggedQuestions[currentQuestionIndex] = !flaggedQuestions[currentQuestionIndex]; renderQuestion(); }
         function saveNote(val) { questionNotes[currentQuestionIndex] = val; }
 
         function renderAnswerSheet() {
@@ -675,11 +648,11 @@
         }
 
         function abandonExam() {
-            if (confirm("【警告】\n\n現在離開測驗，未作答的題目將以 0 分計算，且無法重新測驗！\n\n確定要強制交卷嗎？")) { finishAndShowResults(); }
+            if (confirm("【警告】\n\n現在放棄測驗將不予計分！\n\n確定要返回勇者村嗎？")) { returnToAltar(); }
         }
 
         // ==========================================
-        // 交卷與結算邏輯
+        // 結算與解析檢討
         // ==========================================
         async function finishAndShowResults() {
             isExamActive = false;
@@ -691,15 +664,11 @@
 
             try {
                 let correctCount = 0;
-                let orderedAnswers = new Array(currentExam.questions.length).fill(null);
                 let shuffledDetails = new Array(currentExam.questions.length);
 
                 for (let i = 0; i < currentExam.questions.length; i++) {
-                    let origIdx = currentExam.questions[i].originalIndex;
                     let uAns = userAnswers[i];
                     let qData = currentExam.questions[i];
-                    
-                    orderedAnswers[origIdx] = uAns;
                     
                     let isCorrect = (uAns === qData.correctAnswer);
                     if (isCorrect) correctCount++;
@@ -717,9 +686,6 @@
 
                 const finalScore = Math.round((correctCount / currentExam.questions.length) * 100);
 
-                // 將結算資料記錄下來，以供後續檢討或回傳 GAS (選擇性)
-                // 這裡我們只將結果暫存在前端顯示，確保不干擾原本的試務中心
-                
                 document.getElementById('loading-screen').style.display = 'none';
                 document.getElementById('result-ui').style.display = 'block';
 
@@ -760,15 +726,15 @@
             } catch (err) {
                 console.error(err);
                 document.getElementById('loading-screen').style.display = 'none';
-                alert("結算過程發生錯誤，請截圖通知老師。");
+                alert("結算過程發生錯誤。");
                 returnToAltar();
             }
         }
 
-        // 看完結算，退回祭壇
         function returnToAltar() {
             currentExam = null;
             document.getElementById('result-ui').style.display = 'none';
+            document.getElementById('test-ui').style.display = 'none';
             document.getElementById('rpg-main-ui').style.display = 'block';
         }
     </script>
