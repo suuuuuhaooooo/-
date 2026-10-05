@@ -527,9 +527,6 @@
                     
                     setTimeout(() => {
                         progressBox.style.display = 'none';
-                        btn.disabled = false;
-                        btn.innerText = "消耗額度，使用 AI 出題";
-                        startExam(aiExamData);
                     }, 1000);
 
                 } else throw new Error(result.message);
