@@ -11,6 +11,20 @@
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-database-compat.js"></script>
     
+    <!-- 載入 MathJax 用於數學式渲染 -->
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script>
+    window.MathJax = {
+            tex: {
+                inlineMath: [['$', '$'], ['\\(', '\\)']],
+                processEscapes: true 
+            },
+            options: {
+                skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre']
+            }
+        };
+    </script>
+
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;700&display=swap');
         
@@ -21,6 +35,7 @@
             background-color: var(--bg); 
             margin: 0; padding: 20px; color: #333; 
             user-select: none; -webkit-user-select: none;
+            overscroll-behavior-y: none;
             background-image: linear-gradient(120deg, #8e9775, #b2bd9f, #d5dcd0, #9ba483, #c6d0bb) !important;
             background-size: 900% 900% !important;
             animation: fluidGradient 180s ease-in-out infinite !important; 
@@ -32,6 +47,22 @@
             50%  { background-position: 100% 20%; }
             75%  { background-position: 20% 0%; }
             100% { background-position: 0% 20%; }
+        }
+
+        /* 數學式防破版設定 */
+        mjx-container {
+            max-width: 100% !important;
+            overflow-x: auto !important;
+            overflow-y: hidden !important;
+            padding: 4px 0;
+            box-sizing: border-box;
+        }
+        mjx-container::-webkit-scrollbar { height: 4px; }
+        mjx-container::-webkit-scrollbar-thumb { background-color: #ccc; border-radius: 4px; }
+        .question-text, .option-btn, .review-exp, .clean-card {
+            word-break: break-word;
+            overflow-wrap: break-word;
+            max-width: 100%;
         }
 
         #loading-screen { 
@@ -46,7 +77,7 @@
         @keyframes bounce { from { transform: translateY(0); opacity: 0.6; } to { transform: translateY(-10px); opacity: 1; } }
         .loading-text { font-size: 14px; color: var(--dark); font-weight: 700; letter-spacing: 2px; }
 
-        /* 繼承 test.html 的 UI 容器與毛玻璃 */
+        /* UI 容器與毛玻璃 */
         .container-ui { 
             max-width: 800px; margin: 0 auto; 
             padding: 40px; border-radius: 8px; box-shadow: 0 8px 32px rgba(91, 99, 72, 0.1);
@@ -55,6 +86,7 @@
             backdrop-filter: blur(24px) !important;            
             -webkit-backdrop-filter: blur(24px) !important;   
             border: 1px solid rgba(255, 255, 255, 0.4); 
+            display: none; /* 預設隱藏，由 JS 控制顯示 */
         }
 
         h2 { color: var(--dark); border-left: 5px solid #8e44ad; padding-left: 15px; margin-top: 0; }
@@ -63,7 +95,7 @@
         .clean-card { background: rgba(255,255,255,0.6); border: 1px solid #f0f0f0; border-radius: 12px; padding: 25px; margin-bottom: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.02); }
         .modern-select { padding: 12px; border-radius: 8px; border: 1px solid #ddd; outline: none; background: rgba(255,255,255,0.8); font-size: 14px; color: #555; width: 100%; cursor: pointer; font-weight: bold; }
 
-        /* === RPG 專屬視覺 === */
+        /* === RPG 首頁專屬視覺 === */
         .rpg-hero-card { background: linear-gradient(135deg, #2c3e50, #34495e); color: white; padding: 25px; border-radius: 12px; box-shadow: 0 10px 20px rgba(0,0,0,0.15); margin-bottom: 30px; position: relative; overflow: hidden; }
         .rpg-hero-card::after { content: '🛡️'; position: absolute; right: -20px; top: -20px; font-size: 150px; opacity: 0.1; }
         .rpg-exp-bar-bg { width: 100%; height: 10px; background: rgba(255,255,255,0.2); border-radius: 5px; overflow: hidden; margin-top: 8px; }
@@ -80,11 +112,62 @@
         .scope-tag.active { border-color: #8e44ad; background: #f4ecf8; color: #732d91; box-shadow: 0 2px 8px rgba(142,68,173,0.2); }
         .scope-tag.active-weakness { border-color: #e74c3c; background: #fdf2f0; color: #c0392b; box-shadow: 0 2px 8px rgba(231,76,60,0.2); }
 
+        /* === 考試介面 UI (繼承自 test.html) === */
+        .quiz-header-container { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px dashed #eee; padding-bottom: 15px; margin-bottom: 20px; }
+        .quiz-header { font-size: 15px; color: #888; font-weight: 700; letter-spacing: 1px; margin: 0; }
+        .timer-display { font-size: 18px; color: #c0392b; font-weight: 700; background: #fdf2f0; padding: 5px 12px; border-radius: 4px; border: 1px solid #fadbd8; }
+        
+        .question-text { font-size: 18px; color: #333; line-height: 1.6; margin-bottom: 25px; font-weight: 700; }
+        .option-btn { display: block; width: 100%; text-align: left; padding: 15px 20px; margin-bottom: 12px; background: rgba(255,255,255,0.7); border: 2px solid #eee; border-radius: 6px; font-size: 16px; color: #555; cursor: pointer; transition: 0.2s; box-sizing: border-box; font-family: inherit; }
+        .option-btn:hover { background: #f0f3ef; border-color: #d1d8c8; }
+        .option-btn.selected { background: #f4ecf8; border-color: #8e44ad; color: #732d91; font-weight: 700; }
+        
+        .main-btn { background: #8e44ad; color: white; border: none; padding: 15px; width: 100%; cursor: pointer; letter-spacing: 2px; font-weight: 700; transition: 0.3s; margin-top: 20px; border-radius: 4px; font-size: 16px; }
+        .main-btn:hover { background: #732d91; }
+        .main-btn:disabled { background: #ccc; cursor: not-allowed; }
+
+        .test-controls { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        .flag-btn { background: #fff; border: 2px solid #ddd; color: #777; padding: 6px 12px; border-radius: 20px; font-size: 13px; font-weight: bold; cursor: pointer; transition: 0.2s; display: flex; align-items: center; gap: 5px; }
+        .flag-btn.active { border-color: #e74c3c; color: #c0392b; background: #fdf2f0; }
+        
+        .note-area { width: 100%; box-sizing: border-box; padding: 12px; border-radius: 8px; border: 2px solid #eee; margin-top: 15px; font-family: inherit; font-size: 14px; resize: vertical; min-height: 80px; background: rgba(255,255,255,0.7); transition: 0.2s; outline: none; }
+        .note-area:focus { border-color: #8e44ad; background: #fff; }
+
+        .nav-buttons { display: flex; gap: 10px; margin-top: 20px; }
+        .nav-btn-secondary { background: #e0e0e0; color: #555; }
+        .nav-btn-secondary:hover:not(:disabled) { background: #d0d0d0; }
+
+        .answer-sheet-wrapper { margin-top: 30px; background: rgba(255,255,255,0.7); padding: 20px; border-radius: 8px; border: 1px solid #eee; }
+        .answer-sheet-title { font-size: 14px; font-weight: bold; color: var(--dark); border-bottom: 2px solid #f0f0f0; padding-bottom: 10px; margin-bottom: 15px; }
+        .answer-sheet { display: flex; flex-wrap: wrap; gap: 10px; }
+        .ans-circle { width: 38px; height: 38px; border-radius: 50%; border: 2px solid #ddd; display: flex; align-items: center; justify-content: center; font-weight: bold; cursor: pointer; color: #777; background: #fff; transition: 0.2s; font-size: 14px; }
+        .ans-circle:hover { border-color: #8e44ad; }
+        .ans-circle.answered { background: #8e44ad; color: white; border-color: #8e44ad; }
+        .ans-circle.flagged { border-color: #e74c3c; color: #c0392b; background: #fdf2f0; }
+        .ans-circle.answered.flagged { background: #e74c3c; color: white; border-color: #c0392b; }
+        .ans-circle.active { box-shadow: 0 0 0 4px rgba(142,68,173,0.2); border-color: #732d91; transform: scale(1.1); }
+
+        #score-display { text-align: center; font-size: 36px; color: var(--dark); font-weight: 700; margin: 20px 0; padding: 20px; background: rgba(255,255,255,0.7); border-radius: 8px; }
+        .review-card { background: rgba(255,255,255,0.8); border: 1px solid #eee; padding: 20px; margin-bottom: 20px; border-radius: 6px; }
+        .review-q { font-weight: 700; margin-bottom: 10px; font-size: 16px; }
+        .review-ans { font-size: 14px; margin-bottom: 5px; }
+        .review-correct { color: #27ae60; font-weight: 700; }
+        .review-wrong { color: #c0392b; font-weight: 700; }
+        .review-exp { margin-top: 12px; padding: 12px; background: #f9f9f9; border-left: 4px solid #8e44ad; font-size: 13px; color: #666; line-height: 1.5; }
+
         @media (max-width: 768px) {
             body { padding: 10px; }
             .container-ui { padding: 20px 15px; }
             .rpg-hero-card { padding: 20px; }
             #rpg-title-text { font-size: 22px !important; }
+            .quiz-header-container { flex-direction: row !important; justify-content: space-between; align-items: center; padding-bottom: 12px; }
+            .quiz-header { text-align: left; font-size: 13px; }
+            .timer-display { text-align: right; font-size: 14px; padding: 5px 10px; }
+            .question-text { font-size: 16px; margin-bottom: 20px; }
+            .option-btn { padding: 12px 15px; font-size: 15px; margin-bottom: 10px; }
+            .main-btn { padding: 12px; font-size: 15px; }
+            #score-display { font-size: 28px; padding: 15px; }
+            .review-card { padding: 15px; }
         }
     </style>
 </head>
@@ -95,7 +178,8 @@
         <div class="loading-text" id="loading-msg">身分驗證與魔法陣準備中...</div>
     </div>
 
-    <div class="container-ui" id="rpg-main-ui" style="display: none;">
+    <!-- === 畫面 1：RPG 首頁與出題面板 === -->
+    <div class="container-ui" id="rpg-main-ui">
         <a href="classroom.html" class="back-btn">← 返回雲端教室</a>
         <h2 style="border-left-color: #8e44ad;">⚔️ AI 勇者村 (每日試煉)</h2>
         <p style="font-size: 13px; color: #555; margin-bottom: 25px; padding-left: 20px;">請點擊下方標籤勾選您想挑戰的範圍 (可複選)，AI 導師將為您量身打造專屬試卷。</p>
@@ -147,7 +231,50 @@
         </div>
     </div>
 
+    <!-- === 畫面 2：考試作答介面 === -->
+    <div id="test-ui" class="container-ui">
+        <span class="back-btn" onclick="abandonExam()">← 放棄本次作答，提早交卷</span>
+        <h2 id="active-exam-title">測驗載入中...</h2>
+        <div id="quiz-container">
+            <div class="quiz-header-container">
+                <div class="quiz-header" id="quiz-progress">題目 1 / X</div>
+                <div class="timer-display" id="timer-display">時間還剩 30:00</div>
+            </div>
+            
+            <div class="test-controls">
+                <button id="flag-btn" class="flag-btn" onclick="toggleFlag()">🚩 標記本題</button>
+            </div>
+
+            <div class="question-text" id="question-text">載入題目中...</div>
+            <div id="options-container"></div>
+            
+            <textarea id="note-area" class="note-area" placeholder="在此輸入您的個人筆記或計算思路 (僅供自己參考)..." oninput="saveNote(this.value)"></textarea>
+
+            <div class="nav-buttons">
+                <button id="prev-btn" class="main-btn nav-btn-secondary" onclick="prevQuestion()" disabled>上一題</button>
+                <button id="next-btn" class="main-btn" onclick="nextQuestion()">下一題</button>
+            </div>
+
+            <div class="answer-sheet-wrapper">
+                <div class="answer-sheet-title">作答狀況與答案卡 (點擊圓圈可快速跳題)</div>
+                <div id="answer-sheet" class="answer-sheet"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- === 畫面 3：測驗結算與檢討介面 === -->
+    <div id="result-ui" class="container-ui">
+        <h3 id="result-title" style="text-align: center; color: var(--dark); margin-bottom: 0;">測驗結算</h3>
+        <div id="score-display"></div>
+        <h4 style="border-bottom: 2px solid #eee; padding-bottom: 10px; margin-top: 30px;">錯題與未作答檢討</h4>
+        <div id="review-container"></div>
+        <button class="main-btn" onclick="returnToAltar()">完成檢討，返回勇者村</button>
+    </div>
+
     <script>
+        // ==========================================
+        // Firebase 設定與全域變數
+        // ==========================================
         const firebaseConfig = {
             apiKey: "AIzaSyALkTnkYY3JZLCTyajahpi4IZKmFX9USdw",
             authDomain: "su-hao-classroom.firebaseapp.com",
@@ -166,7 +293,23 @@
         let selectedScopes = new Set();
         let aiGenerateTimer;
 
+        // 考試相關變數
+        let currentExam = null;
+        let currentQuestionIndex = 0;
+        let userAnswers = [];
+        let flaggedQuestions = [];
+        let questionNotes = [];
+        let examStartTime = 0; 
+        let allocatedTime = 0; 
+        let frozenTimeSpent = null; 
+        let timerInterval = null; 
+        let timeRemaining = 0;
+        let cheatWarnings = 0;    
+        let isExamActive = false; 
+
+        // ==========================================
         // 頁面載入與身分驗證
+        // ==========================================
         auth.onAuthStateChanged(async (user) => {
             if (!user) {
                 alert("請先登入系統！");
@@ -175,7 +318,7 @@
             }
 
             try {
-                // 嘗試從 sessionStorage 抓取快取資料 (由 classroom.html 存入的)
+                // 從 sessionStorage 抓取快取資料 (由 classroom.html 存入的)
                 const cachedExams = sessionStorage.getItem('suhao_exams');
                 const cachedStudents = sessionStorage.getItem('suhao_students');
                 
@@ -204,7 +347,50 @@
             }
         });
 
-        // 渲染可複選的標籤
+        // ==========================================
+        // 防作弊機制 (切換視窗偵測)
+        // ==========================================
+        document.addEventListener("visibilitychange", () => {
+            if (isExamActive && document.hidden) {
+                cheatWarnings++;
+                if (cheatWarnings >= 3) {
+                    alert("【系統通知】\n\n系統偵測到您已切換視窗或離開測驗畫面達 3 次！\n已視同違規作弊，系統將立刻強制交卷。");
+                    finishAndShowResults();
+                } else {
+                    alert(`【警告】\n\n考試期間嚴禁切換視窗、開啟其他網頁或 APP！\n\n您目前已違規 ${cheatWarnings} 次。\n若達 3 次，系統將直接強制收卷。`);
+                }
+            }
+        });
+        
+        window.addEventListener('popstate', function(event) {
+            if (isExamActive) {
+                window.history.pushState('exam_active', null, '');
+                cheatWarnings++;
+                if (cheatWarnings >= 3) {
+                    alert("【系統通知】\n\n系統偵測到您已切換視窗或離開測驗畫面達 3 次！\n已視同違規作弊，系統將立刻強制交卷。");
+                    finishAndShowResults();
+                } else {
+                    alert(`【警告】\n\n考試期間嚴禁點擊「上一頁」或使用「返回手勢」！\n\n您目前已違規 ${cheatWarnings} 次。\n若達 3 次，系統將直接強制收卷。`);
+                }
+            }
+        });
+
+        window.addEventListener('beforeunload', function (e) {
+            if (isExamActive) { e.preventDefault(); e.returnValue = ''; return ''; }
+        });
+
+        // 禁用開發者工具與右鍵
+        document.addEventListener('keydown', function(event) {
+            if (event.keyCode === 123 || (event.ctrlKey && event.shiftKey && (event.keyCode === 73 || event.keyCode === 74)) || (event.ctrlKey && event.keyCode === 85)) { 
+                event.preventDefault(); alert("【警告】\n\n嚴禁開啟開發者工具！系統已記錄異常行為。"); 
+            }
+        });
+        document.addEventListener('contextmenu', function(event) { event.preventDefault(); alert("版權所有，翻印必究！"); });
+
+
+        // ==========================================
+        // 出題面板邏輯
+        // ==========================================
         function renderScopeTags() {
             const container = document.getElementById('scope-container');
             container.innerHTML = `<div class="scope-tag" onclick="toggleScope('weakness', this)">🎯 歷史錯題盲點特訓</div>`;
@@ -217,7 +403,6 @@
             });
         }
 
-        // 標籤點擊切換邏輯
         function toggleScope(id, el) {
             const activeClass = id === 'weakness' ? 'active-weakness' : 'active';
             if (selectedScopes.has(id)) {
@@ -229,7 +414,6 @@
             }
         }
 
-        // 啟動 AI 召喚
         async function startSummon() {
             if (selectedScopes.size === 0) return alert("請至少選擇一個試煉範圍！");
             
@@ -302,7 +486,7 @@
                 
                 if (result.success) {
                     bar.style.width = '100%';
-                    text.innerText = "試煉卷軸完成！傳送至試務中心...";
+                    text.innerText = "試煉卷軸完成！進入考場...";
                     
                     const aiExamData = {
                         id: "AI_RPG_" + Date.now(), 
@@ -311,12 +495,15 @@
                         questions: result.questions
                     };
                     
-                    // 🌟 關鍵：將生成好的考卷打包存進 sessionStorage，並跳轉至 test.html
-                    sessionStorage.setItem('pending_ai_exam', JSON.stringify(aiExamData));
-                    
                     setTimeout(() => {
-                        window.location.href = "test.html?mode=ai_quest";
-                    }, 1500);
+                        // 復原按鈕狀態
+                        progressBox.style.display = 'none';
+                        btn.disabled = false;
+                        btn.innerText = "✨ 消耗額度，啟動 AI 詠唱";
+                        
+                        // 啟動考試
+                        startExam(aiExamData);
+                    }, 1200);
 
                 } else throw new Error(result.message);
 
@@ -327,6 +514,262 @@
                 btn.innerText = "✨ 消耗額度，啟動 AI 詠唱";
                 alert("召喚失敗：" + e.message);
             }
+        }
+
+        // ==========================================
+        // 考試介面與邏輯 (原汁原味移植)
+        // ==========================================
+        function shuffleQuestions(questions) {
+            let groups = [];
+            for (let i = 0; i < questions.length; i++) {
+                if (i > 0 && (questions[i].question.includes("承上題") || questions[i].question.includes("同上題"))) {
+                    groups[groups.length - 1].push(questions[i]);
+                } else {
+                    groups.push([questions[i]]);
+                }
+            }
+            for (let i = groups.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [groups[i], groups[j]] = [groups[j], groups[i]];
+            }
+            let finalQuestions = [];
+            groups.forEach(group => { finalQuestions.push(...group); });
+            return finalQuestions;
+        }
+
+        function startExam(aiExamData) {
+            currentExam = JSON.parse(JSON.stringify(aiExamData)); 
+            currentExam.questions.forEach((q, index) => {
+                q.originalIndex = index;
+            });
+            currentExam.questions = shuffleQuestions(currentExam.questions);
+            currentQuestionIndex = 0;
+            
+            userAnswers = new Array(currentExam.questions.length).fill(null);
+            flaggedQuestions = new Array(currentExam.questions.length).fill(false);
+            questionNotes = new Array(currentExam.questions.length).fill("");
+
+            // 切換畫面
+            document.getElementById('rpg-main-ui').style.display = 'none';
+            document.getElementById('test-ui').style.display = 'block';
+            document.getElementById('active-exam-title').innerText = currentExam.title;
+            
+            allocatedTime = currentExam.questions.length * 2 * 60; // 預設一題兩分鐘
+            timeRemaining = allocatedTime; 
+            frozenTimeSpent = null; 
+            
+            updateTimerDisplay();
+            clearInterval(timerInterval);
+            cheatWarnings = 0;
+            isExamActive = true;
+            examStartTime = Date.now(); 
+            window.history.pushState('exam_active', null, '');
+            
+            timerInterval = setInterval(() => {
+                let elapsedSec = Math.floor((Date.now() - examStartTime) / 1000);
+                timeRemaining = allocatedTime - elapsedSec;
+                
+                updateTimerDisplay();
+                if (timeRemaining <= 0) { 
+                    clearInterval(timerInterval); 
+                    frozenTimeSpent = allocatedTime; 
+                    alert("測驗時間到！系統即將自動為您交卷結算。"); 
+                    finishAndShowResults(); 
+                }
+            }, 1000);
+            renderQuestion();
+        }
+
+        function updateTimerDisplay() {
+            const m = Math.floor(timeRemaining / 60); const s = timeRemaining % 60;
+            document.getElementById('timer-display').innerText = `時間還剩 ${m < 10 ? '0' : ''}${m}:${s < 10 ? '0' : ''}${s}`;
+        }
+
+        function renderQuestion() {
+            const qData = currentExam.questions[currentQuestionIndex];
+            document.getElementById('quiz-progress').innerText = `題目 ${currentQuestionIndex + 1} / ${currentExam.questions.length}`;
+            document.getElementById('question-text').innerHTML = qData.question;
+            
+            document.getElementById('note-area').value = questionNotes[currentQuestionIndex];
+            
+            const flagBtn = document.getElementById('flag-btn');
+            if (flaggedQuestions[currentQuestionIndex]) {
+                flagBtn.classList.add('active');
+                flagBtn.innerText = "🚩 取消標記";
+            } else {
+                flagBtn.classList.remove('active');
+                flagBtn.innerText = "🚩 標記本題";
+            }
+
+            const optionsContainer = document.getElementById('options-container');
+            optionsContainer.innerHTML = ""; 
+            qData.options.forEach((opt, index) => {
+                const btn = document.createElement('button');
+                btn.className = 'option-btn';
+                btn.innerHTML = `${String.fromCharCode(65 + index)}. ${opt}`;
+                btn.onclick = () => selectOption(index);
+                if (userAnswers[currentQuestionIndex] === index) btn.classList.add('selected');
+                optionsContainer.appendChild(btn);
+            });
+            
+            document.getElementById('prev-btn').disabled = (currentQuestionIndex === 0);
+            const nextBtn = document.getElementById('next-btn');
+            nextBtn.disabled = false;
+            nextBtn.innerText = currentQuestionIndex === currentExam.questions.length - 1 ? "完成並交卷" : "下一題";
+            
+            renderAnswerSheet(); 
+            if (window.MathJax) { setTimeout(() => { MathJax.typesetPromise(); }, 100); }
+        }
+
+        function selectOption(index) {
+            userAnswers[currentQuestionIndex] = index; 
+            const buttons = document.querySelectorAll('.option-btn');
+            buttons.forEach(btn => btn.classList.remove('selected'));
+            buttons[index].classList.add('selected'); 
+            renderAnswerSheet(); 
+        }
+
+        function prevQuestion() {
+            if (currentQuestionIndex > 0) { currentQuestionIndex--; renderQuestion(); }
+        }
+
+        function nextQuestion() {
+            if (currentQuestionIndex < currentExam.questions.length - 1) {
+                currentQuestionIndex++; 
+                renderQuestion();
+            } else { 
+                let unansweredList = [];
+                for (let i = 0; i < userAnswers.length; i++) {
+                    if (userAnswers[i] === null) unansweredList.push(i + 1);
+                }
+                if (unansweredList.length > 0) {
+                    alert("您還有以下題目尚未完成：\n第 " + unansweredList.join(", ") + " 題\n\n請點擊畫面下方的「答案卡」圓圈，快速跳轉至該題完成作答！");
+                    return; 
+                }
+                if (confirm("確定要正式交卷並查看成績嗎？")) { finishAndShowResults(); }
+            }
+        }
+
+        function jumpToQuestion(idx) { currentQuestionIndex = idx; renderQuestion(); }
+
+        function toggleFlag() {
+            flaggedQuestions[currentQuestionIndex] = !flaggedQuestions[currentQuestionIndex];
+            renderQuestion();
+        }
+
+        function saveNote(val) { questionNotes[currentQuestionIndex] = val; }
+
+        function renderAnswerSheet() {
+            const sheet = document.getElementById('answer-sheet');
+            sheet.innerHTML = "";
+            for (let i = 0; i < currentExam.questions.length; i++) {
+                const circle = document.createElement('div');
+                circle.className = 'ans-circle';
+                if (i === currentQuestionIndex) circle.classList.add('active');
+                if (userAnswers[i] !== null) circle.classList.add('answered');
+                if (flaggedQuestions[i]) circle.classList.add('flagged');
+                circle.innerText = i + 1;
+                circle.onclick = () => jumpToQuestion(i);
+                sheet.appendChild(circle);
+            }
+        }
+
+        function abandonExam() {
+            if (confirm("【警告】\n\n現在離開測驗，未作答的題目將以 0 分計算，且無法重新測驗！\n\n確定要強制交卷嗎？")) { finishAndShowResults(); }
+        }
+
+        // ==========================================
+        // 交卷與結算邏輯
+        // ==========================================
+        async function finishAndShowResults() {
+            isExamActive = false;
+            if (timerInterval) clearInterval(timerInterval);
+            
+            document.getElementById('test-ui').style.display = 'none';
+            document.getElementById('loading-screen').style.display = 'flex';
+            document.getElementById('loading-msg').innerText = "AI 導師正在批改您的試卷...";
+
+            try {
+                let correctCount = 0;
+                let orderedAnswers = new Array(currentExam.questions.length).fill(null);
+                let shuffledDetails = new Array(currentExam.questions.length);
+
+                for (let i = 0; i < currentExam.questions.length; i++) {
+                    let origIdx = currentExam.questions[i].originalIndex;
+                    let uAns = userAnswers[i];
+                    let qData = currentExam.questions[i];
+                    
+                    orderedAnswers[origIdx] = uAns;
+                    
+                    let isCorrect = (uAns === qData.correctAnswer);
+                    if (isCorrect) correctCount++;
+                    
+                    shuffledDetails[i] = {
+                        originalQuestion: qData.question,
+                        userPick: (uAns !== null && uAns !== undefined) ? qData.options[uAns] : "未作答",
+                        isCorrect: isCorrect,
+                        correctAnswer: qData.options[qData.correctAnswer],
+                        explanation: qData.explanation || "無解析",
+                        studentNote: questionNotes[i] || "",
+                        isFlagged: flaggedQuestions[i]
+                    };
+                }
+
+                const finalScore = Math.round((correctCount / currentExam.questions.length) * 100);
+
+                // 將結算資料記錄下來，以供後續檢討或回傳 GAS (選擇性)
+                // 這裡我們只將結果暫存在前端顯示，確保不干擾原本的試務中心
+                
+                document.getElementById('loading-screen').style.display = 'none';
+                document.getElementById('result-ui').style.display = 'block';
+
+                const scoreEl = document.getElementById('score-display');
+                scoreEl.innerText = `${finalScore} 分`;
+                if (finalScore === 100) { 
+                    scoreEl.style.color = "#27ae60"; scoreEl.innerText += " (滿分！太厲害了！)"; 
+                } else if (finalScore >= 60) { 
+                    scoreEl.style.color = "#d35400"; 
+                } else { 
+                    scoreEl.style.color = "#c0392b"; scoreEl.innerText += " (要再加油哦！)";
+                }
+
+                const reviewContainer = document.getElementById('review-container');
+                reviewContainer.innerHTML = "";
+                
+                shuffledDetails.forEach((detail, index) => {
+                    let userAnsText = detail.userPick === "未作答" ? `<span style="color:#7f8c8d; font-weight:bold;">未作答</span>` : detail.userPick;
+                    const statusHtml = detail.isCorrect 
+                        ? `<span class="review-correct">√ 答對了！</span>` 
+                        : `<span class="review-wrong">x 答錯了 (你的答案：${userAnsText})</span>`;
+                        
+                    let flagHtml = detail.isFlagged ? `<span style="background:#fdf2f0; color:#c0392b; padding:2px 8px; border-radius:12px; font-size:12px; font-weight:bold; margin-left:10px;">🚩 已標記</span>` : '';
+                    let noteHtml = detail.studentNote ? `<div style="background:#fff3e0; border-left:4px solid #e67e22; padding:10px; margin-top:10px; font-size:13px; color:#d35400;"><strong>✏️ 你的筆記：</strong><br>${detail.studentNote}</div>` : '';
+
+                    reviewContainer.innerHTML += `
+                        <div class="review-card">
+                            <div class="review-q">Q${index + 1}. ${detail.originalQuestion} ${flagHtml}</div>
+                            <div class="review-ans">正確答案：${detail.correctAnswer}</div>
+                            <div class="review-ans">${statusHtml}</div>
+                            ${noteHtml}
+                            <div class="review-exp"><strong>解析：</strong><br>${detail.explanation}</div>
+                        </div>`;
+                });
+
+                if (window.MathJax) { setTimeout(() => { MathJax.typesetPromise([reviewContainer]); }, 100); }
+
+            } catch (err) {
+                console.error(err);
+                document.getElementById('loading-screen').style.display = 'none';
+                alert("結算過程發生錯誤，請截圖通知老師。");
+                returnToAltar();
+            }
+        }
+
+        // 看完結算，退回祭壇
+        function returnToAltar() {
+            currentExam = null;
+            document.getElementById('result-ui').style.display = 'none';
+            document.getElementById('rpg-main-ui').style.display = 'block';
         }
     </script>
 </body>
