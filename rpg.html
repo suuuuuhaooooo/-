@@ -362,8 +362,8 @@
                 document.getElementById('rpg-main-ui').style.display = 'block';
 
             } catch (e) {
-                console.error(e);
-                alert("資料讀取失敗，請重新整理頁面。");
+                console.error("初始化崩潰錯誤詳情：", e);
+                alert("資料讀取失敗，請重新整理頁面。錯誤：" + e.message);
                 window.location.replace("classroom.html");
             }
         });
