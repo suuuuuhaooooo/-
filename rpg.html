@@ -49,7 +49,6 @@
             100% { background-position: 0% 20%; }
         }
 
-        /* 數學式防破版設定 */
         mjx-container {
             max-width: 100% !important;
             overflow-x: auto !important;
@@ -77,7 +76,6 @@
         @keyframes bounce { from { transform: translateY(0); opacity: 0.6; } to { transform: translateY(-10px); opacity: 1; } }
         .loading-text { font-size: 14px; color: var(--dark); font-weight: 700; letter-spacing: 2px; }
 
-        /* UI 容器與毛玻璃 */
         .container-ui { 
             max-width: 800px; margin: 0 auto; 
             padding: 40px; border-radius: 8px; box-shadow: 0 8px 32px rgba(91, 99, 72, 0.1);
@@ -95,7 +93,6 @@
         .clean-card { background: rgba(255,255,255,0.6); border: 1px solid #f0f0f0; border-radius: 12px; padding: 25px; margin-bottom: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.02); }
         .modern-input { padding: 12px; border-radius: 8px; border: 1px solid #ddd; outline: none; background: rgba(255,255,255,0.8); font-size: 14px; color: #555; width: 100%; font-weight: bold; box-sizing: border-box; }
 
-        /* === RPG 首頁專屬視覺 === */
         .rpg-hero-card { background: linear-gradient(135deg, #2c3e50, #34495e); color: white; padding: 25px; border-radius: 12px; box-shadow: 0 10px 20px rgba(0,0,0,0.15); margin-bottom: 30px; position: relative; overflow: hidden; }
         .rpg-hero-card::after { content: '🛡️'; position: absolute; right: -20px; top: -20px; font-size: 150px; opacity: 0.1; }
         .rpg-exp-bar-bg { width: 100%; height: 10px; background: rgba(255,255,255,0.2); border-radius: 5px; overflow: hidden; margin-top: 8px; }
@@ -105,14 +102,12 @@
         .summon-btn:hover:not(:disabled) { background: #732d91; transform: translateY(-2px); box-shadow: 0 6px 20px rgba(142, 68, 173, 0.3); }
         .summon-btn:disabled { background: #aaa; cursor: not-allowed; transform: none; box-shadow: none; }
 
-        /* 標籤複選器 UI */
         .scope-tags-container { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 15px; }
         .scope-tag { padding: 10px 18px; border: 2px solid #ddd; border-radius: 25px; font-size: 14px; color: #666; cursor: pointer; transition: 0.2s; background: rgba(255,255,255,0.7); font-weight: bold; }
         .scope-tag:hover { border-color: #bbb; background: #fff; }
         .scope-tag.active { border-color: #8e44ad; background: #f4ecf8; color: #732d91; box-shadow: 0 2px 8px rgba(142,68,173,0.2); }
         .scope-tag.active-weakness { border-color: #e74c3c; background: #fdf2f0; color: #c0392b; box-shadow: 0 2px 8px rgba(231,76,60,0.2); }
 
-        /* === 考試介面 UI === */
         .quiz-header-container { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px dashed #eee; padding-bottom: 15px; margin-bottom: 20px; }
         .quiz-header { font-size: 15px; color: #888; font-weight: 700; letter-spacing: 1px; margin: 0; }
         .timer-display { font-size: 18px; color: #c0392b; font-weight: 700; background: #fdf2f0; padding: 5px 12px; border-radius: 4px; border: 1px solid #fadbd8; }
@@ -144,7 +139,7 @@
         .ans-circle:hover { border-color: #8e44ad; }
         .ans-circle.answered { background: #8e44ad; color: white; border-color: #8e44ad; }
         .ans-circle.flagged { border-color: #e74c3c; color: #c0392b; background: #fdf2f0; }
-        .ans-circle.answered.flagged { background: #e74c3c; color: white; border-color: #e74c3c; }
+        .ans-circle.answered.flagged { background: #e74c3c; color: white; border-color: #c0392b; }
         .ans-circle.active { box-shadow: 0 0 0 4px rgba(142,68,173,0.2); border-color: #732d91; transform: scale(1.1); }
 
         #score-display { text-align: center; font-size: 36px; color: var(--dark); font-weight: 700; margin: 20px 0; padding: 20px; background: rgba(255,255,255,0.7); border-radius: 8px; }
@@ -175,7 +170,7 @@
 
     <div id="loading-screen">
         <div class="loading-dots"><div></div><div></div><div></div></div>
-        <div class="loading-text" id="loading-msg">從 Firebase 載入歷史資料中...</div>
+        <div class="loading-text" id="loading-msg">正在從 Firebase 載入您的題庫與歷史紀錄...</div>
     </div>
 
     <!-- === 畫面 1：RPG 首頁與出題面板 === -->
@@ -205,7 +200,7 @@
         </div>
 
         <div class="clean-card">
-            <h3 style="margin-top: 0; font-size: 16px; color: var(--dark);">1. 選擇試煉範圍 (可多選)</h3>
+            <h3 style="margin-top: 0; font-size: 16px; color: var(--dark);">1. 選擇試煉範圍 (可複選)</h3>
             <div id="scope-container" class="scope-tags-container">
                 <!-- 標籤將由 JS 動態載入 -->
             </div>
@@ -325,9 +320,20 @@
                         const assignedIds = myData.examIds.split(',').map(id => id.trim());
                         studentExams = allExams.filter(exam => assignedIds.includes(exam.id));
                     }
+                } else {
+                    // 若沒有快取，直接向 GAS 請求試卷目錄
+                    const r = await fetch(SCRIPT_URL + "?token=SuHaoClassroom2026_SecureKey");
+                    const studentDataArray = await r.json();
+                    const idToken = await user.getIdToken();
+                    const r2 = await fetch(SCRIPT_URL, {
+                        method: "POST",
+                        headers: { "Content-Type": "text/plain;charset=utf-8" },
+                        body: JSON.stringify({ token: "SuHaoClassroom2026_SecureKey", action: "getExams", idToken: idToken })
+                    });
+                    studentExams = await r2.json();
                 }
 
-                // 2. 直接從 Firebase 抓取該學生的完整歷史考試紀錄 (與 test.html 同源)
+                // 2. 嚴格從 Firebase 抓取該學生的完整歷史考試紀錄 (exam_records)
                 const snap = await db.ref('exam_records/' + user.uid).once('value');
                 completedRecords = snap.val() || {};
 
@@ -368,9 +374,11 @@
             const container = document.getElementById('scope-container');
             container.innerHTML = `<div class="scope-tag" onclick="toggleScope('weakness', this)">🎯 歷史錯題盲點特訓</div>`;
             
+            // 同時渲染正規單元，以及學生在 Firebase 內做過、有紀錄的考卷
             studentExams.forEach(exam => {
                 if (!exam.id.startsWith("AI_RPG_")) {
-                    container.innerHTML += `<div class="scope-tag" onclick="toggleScope('${exam.id}', this)">📚 ${exam.title}</div>`;
+                    const isCompleted = completedRecords[exam.id] ? " (已完成)" : "";
+                    container.innerHTML += `<div class="scope-tag" onclick="toggleScope('${exam.id}', this)">📚 ${exam.title}${isCompleted}</div>`;
                 }
             });
         }
@@ -399,14 +407,14 @@
             let refQuestions = [];
             let scopeLabel = "";
 
-            // 1. 從 Firebase 紀錄 (completedRecords) 抓取「歷史錯題」
+            // 1. 從 Firebase 紀錄 (completedRecords) 精準撈取「歷史錯題」
             if (selectedScopes.has("weakness")) {
                 scopeLabel += "錯題特訓 ";
                 for (const examId in completedRecords) {
                     const record = completedRecords[examId];
                     if (record && record.details) {
                         record.details.forEach(d => {
-                            // 篩選出答錯的題目作為弱點範本
+                            // 撈出所有答錯的原始題目
                             if (!d.isCorrect && d.originalQuestion) {
                                 refQuestions.push(d.originalQuestion);
                             }
@@ -428,7 +436,7 @@
                 }
             });
 
-            // 如果選了錯題特訓但 Firebase 裡完全沒有錯題紀錄
+            // 檢查若選了錯題特訓但 Firebase 裡完全沒有錯題
             if (selectedScopes.has("weakness") && refQuestions.length === 0 && selectedScopes.size === 1) {
                 return alert("太棒了！您的 Firebase 錯題本目前完全沒有錯題紀錄，請改選其他「指定單元」進行試煉！");
             }
@@ -449,7 +457,7 @@
                 if (progress < 90) {
                     progress += Math.floor(Math.random() * 4) + 1;
                     bar.style.width = Math.min(progress, 90) + '%';
-                    text.innerText = progress < 40 ? "正在從 Firebase 提取錯題與單元結構..." : "Gemini 3.8 Flash 正在設計全新類題...";
+                    text.innerText = progress < 40 ? "正在從 Firebase 提取歷史錯題與單元結構..." : "Gemini 3.8 Flash 正在設計全新類題...";
                 }
             }, 500);
 
