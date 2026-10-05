@@ -508,16 +508,6 @@
             75%  { background-position: 20% 0%; }
             100% { background-position: 0% 20%; }
         }
-        /* === AI 勇者村 CSS === */
-        .rpg-hero-card { background: linear-gradient(135deg, #2c3e50, #34495e); color: white; padding: 25px; border-radius: 12px; box-shadow: 0 10px 20px rgba(0,0,0,0.15); margin-bottom: 30px; position: relative; overflow: hidden; }
-        .rpg-hero-card::after { content: '🛡️'; position: absolute; right: -20px; top: -20px; font-size: 150px; opacity: 0.1; }
-        .rpg-exp-bar-bg { width: 100%; height: 10px; background: rgba(255,255,255,0.2); border-radius: 5px; overflow: hidden; margin-top: 8px; }
-        .rpg-exp-bar-fill { width: 0%; height: 100%; background: #f1c40f; transition: width 1s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: 0 0 10px rgba(241,196,15,0.8); }
-        .summon-btn { background: #8e44ad; color: white; border: none; padding: 16px 30px; font-size: 16px; font-weight: bold; border-radius: 50px; cursor: pointer; transition: 0.3s; box-shadow: 0 4px 15px rgba(142, 68, 173, 0.3); width: 100%; max-width: 300px; display: block; margin: 0 auto; }
-        .summon-btn:hover:not(:disabled) { background: #732d91; transform: translateY(-2px); box-shadow: 0 6px 20px rgba(142, 68, 173, 0.4); }
-        .summon-btn:disabled { background: #95a5a6; box-shadow: none; cursor: not-allowed; transform: none; }
-        .ai-progress-bg { width: 100%; height: 8px; background: #eee; border-radius: 4px; overflow: hidden; margin-top: 10px; }
-        .ai-progress-fill { width: 0%; height: 100%; background: linear-gradient(90deg, #9b59b6, #8e44ad); transition: width 0.5s; }
     </style>
     
 </head>
@@ -610,7 +600,6 @@
                         <a id="nav-video" class="nav-link active" onclick="showView('video-view', this)">影音中心</a>
                         <a id="nav-pdf" class="nav-link" onclick="showView('pdf-view', this)">線上教材</a>
                         <a href="test.html" class="nav-link">試務中心</a>
-                        <a id="nav-rpg" class="nav-link" onclick="showView('rpg-view', this)">AI 勇者村</a>
                     </div>
 
                     <!-- 群組 2：點數獎勵 -->
@@ -951,64 +940,6 @@
                 <span style="font-size: 13px; color: #888;">綁定狀態確認中...</span>
             </div>
         </section>
-        <section id="rpg-view" class="view-section">
-                <h2 style="font-size: 20px; margin-bottom: 5px; border-left: 5px solid #8e44ad; padding-left: 15px;">AI 勇者村 (每日試煉)</h2>
-                <p style="font-size: 13px; color: #888; margin-bottom: 25px; padding-left: 20px;">每日限定一次，AI 將掃描您的歷史錯題或指定範圍，為您量身打造勇者試煉。</p>
-
-                <!-- RPG 儀表板 (Round 2 會讓這裡的數值動起來) -->
-                <div class="rpg-hero-card">
-                    <div style="display: flex; justify-content: space-between; align-items: flex-end;">
-                        <div>
-                            <div style="font-size: 14px; color: #bdc3c7; margin-bottom: 5px;">當前稱號</div>
-                            <div id="rpg-title-text" style="font-size: 28px; font-weight: bold; color: #f1c40f; letter-spacing: 2px; text-shadow: 0 2px 4px rgba(0,0,0,0.5);">新手見習生</div>
-                        </div>
-                        <div style="text-align: right;">
-                            <div style="font-size: 14px; color: #bdc3c7; margin-bottom: 5px;">連續試煉</div>
-                            <div style="font-size: 24px; font-weight: bold; color: #e74c3c;">第<span id="rpg-streak">0</span> 天</div>
-                        </div>
-                    </div>
-                    <div style="margin-top: 25px;">
-                        <div style="display: flex; justify-content: space-between; font-size: 12px; color: #ecf0f1;">
-                            <span>EXP: <span id="rpg-current-exp">0</span></span>
-                            <span>下一等級: <span id="rpg-next-exp">100</span></span>
-                        </div>
-                        <div class="rpg-exp-bar-bg">
-                            <div id="rpg-exp-bar" class="rpg-exp-bar-fill" style="width: 0%;"></div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- 召喚祭壇 -->
-                <div class="clean-card" style="text-align: center; padding: 30px 20px;">
-                    <h3 style="color: var(--dark); margin-top: 0; margin-bottom: 15px;">設定您的挑戰卷軸</h3>
-                    
-                    <div style="display: flex; flex-direction: column; gap: 15px; max-width: 400px; margin: 0 auto 25px auto;">
-                        <!-- 選擇題源 -->
-                        <select id="ai-quest-source" class="modern-select" style="width: 100%; font-size: 15px; padding: 12px; border: 2px solid #e0e0e0;">
-                            <option value="weakness">智慧弱點打擊 (從錯題本撈取核心觀念)</option>
-                            <!-- 下拉選單將在程式啟動時，動態塞入學生能看到的「試務中心」單元 -->
-                        </select>
-                        
-                        <!-- 選擇題數 -->
-                        <select id="ai-quest-count" class="modern-select" style="width: 100%; font-size: 15px; padding: 12px; border: 2px solid #e0e0e0;">
-                            <option value="5">出題數量：5 題</option>
-                            <option value="10">出題數量：10 題</option>
-                        </select>
-                    </div>
-                    
-                    <div id="ai-daily-status" style="font-size: 14px; font-weight: bold; color: #27ae60; margin-bottom: 15px;">【 今日額度：1 / 1 】<br><span style="font-size: 11px; color:#aaa; font-weight:normal;">(進度與額度於每日凌晨 00:00 重置)</span></div>
-                    
-                    <button id="btn-summon-ai" onclick="startAIQuest()" class="summon-btn">消耗額度，啟動 AI 召喚</button>
-
-                    <!-- 動態進度條 -->
-                    <div id="ai-loading-container" style="display: none; margin-top: 25px; max-width: 400px; margin-left: auto; margin-right: auto;">
-                        <div style="font-size: 13px; color: #8e44ad; font-weight: bold; text-align: left;" id="ai-loading-text">AI 準備中... 0%</div>
-                        <div class="ai-progress-bg">
-                            <div id="ai-dynamic-bar" class="ai-progress-fill"></div>
-                        </div>
-                    </div>
-                </div>
-            </section>
         </main>
     </div>
     <div id="reward-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.85); backdrop-filter: blur(5px); z-index: 10000; justify-content: center; align-items: center;">
@@ -3462,160 +3393,6 @@
                 }, 1200);
             } else {
                 loading.innerHTML = '<p style="color:#aaa;">目前尚未綁定的聯絡簿，請聯繫管理員。</p>';
-            }
-        }
-        // ==========================================
-        // ⚔️ AI 勇者村：動態選單與出題邏輯
-        // ==========================================
-        let aiGenerateTimer;
-
-        // 當點擊側邊欄進入「AI 勇者村」時，把試務中心的單元塞進下拉選單
-        function initAIQuestDropdown() {
-            const sourceSelect = document.getElementById('ai-quest-source');
-            // 保留第一個選項 (錯題本)
-            sourceSelect.innerHTML = '<option value="weakness">智慧弱點打擊 (從錯題本撈取核心觀念)</option>';
-            
-            // 把學生擁有的試務中心單元加進去
-            if (studentPersonalExams && studentPersonalExams.length > 0) {
-                const optGroup = document.createElement('optgroup');
-                optGroup.label = "指定單元強化試煉";
-                
-                studentPersonalExams.forEach(exam => {
-                    const opt = document.createElement('option');
-                    opt.value = "EXAMID|" + exam.id; // 用前綴區分這是指定考卷
-                    opt.textContent = "指定：" + exam.title;
-                    optGroup.appendChild(opt);
-                });
-                sourceSelect.appendChild(optGroup);
-            }
-        }
-
-        // 攔截原本的 showView 函式，多加一個判斷
-        const originalShowView = showView;
-        showView = function(viewId, navEl) {
-            originalShowView(viewId, navEl);
-            if (viewId === 'rpg-view') {
-                initAIQuestDropdown();
-            }
-        };
-
-        // 啟動召喚核心
-        async function startAIQuest() {
-            const user = auth.currentUser;
-            if (!user) return alert("請先登入系統！");
-
-            const btn = document.getElementById('btn-summon-ai');
-            const loadContainer = document.getElementById('ai-loading-container');
-            const bar = document.getElementById('ai-dynamic-bar');
-            const text = document.getElementById('ai-loading-text');
-
-            // 1. 準備提詞資料
-            const selectedSource = document.getElementById('ai-quest-source').value;
-            const qCount = parseInt(document.getElementById('ai-quest-count').value) || 5;
-            
-            let refQuestions = []; // 傳給 AI 參考的題目
-            let scopeLabel = "綜合學科";
-
-            if (selectedSource === "weakness") {
-                scopeLabel = "歷史錯題盲點突破";
-                // 從 completedRecords 挖出歷史錯題
-                for (const examId in completedRecords) {
-                    const record = completedRecords[examId];
-                    if (record && record.details) {
-                        record.details.forEach(d => {
-                            if (!d.isCorrect) refQuestions.push(d.originalQuestion);
-                        });
-                    }
-                }
-            } else if (selectedSource.startsWith("EXAMID|")) {
-                const targetExamId = selectedSource.split("|")[1];
-                const targetExam = studentPersonalExams.find(e => e.id === targetExamId);
-                if (targetExam) {
-                    scopeLabel = targetExam.title;
-                    refQuestions = targetExam.questions.map(q => q.question);
-                }
-            }
-
-            // 如果參考題目太多，隨機抽 5 題給 AI 當範本就好，避免 Token 爆炸
-            if (refQuestions.length > 5) {
-                refQuestions = refQuestions.sort(() => Math.random() - 0.5).slice(0, 5);
-            }
-
-            if (selectedSource === "weakness" && refQuestions.length === 0) {
-                return alert("太棒了！您的歷史錯題本目前空空如也，請改選「指定單元」進行試煉喔！");
-            }
-
-            // 2. 啟動防爆衝介面
-            btn.disabled = true;
-            btn.innerText = "魔法陣詠唱中...";
-            loadContainer.style.display = 'block';
-            
-            let progress = 0;
-            aiGenerateTimer = setInterval(() => {
-                if (progress < 90) {
-                    progress += Math.floor(Math.random() * 4) + 1;
-                    if(progress > 90) progress = 90;
-                    bar.style.width = progress + '%';
-                    
-                    if(progress < 30) text.innerText = `正在掃描您的能力維度... ${progress}%`;
-                    else if(progress < 60) text.innerText = `AI 導師正在為您構思全新題目... ${progress}%`;
-                    else text.innerText = `正在進行邏輯嚴謹度驗證... ${progress}%`;
-                }
-            }, 600); // 假裝等個 15~20 秒
-
-            try {
-                const idToken = await user.getIdToken();
-
-                // 3. 呼叫 GAS 後端要求出題
-                const response = await fetch(SCRIPT_URL, {
-                    method: 'POST',
-                    redirect: 'follow',
-                    headers: { "Content-Type": "text/plain;charset=utf-8" },
-                    body: JSON.stringify({
-                        action: "generateAIQuest",
-                        idToken: idToken,
-                        scopeLabel: scopeLabel,
-                        questionCount: qCount,
-                        refQuestions: refQuestions
-                    })
-                });
-
-                const result = await response.json();
-                clearInterval(aiGenerateTimer);
-                
-                if (result.success) {
-                    bar.style.width = '100%';
-                    text.innerText = `試煉卷軸製作完畢！即將進入戰鬥... 100%`;
-
-                    const aiExamData = {
-                        id: "AI_RPG_" + Date.now(), 
-                        title: `⚔ AI 試煉：${scopeLabel}`,
-                        desc: `這是 AI 導師為您特別安排的 ${qCount} 題考驗，完成可獲得大量經驗值！`,
-                        questions: result.questions
-                    };
-
-                    // 塞入題庫記憶體 (不存進 Firebase，只在這次登入有效)
-                    studentPersonalExams.push(aiExamData);
-                    
-                    // 延遲 1 秒後，直接啟動您原本寫好的優質考試介面
-                    setTimeout(() => {
-                        loadContainer.style.display = 'none';
-                        btn.disabled = false;
-                        btn.innerText = "消耗額度，啟動 AI 召喚";
-
-                        startExam(aiExamData.id); 
-                    }, 1200);
-
-                } else {
-                    throw new Error(result.message);
-                }
-
-            } catch (e) {
-                clearInterval(aiGenerateTimer);
-                loadContainer.style.display = 'none';
-                btn.disabled = false;
-                btn.innerText = "消耗額度，啟動 AI 召喚";
-                alert("召喚失敗：" + e.message);
             }
         }
 //
