@@ -351,6 +351,12 @@
                     btn.disabled = true;
                     btn.innerText = "今日額度已用完 (明日 00:00 重置)";
                     btn.style.background = "#7f8c8d";
+                    const backlogSnap = await db.ref('rpg_backlog/' + user.uid).once('value');
+                    const backlogExam = backlogSnap.val();
+                    if (backlogExam) {
+                        window.pendingAiExam = backlogExam;
+                        renderQuestBacklog(backlogExam);
+                    }
                 }
                 document.getElementById('loading-screen').style.display = 'none';
                 document.getElementById('rpg-main-ui').style.display = 'block';
@@ -522,6 +528,10 @@
                         desc: `精選 ${qCount} 題 (每題 ${100/qCount} 分)`,
                         questions: result.questions
                     };
+                    const user = auth.currentUser;
+                    if (user) {
+                        await db.ref('rpg_backlog/' + user.uid).set(aiExamData);
+                    }
                     window.pendingAiExam = aiExamData;
                     renderQuestBacklog(aiExamData);
                     
