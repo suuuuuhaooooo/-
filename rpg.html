@@ -737,7 +737,7 @@
                             <div style="font-weight: bold; color: var(--dark); font-size: 15px; margin-bottom: 4px;">${examData.title}</div>
                             <div style="font-size: 12px; color: #27ae60;">得分：${completedRecords[examData.id].score} 分 ｜ 狀態：已完成試煉</div>
                         </div>
-                        <button class="main-btn" style="margin: 0; width: auto; padding: 10px 20px; font-size: 14px; background: #27ae60;" onclick="reviewCompletedExam('${examData.id}')">查看檢討</button>
+                        <button class="main-btn" style="margin: 0; padding: 10px 15px; font-size: 14px; background: #3498db; white-space: nowrap; flex-shrink: 0; min-width: 100px; text-align: center;" onclick="reviewCompletedExam('${examId}')">查看檢討</button>
                     </div>
                 `;
             } else {
@@ -747,7 +747,7 @@
                             <div style="font-weight: bold; color: var(--dark); font-size: 15px; margin-bottom: 4px;">${examData.title}</div>
                             <div style="font-size: 12px; color: #666;">${examData.desc} ｜ 狀態：等待勇者拔劍</div>
                         </div>
-                        <button class="main-btn" style="margin: 0; width: auto; padding: 10px 20px; font-size: 14px;" onclick="startExam(window.pendingAiExam)">進入試煉場</button>
+                        <button class="main-btn" style="margin: 0; padding: 10px 15px; font-size: 14px; white-space: nowrap; flex-shrink: 0; min-width: 100px; text-align: center;" onclick="startExam(window.pendingAiExam)">進入試煉場</button>
                     </div>
                 `;
             }
