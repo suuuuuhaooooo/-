@@ -963,7 +963,42 @@
                     else if (newTotalExp >= 3000) newTitle = "戰士";
                     else if (newTotalExp >= 1000) newTitle = "初級冒險者";
 
-                    let studentRealName = rpgData.name || "神秘勇者";
+                    // --- 🌟 安全獲取真實姓名機制 ---
+                    let studentRealName = rpgData.name;
+                    
+                    // 如果名字是空的，或是之前不小心被存成「神秘勇者」，就啟動姓名抓取機制
+                    if (!studentRealName || studentRealName === "神秘勇者") {
+                        // 1. 先嘗試直接抓 Google 帳號的顯示名稱 (最快、最不會出錯)
+                        studentRealName = user.displayName || "神秘勇者";
+                        
+                        // 2. 如果還是神秘勇者，才去向後端 GAS 查詢 (加上雙重保護防崩潰)
+                        if (studentRealName === "神秘勇者") {
+                            try {
+                                const userRes = await fetch(SCRIPT_URL, {
+                                    method: "POST",
+                                    headers: { "Content-Type": "text/plain;charset=utf-8" },
+                                    body: JSON.stringify({
+                                        action: "getUser",
+                                        token: "SuHaoClassroom2026_SecureKey",
+                                        uid: user.uid
+                                    })
+                                });
+                                // 先轉成純文字，避免 <!DOCTYPE> 錯誤直接讓 JSON.parse 崩潰
+                                const rawText = await userRes.text(); 
+                                try {
+                                    const userData = JSON.parse(rawText);
+                                    if (userData.success && userData.name) {
+                                        studentRealName = userData.name;
+                                    }
+                                } catch (jsonErr) {
+                                    console.warn("GAS 回傳的不是 JSON，略過姓名更新");
+                                }
+                            } catch (err) {
+                                console.warn("獲取真實姓名連線失敗，沿用預設名稱");
+                            }
+                        }
+                    }
+                    // ------------------------------------
 
                     await rpgRef.update({
                         exp: newTotalExp,
