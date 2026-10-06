@@ -623,7 +623,9 @@
                 
                 let list = [];
                 for (let uid in data) {
-                    list.push(data[uid]);
+                    if (data[uid].exp && data[uid].exp > 0) {
+                        list.push(data[uid]);
+                    }
                 }
                 
                 list.sort((a, b) => (b.exp || 0) - (a.exp || 0));
