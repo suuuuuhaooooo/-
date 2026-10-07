@@ -357,10 +357,30 @@
                     method: 'POST', headers: { "Content-Type": "text/plain;charset=utf-8" },
                     body: JSON.stringify(payloadData) 
                 });
-                const result = await response.json();
+                
+                // 先解析成文字，方便印出除錯
+                const rawText = await response.text();
+                let result;
+                try {
+                    result = JSON.parse(rawText);
+                } catch (jsonErr) {
+                    throw new Error("後端回傳了非 JSON 格式的錯誤：" + rawText.substring(0, 100));
+                }
 
-                const aiReply = result?.candidates?.[0]?.content?.parts?.[0]?.text;
                 const loadingBubble = document.getElementById(loadingId);
+
+                // 🚨 1. 檢查後端是否有回傳我們自定義的 error 欄位
+                if (result.error) {
+                    throw new Error(result.error);
+                }
+
+                // 🚨 2. 檢查是否被安全政策阻擋
+                if (result.promptFeedback && result.promptFeedback.blockReason) {
+                    throw new Error("發言被安全政策阻擋，原因：" + result.promptFeedback.blockReason);
+                }
+
+                // 🚨 3. 嘗試取得 AI 回覆
+                const aiReply = result?.candidates?.[0]?.content?.parts?.[0]?.text;
 
                 if (aiReply) {
                     if (loadingBubble) {
@@ -377,14 +397,14 @@
                 
                     triggerMathJax();
                 } else {
-                    if (loadingBubble) {
-                        loadingBubble.innerHTML = "AI 幫手沒有產生有效回覆。";
-                    }
+                    // 如果還是沒有拿到，印出整包 JSON 來看看到底發生什麼事
+                    throw new Error("無法解析 AI 回覆，伺服器回傳內容：" + JSON.stringify(result).substring(0, 150));
                 }
             } catch (e) {
                 const loadingBubble = document.getElementById(loadingId);
                 if (loadingBubble) {
-                    loadingBubble.innerText = "錯誤: " + e.message;
+                    // 把紅色錯誤訊息塞進泡泡裡
+                    loadingBubble.innerHTML = `<div class="error-msg">${e.message}</div>`;
                 }
             }
             inputEl.disabled = false; inputEl.focus(); scrollToBottom();
