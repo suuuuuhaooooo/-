@@ -378,7 +378,8 @@
 
                 // 🚨 1. 檢查後端是否有回傳我們自定義的 error 欄位
                 if (result.error) {
-                    throw new Error(result.error);
+                    let errMsg = typeof result.error === 'string' ? result.error : (result.error.message || JSON.stringify(result.error));
+                    throw new Error("Google API 拒絕連線：" + errMsg);
                 }
 
                 // 🚨 2. 檢查是否被安全政策阻擋
