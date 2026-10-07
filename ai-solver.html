@@ -299,29 +299,36 @@
 
         async function callGeminiFirstTurn(base64Img, tid, uid) {
             try {
-                const lineIdToken = liff.getIDToken(); // 🛡️ 取得憑證
+                const lineIdToken = liff.getIDToken(); 
                 
                 const response = await fetch(SCRIPT_URL, {
                     method: 'POST', headers: { "Content-Type": "text/plain;charset=utf-8" },
                     body: JSON.stringify({ 
                         action: "smartSolveImage", 
-                        taskId: tid,           // 🌟 必須把 taskId 傳給後端去對比資料庫
-                        lineToken: lineIdToken,// 🌟 傳送加密憑證
+                        taskId: tid,           
+                        lineToken: lineIdToken,
                         image: base64ImageClean(base64Img)
                     })
                 });
                 
                 const resultText = await response.text();
-                let result = JSON.parse(resultText);
+                let result;
+                try {
+                    result = JSON.parse(resultText);
+                } catch (parseError) {
+                     throw new Error("後端伺服器回應異常：" + resultText.substring(0, 150));
+                }
                 
                 if (result.success && result.text) {
                     window.initialResponse = result.text;
                     renderInitialResult(result.text);
                     db.ref("ai_tasks/" + tid).update({ status: "completed", ai_response: result.text, image: null });
                 } else { 
-                    throw new Error(result.error || "AI 解題幫手忙線中，請稍後重試。"); 
+                    throw new Error(result.error || result.message || "AI 解題幫手忙線中，未收到有效結果。"); 
                 }
-            } catch (error) { showError("錯誤：" + error.message); }
+            } catch (error) { 
+                showError("解題失敗：" + error.message); 
+            }
         }
         async function sendFollowUp() {
             const inputEl = document.getElementById('chat-input');
@@ -445,32 +452,28 @@
         }
 
         function showError(m) {
-            document.getElementById('loading-area').style.display = "none";
-            appendChatBubble('ai', `<div class="error-msg">${m}</div>`);
+            // 把原本還在轉圈圈的 loading 區塊藏起來
+            const loadingArea = document.getElementById('loading-area');
+            if (loadingArea) loadingArea.style.display = "none";
+            
+            // 將錯誤訊息以泡泡的形式印在聊天室中
+            appendChatBubble('ai', `<div class="error-msg">發生異常：<br>${m}</div>`);
+            
+            // 更新上方導覽列的狀態燈號為紅色
             updateStatus("發生異常", "#c0392b");
         }
-
-        // 🟢 終極版的 AI 回覆格式化函式 (完美相容 Markdown, MathJax 與 TikZJax)
         function formatAIResponse(text) {
-            // 第一步：保護 TikZ 繪圖區塊 (包含被 Markdown 程式碼區塊包覆的狀態)
-            // 將 ```tikz 或 ```latex 包著的，或是單純的 \begin{tikzpicture} 轉成 TikZJax 專屬腳本
             let processed = text;
-            
-            // 處理被 ```tikz 包覆的情況
             processed = processed.replace(/```(?:tikz|latex)[\s\S]*?\\begin\{tikzpicture\}([\s\S]*?)\\end\{tikzpicture\}[\s\S]*?```/g, 
                 (match, tikzBody) => {
                     return `%%%TIKZ_BLOCK_START%%%\n\\begin{tikzpicture}${tikzBody}\\end{tikzpicture}\n%%%TIKZ_BLOCK_END%%%`;
                 }
             );
-            
-            // 處理沒有被 ``` 包覆，直接寫出來的情況
             processed = processed.replace(/\\begin\{tikzpicture\}([\s\S]*?)\\end\{tikzpicture\}/g, 
                 (match, tikzBody) => {
                     return `%%%TIKZ_BLOCK_START%%%\n\\begin{tikzpicture}${tikzBody}\\end{tikzpicture}\n%%%TIKZ_BLOCK_END%%%`;
                 }
             );
-
-            // 第二步：保護數學方程式 (避免被 Markdown 誤傷下劃線等符號)
             const mathBlocks = [];
             processed = processed.replace(/(\$\$[\s\S]*?\$\$|\$[\s\S]*?\$)/g, (match) => {
                 mathBlocks.push(match);
