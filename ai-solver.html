@@ -341,16 +341,15 @@
             if (window.sessionImage) apiContents.push({ role: "user", parts: [{ text: "題目圖" }, { inline_data: { mime_type: "image/jpeg", data: base64ImageClean(window.sessionImage) } }] });
             apiContents.push({ role: "model", parts: [{ text: window.initialResponse }] });
             window.followUps.forEach(msg => apiContents.push({ role: msg.role === 'user' ? "user" : "model", parts: [{ text: msg.text }] }));
-            apiContents.push({ role: "user", parts: [{ text: userText }] }); // 傳給 AI 的內容保持原樣即可
+            apiContents.push({ role: "user", parts: [{ text: userText }] });
         
             try {
-                // 🛡️ 取得 LINE 簽發的防偽憑證
                 const lineIdToken = liff.getIDToken();
         
                 const payloadData = { 
                     action: "askGemini", 
                     taskId: window.activeTaskId,          
-                    lineToken: lineIdToken,  // 🌟 改傳送加密憑證，不再傳 visitorUid
+                    lineToken: lineIdToken,
                     geminiPayload: { contents: apiContents } 
                 };
         
@@ -359,17 +358,35 @@
                     body: JSON.stringify(payloadData) 
                 });
                 const result = await response.json();
-                
-                // ... (下方處理結果的程式碼保持不變)
+
                 const aiReply = result?.candidates?.[0]?.content?.parts?.[0]?.text;
-                document.getElementById(loadingId).remove();
+                const loadingBubble = document.getElementById(loadingId);
+
                 if (aiReply) {
-                    appendChatBubble('ai', formatAIResponse(aiReply));
-                    window.followUps.push({ role: "user", text: userText }, { role: "model", text: aiReply });
-                    db.ref("ai_tasks/" + window.activeTaskId).update({ follow_ups: window.followUps });
+                    if (loadingBubble) {
+                        loadingBubble.innerHTML = formatAIResponse(aiReply);
+                    }
+                
+                    window.followUps.push(
+                        { role: "user", text: userText },
+                        { role: "model", text: aiReply }
+                    );
+                
+                    db.ref("ai_tasks/" + window.activeTaskId)
+                        .update({ follow_ups: window.followUps });
+                
                     triggerMathJax();
+                } else {
+                    if (loadingBubble) {
+                        loadingBubble.innerHTML = "AI 幫手沒有產生有效回覆。";
+                    }
                 }
-            } catch (e) { document.getElementById(loadingId).innerText = "錯誤: " + e.message; }
+            } catch (e) {
+                const loadingBubble = document.getElementById(loadingId);
+                if (loadingBubble) {
+                    loadingBubble.innerText = "錯誤: " + e.message;
+                }
+            }
             inputEl.disabled = false; inputEl.focus(); scrollToBottom();
         }
 
