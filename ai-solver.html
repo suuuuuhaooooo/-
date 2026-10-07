@@ -278,6 +278,7 @@
                     return;
                 }
                 const isOwner = (visitorUid && data.uid === visitorUid);
+                window.activeTaskId = tid;
                 if (data.image) window.sessionImage = data.image;
                 if (data.status === "completed" && data.ai_response) {
                     window.initialResponse = data.ai_response;
